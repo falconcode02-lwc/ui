@@ -1,0 +1,162 @@
+<div class="workflow-import-container">
+    <nz-steps [nzCurrent]="currentStep" nzSize="small">
+        <nz-step nzTitle="Upload & Configure" nzDescription="Upload workflow and edit metadata"></nz-step>
+        <nz-step nzTitle="Validation" nzDescription="Review dependencies"></nz-step>
+        <nz-step nzTitle="Confirmation" nzDescription="Confirm and create"></nz-step>
+    </nz-steps>
+
+    <div class="steps-content">
+        <!-- Step 1: Upload and Metadata -->
+        <div *ngIf="currentStep === 0" class="step-content">
+            <h3>Step 1: Upload Workflow File</h3>
+
+            <nz-upload nzType="drag" [nzMultiple]="false" [nzFileList]="fileList" [nzBeforeUpload]="beforeUpload"
+                [nzRemove]="removeFile" nzAccept=".ffw">
+                <p class="ant-upload-drag-icon">
+                    <nz-icon nzType="inbox"></nz-icon>
+                </p>
+                <p class="ant-upload-text">Click or drag .ffw file to this area to upload</p>
+                <p class="ant-upload-hint">
+                    Upload a workflow file exported from this system (.ffw format)
+                </p>
+            </nz-upload>
+
+            <form *ngIf="importedData" nz-form [formGroup]="metadataForm" class="metadata-form">
+                <h4>Workflow Metadata</h4>
+
+                <nz-form-item>
+                    <nz-form-label [nzSpan]="6" nzRequired>Name</nz-form-label>
+                    <nz-form-control [nzSpan]="18" nzErrorTip="Please enter workflow name">
+                        <input nz-input formControlName="name" placeholder="Enter workflow name" />
+                    </nz-form-control>
+                </nz-form-item>
+
+                <nz-form-item>
+                    <nz-form-label [nzSpan]="6">Description</nz-form-label>
+                    <nz-form-control [nzSpan]="18">
+                        <textarea nz-input formControlName="description" placeholder="Enter workflow description"
+                            [nzAutosize]="{ minRows: 3, maxRows: 5 }"></textarea>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <nz-form-item>
+                    <nz-form-label [nzSpan]="6" nzRequired>Code</nz-form-label>
+                    <nz-form-control [nzSpan]="18" nzErrorTip="Please enter workflow code">
+                        <input nz-input formControlName="code" placeholder="Enter workflow code" />
+                    </nz-form-control>
+                </nz-form-item>
+
+                <nz-form-item>
+                    <nz-form-label [nzSpan]="6">Controller</nz-form-label>
+                    <nz-form-control [nzSpan]="18">
+                        <input nz-input formControlName="controller" placeholder="Enter controller name (optional)" />
+                    </nz-form-control>
+                </nz-form-item>
+            </form>
+        </div>
+
+        <!-- Step 2: Validation -->
+        <div *ngIf="currentStep === 1" class="step-content">
+            <h3>Step 2: Validation Results</h3>
+
+            <nz-alert *ngIf="validationResult && validationResult.errors && validationResult.errors.length > 0"
+                nzType="error" nzMessage="Validation Errors" [nzDescription]="errorsTemplate" nzShowIcon
+                class="validation-alert">
+            </nz-alert>
+            <ng-template #errorsTemplate>
+                <ul>
+                    <li *ngFor="let error of validationResult!.errors">{{ error }}</li>
+                </ul>
+            </ng-template>
+
+            <nz-alert *ngIf="validationResult && validationResult.warnings && validationResult.warnings.length > 0"
+                nzType="warning" nzMessage="Warnings" [nzDescription]="warningsTemplate" nzShowIcon
+                class="validation-alert">
+            </nz-alert>
+            <ng-template #warningsTemplate>
+                <ul>
+                    <li *ngFor="let warning of validationResult!.warnings">{{ warning }}</li>
+                </ul>
+            </ng-template>
+
+            <div class="validation-section"
+                *ngIf="validationResult && validationResult.missingCalls && validationResult.missingCalls.length > 0">
+                <h4><nz-icon nzType="phone" nzTheme="outline"></nz-icon> Referenced Calls</h4>
+                <p class="section-hint">This workflow references the following calls. Please ensure they exist in your
+                    environment:</p>
+                <nz-list nzBordered [nzDataSource]="validationResult!.missingCalls!" nzSize="small">
+                    <nz-list-item *ngFor="let call of validationResult!.missingCalls">
+                        <nz-tag nzColor="blue">{{ call }}</nz-tag>
+                    </nz-list-item>
+                </nz-list>
+            </div>
+
+            <div class="validation-section"
+                *ngIf="validationResult && validationResult.missingPlugins && validationResult.missingPlugins.length > 0">
+                <h4><nz-icon nzType="api" nzTheme="outline"></nz-icon> Referenced Plugins</h4>
+                <p class="section-hint">This workflow uses the following plugins. Please ensure they are installed:</p>
+                <nz-list nzBordered [nzDataSource]="validationResult!.missingPlugins!" nzSize="small">
+                    <nz-list-item *ngFor="let plugin of validationResult!.missingPlugins">
+                        <nz-tag nzColor="purple">{{ plugin }}</nz-tag>
+                    </nz-list-item>
+                </nz-list>
+            </div>
+
+            <nz-alert *ngIf="validationResult && validationResult.valid && 
+                             (!validationResult.missingCalls || validationResult.missingCalls.length === 0) &&
+                             (!validationResult.missingPlugins || validationResult.missingPlugins.length === 0)"
+                nzType="success" nzMessage="Validation Successful"
+                nzDescription="No issues found. The workflow is ready to be imported." nzShowIcon
+                class="validation-alert">
+            </nz-alert>
+        </div>
+
+        <!-- Step 3: Confirmation -->
+        <div *ngIf="currentStep === 2" class="step-content">
+            <nz-result nzStatus="info" nzTitle="Ready to Import"
+                [nzSubTitle]="'Import workflow: ' + (importedData!.metadata.name || '')">
+                <div nz-result-extra>
+                    <div class="workflow-summary">
+                        <h4>Workflow Details</h4>
+                        <p><strong>Name:</strong> {{ importedData!.metadata.name }}</p>
+                        <p><strong>Code:</strong> {{ importedData!.metadata.code }}</p>
+                        <p><strong>Controller:</strong> {{ importedData!.metadata.controller }}</p>
+                        <p *ngIf="importedData?.metadata?.description"><strong>Description:</strong> {{
+                            importedData!.metadata.description }}</p>
+
+                        <nz-alert
+                            *ngIf="validationResult && validationResult.missingCalls && validationResult.missingCalls.length > 0"
+                            nzType="warning"
+                            [nzMessage]="validationResult!.missingCalls!.length + ' call(s) referenced'" nzShowIcon
+                            class="summary-alert">
+                        </nz-alert>
+
+                        <nz-alert
+                            *ngIf="validationResult && validationResult.missingPlugins && validationResult.missingPlugins.length > 0"
+                            nzType="warning" [nzMessage]="validationResult!.missingPlugins!.length + ' plugin(s) used'"
+                            nzShowIcon class="summary-alert">
+                        </nz-alert>
+                    </div>
+                </div>
+            </nz-result>
+        </div>
+    </div>
+
+    <div class="steps-action">
+        <button nz-button nzType="default" (click)="cancel()">
+            <nz-icon nzType="close"></nz-icon> Cancel
+        </button>
+
+        <button *ngIf="currentStep > 0" nz-button nzType="default" (click)="previousStep()">
+            <nz-icon nzType="left"></nz-icon> Previous
+        </button>
+
+        <button *ngIf="currentStep < 2" nz-button nzType="primary" (click)="nextStep()">
+            Next <nz-icon nzType="right"></nz-icon>
+        </button>
+
+        <button *ngIf="currentStep === 2" nz-button nzType="primary" (click)="finishImport()" [nzLoading]="importing">
+            <nz-icon nzType="check"></nz-icon> Finish & Import
+        </button>
+    </div>
+</div>

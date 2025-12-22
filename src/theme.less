@@ -1,0 +1,45 @@
+
+// Custom Theming for NG-ZORRO
+// For more information: https://ng.ant.design/docs/customize-theme/en
+//@import "../node_modules/ng-zorro-antd/ng-zorro-antd.less";
+ /* Import one component's styles */
+// pick your active color
+
+
+@import "../node_modules/ng-zorro-antd/ng-zorro-antd.dark.less";
+ 
+  
+@primary-color: #ff6d5a; // primary token - n8n style coral/orange
+// dark-menu specifics
+@menu-dark-item-active-bg: #ff6d5a;
+@menu-dark-item-active-color: #ffffff;
+@menu-dark-highlight-color: #ff8b7a;
+// Override less variables to here
+// View all variables: https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/components/style/themes/default.less
+nz-list-item.ant-list-item.selected-item {
+    background-color: @primary-color;
+}
+
+nz-list-item.ant-list-item {
+    padding-top: 6px!important;
+    padding-bottom: 2px!important;
+}
+
+nz-list-item.ant-list-item.selected-item-file {
+    background-color: @primary-color;
+}
+
+nz-list-item.ant-list-item{
+    text-align: left!important;
+}
+.ant-layout-header {
+    height: 72px;
+    line-height: 50px;
+}
+.app-header{
+    height: 50px!important;
+}
+
+// span.activityCallCounts {
+//  background-color: @primary-color;
+// }

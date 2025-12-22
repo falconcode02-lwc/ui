@@ -1,0 +1,125 @@
+<nz-page-header class="page-action" nzSize="small">
+    <nz-page-header-title><nz-icon nzType="database" nzTheme="outline"></nz-icon>
+        Custom Variables</nz-page-header-title>
+    <nz-page-header-subtitle>
+        <input nz-input placeholder="Search variables..." style="width:250px; margin-right:12px;"
+            (input)="filterText = $any($event.target).value; applyFilter()" />
+    </nz-page-header-subtitle>
+    <nz-page-header-extra>
+        <button nz-button nzType="primary" (click)="openCreateDrawer()" nzShape="round">
+            <span nz-icon nzType="plus" nzTheme="outline"></span>
+            Create Variable
+        </button>
+    </nz-page-header-extra>
+</nz-page-header>
+
+<div class="custom-variables split-panel">
+    <nz-splitter class="splitter-panel" style="height: calc(100vh - 170px);">
+
+        <nz-splitter-panel [nzDefaultSize]="'20%'" class="group-pane">
+            <div style="padding-right: 16px;">
+                <nz-list nzBordered>
+
+                    @for (item of groupOptions; track item) {
+                    <nz-list-item (click)="selectGroupItem(item)">
+                        <!-- <span nz-typography><mark>[ITEM]</mark></span> -->
+                        {{ item }}
+                    </nz-list-item>
+                    }
+                </nz-list>
+                <!-- <div class="group-list">
+                <h4>Groups</h4>
+                <ul>
+                    <li [class.active]="selectedGroup === null" (click)="selectGroupItem(null)">All</li>
+                    <li *ngFor="let g of groupOptions" [class.active]="selectedGroup === g"
+                        (click)="selectGroupItem(g)">{{ g }}</li>
+                </ul>
+            </div> -->
+            </div>
+        </nz-splitter-panel>
+
+        <nz-splitter-panel>
+            <div class="content-pane">
+                <nz-table #varTable nzShowPagination nzBordered nzSize="small" [nzData]="filteredVariables"
+                    nzFrontPagination [nzPageSize]="8">
+                    <thead>
+                        <tr>
+                            <th>Group</th>
+                            <th>Key</th>
+                            <th>Value</th>
+                            <th nzWidth="180px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let v of varTable.data; trackBy: trackById">
+                            <td>{{ v.group }}</td>
+                            <td>{{ v.key }}</td>
+                            <td>
+                                <div class="value-cell" [title]="(v.value | json)">
+                                    <pre>{{ v.value | json }}</pre>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button nz-button nzType="link" nzSize="small" nz-tooltip nzTooltipTitle="Edit"
+                                        (click)="openEditDrawer(v)">
+                                        <span nz-icon nzType="edit" nzTheme="outline"></span>
+                                    </button>
+
+                                    <button nz-button nzType="link" nzDanger nzSize="small" nz-popconfirm
+                                        nzPopconfirmTitle="Delete this variable?" (nzOnConfirm)="deleteVariable(v.id)">
+                                        <span nz-icon nzType="delete" nzTheme="outline"></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </nz-table>
+
+            </div>
+        </nz-splitter-panel>
+    </nz-splitter>
+</div>
+<nz-drawer [nzVisible]="drawerVisible" nzTitle="{{ isEditMode ? 'Edit Variable' : 'Create Variable' }}" nzWidth="420px"
+    (nzOnClose)="closeDrawer()">
+    <div *nzDrawerContent>
+        <form nz-form [formGroup]="varForm" (ngSubmit)="submitForm()">
+            <nz-form-item>
+                <nz-form-label nzRequired>Group</nz-form-label>
+                <nz-form-control>
+                    <div class="group-autocomplete">
+                        <input nz-input formControlName="group" placeholder="e.g. system" (input)="onGroupInput()"
+                            (focus)="onGroupInput()" />
+                        <ul *ngIf="filteredGroupOptions.length" class="suggestions">
+                            <li *ngFor="let g of filteredGroupOptions" (click)="selectGroup(g)">{{ g }}</li>
+                        </ul>
+                    </div>
+                </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+                <nz-form-label nzRequired>Key</nz-form-label>
+                <nz-form-control>
+                    <input nz-input formControlName="key" placeholder="e.g. theme" />
+                </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+                <nz-form-label>Value</nz-form-label>
+                <nz-form-control>
+                    <textarea nz-input formControlName="value" rows="6"
+                        placeholder='Plain text or JSON (e.g. "dark" or {"a":1})'></textarea>
+                </nz-form-control>
+            </nz-form-item>
+
+            <div class="drawer-actions">
+                <button nzShape="round" nz-button nzType="primary" [disabled]="varForm.invalid" (click)="submitForm()">
+                    <span nz-icon nzType="save" nzTheme="outline"></span>
+                    {{ isEditMode ? 'Update' : 'Create' }}
+                </button>
+                <button nzShape="round" nz-button nzType="default" style="margin-left:8px;"
+                    (click)="closeDrawer()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</nz-drawer>

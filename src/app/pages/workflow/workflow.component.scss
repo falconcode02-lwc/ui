@@ -1,0 +1,725 @@
+// Local include of workflow canvas styles using modern Sass @use.
+// This keeps non-workflow routes lighter and avoids @import deprecation.
+@use '../../../workflow.scss' as *;
+
+.pannel-title {
+    font-weight: bold;
+    font-size: 14px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-top: 5px;
+    text-align: center;
+    border-top: 0px solid #444;
+    border-left: 0px solid #444;
+    border-right: 0px solid #444;
+    border-bottom: 0px solid #444;
+    background: #2e2e2e;
+    color: #e5e5e5;
+}
+
+::ng-deep .editorPanel {
+    background: #2e2e2e;
+    position: relative;
+}
+
+.f-flow {
+    height: 100%;
+    background: #2e2e2e;
+}
+
+// n8n-style dotted background
+::ng-deep .f-background {
+    background-image: radial-gradient(circle, #2a2a2a 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-position: 0 0;
+}
+
+.f-node-input {
+    position: absolute;
+    width: 8px;
+    height: 14px;
+    left: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    background: #2e2e2e;
+    border: 2px solid #555;
+    border-radius: 2px;
+}
+
+.f-node-input:hover {
+    background: #3e3e3e;
+    border-color: #ff6d5a;
+}
+
+.f-node-output {
+    // position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    background: #2e2e2e;
+    border: 2px solid #555;
+    // right: -8px;
+    // top: 50%;
+    // transform: translateY(-50%);
+}
+
+.f-node-output:hover {
+    background: #3e3e3e;
+    border-color: #ff6d5a;
+}
+
+.f-node {
+    padding: 15px;
+    text-align: center;
+    border-radius: 10px;
+    border: 2px solid #909298;
+    background-color: #414244 !important;
+    width: 82px;
+    height: 82px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+    &.f-selected {
+        border-color: #ff6d5a;
+        box-shadow: 0 0 0 4px rgba(255, 109, 90, 0.25);
+        background: #2e2e2e;
+        // Highlights the border when the node is selected
+        // The f-selected class is automatically added by the library when a node or connection is selected.
+    }
+
+    // External icon styling for plugin nodes
+    .node-external-icon {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+        background: white;
+        padding: 4px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+}
+
+
+// .f-connection-content {
+//     font-size: 9px;
+//     padding: 2px 8px;
+//     background: #0e0e0ebc;
+//     border-radius: 10px;
+//     color: #fff;
+//     border: 0.2px solid #000;
+// }
+.f-drag-handle {
+    cursor: move;
+}
+
+::ng-deep {
+    .f-connection {
+        position: relative;
+
+        .f-connection-drag-handle {
+            fill: transparent;
+            // By default, this element has a black fill and is used to detect the start of dragging (e.g., onmousedown).
+            // We make it transparent to avoid visual clutter, while keeping it functional.
+        }
+
+        .f-connection-selection {
+            stroke-width: 2;
+            // This is a pseudo-connection (a copy of the main path) used to make it easier to select the connection.
+            // It's slightly thicker than the actual path (which is often only 1px), making it easier to interact with.
+            // It remains invisible to avoid affecting visual clarity but stays active for user interaction.
+        }
+
+        .f-connection-path {
+            stroke: #909298;
+            stroke-width: 2;
+            stroke-linecap: round;
+
+        }
+
+        &.f-selected {
+            .f-connection-path {
+                stroke: #ff6d5a;
+                filter: drop-shadow(0 0 8px rgba(255, 109, 90, 0.6));
+
+            }
+        }
+
+    }
+
+
+}
+
+
+
+
+.f-connection-path.success {
+    stroke: #4ade80;
+    filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.4));
+}
+
+
+.action {
+    position: absolute;
+    top: -28px;
+    animation: fade-out 0.5s forwards;
+
+
+
+}
+
+.action:hover .action {
+    animation: fade-in 0.5s forwards;
+}
+
+.f-node:hover .action {
+    animation: fade-in 0.5s forwards;
+    /* Show the content when .hover-trigger is hovered */
+}
+
+.f-selected .action {
+    animation: fade-in 0.5s forwards;
+    /* Show the content when .hover-trigger is hovered */
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        display: none;
+    }
+
+    to {
+        opacity: 1;
+        display: block;
+        /* The display property will be set at the very beginning */
+    }
+}
+
+@keyframes fade-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+        display: none;
+        /* The display property will be set at the very end */
+    }
+}
+
+.actionstack {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    gap: 6px;
+}
+
+.f-group {
+    &.f-grouping-over-boundary {
+        border-style: dashed !important;
+        border-width: 2px;
+    }
+}
+
+.f-selection-area {
+    background-color: rgba(255, 109, 90, 0.12);
+    border: 1px dashed rgba(255, 109, 90, 0.4);
+}
+
+.gutter-example {
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+.title {
+  position: absolute;
+    bottom: 0px;
+    font-size: 9px;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    color: #e5e5e5;
+    font-weight: bold;
+    /* border: 1px solid #444; */
+    line-height: 10px;
+}
+
+.f-node.start .title {
+    border-bottom-left-radius: 6px !important;
+}
+
+div.subtitle {
+    position: absolute;
+    bottom: -36px;
+    height: 30px;
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+div.subtitle span.tt {
+    font-size: 12px;
+    width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: bold;
+    text-align: center;
+    color: #e5e5e5;
+}
+
+div.subtitle span.st {
+    width: 180px;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    font-size: 10px;
+}
+
+.groupTitle {
+    position: absolute;
+    top: -14px;
+    border-radius: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 11px;
+    font-weight: bold;
+    left: 11px;
+    background: #2a2a2a;
+    color: #e5e5e5;
+    border: 1px solid #444;
+}
+
+.outputHolder {
+
+    width: 13px;
+    right: revert-layer;
+    position: absolute;
+    right: -8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.f-group {
+    width: 250px;
+    height: 150px;
+    padding: 24px;
+    border-radius: 13px;
+    padding-right: 40px;
+    padding-left: 40px;
+    background: rgba(42, 42, 42, 0.5);
+    border: 2px dashed #555;
+}
+
+.actionButtons {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    justify-content: space-between;
+    align-items: center;
+
+    flex-wrap: nowrap;
+    border-bottom: 1px solid #2a2a2a;
+    padding-left: 10px;
+    padding-right: 10px;
+    background: #2e2e2e;
+}
+
+.actionButtons button {
+    cursor: pointer;
+}
+
+/* Fullscreen modal dark theme overrides */
+::ng-deep .fullscreen-modal.dark-modal .ant-modal-content {
+    background: #2e2e2e;
+    /* very dark background */
+    color: #e5e5e5;
+    border-radius: 0;
+    height: 100vh;
+}
+
+::ng-deep .fullscreen-modal.dark-modal .ant-modal-body {
+    background: #2e2e2e;
+    padding: 0;
+    color: #e5e5e5;
+    height: calc(100vh - 55px);
+    /* leave space for modal header */
+    overflow: hidden;
+}
+
+/* modal header */
+::ng-deep .fullscreen-modal.dark-modal .ant-modal-header {
+    background: #141414;
+    border-bottom: 1px solid #2a2a2a;
+    color: #e5e5e5;
+}
+
+/* Close button styling */
+.modal-close-btn {
+    position: absolute;
+    right: 12px;
+    top: 10px;
+    z-index: 20;
+    color: #e5e5e5;
+}
+
+/* Center form area background and scroll styles */
+::ng-deep .fullscreen-modal.dark-modal .ant-modal-body .app-json-form {
+    background: #2e2e2e;
+    color: #e5e5e5;
+}
+
+.ai-model {
+    position: absolute;
+    bottom: 10px;
+    left: 15px;
+    font-size: 10px;
+}
+
+.ai-memory {
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+    font-size: 10px;
+}
+
+.ai-model .fitter {
+    height: 40px;
+    width: 40px;
+    border: 1px dashed #00c6d5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-content: center;
+
+
+}
+
+
+.ai-memory .fitter {
+    height: 40px;
+    width: 40px;
+    border: 1px dashed #a94100;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-content: center;
+
+
+}
+
+.ai-tools {
+    /* reserved for AI tools area; keep visible block to satisfy linter */
+    display: block;
+}
+
+
+.notes {
+    padding: 0.5rem;
+    position: relative;
+    background: rgba(42, 42, 42, 0.8);
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #e5e5e5;
+}
+
+.f-resize-handle.f-resize-handle-right-top {
+    top: -6px;
+    right: -6px;
+    cursor: nesw-resize;
+}
+
+.f-resize-handle.f-resize-handle-left-top {
+    top: -6px;
+    left: -6px;
+    cursor: nwse-resize;
+}
+
+.f-resize-handle.f-resize-handle-left-bottom {
+    bottom: -6px;
+    left: -6px;
+    cursor: nesw-resize;
+}
+
+.f-resize-handle.f-resize-handle-right-bottom {
+    bottom: -6px;
+    right: -6px;
+    cursor: nwse-resize;
+}
+
+.f-resize-handle.f-resize-handle-right {
+    right: 0px;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    cursor: ew-resize;
+    background: transparent;
+}
+
+.f-resize-handle.f-resize-handle-left {
+    left: 0px;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    cursor: ew-resize;
+    background: transparent;
+}
+
+.f-resize-handle.f-resize-handle-bottom {
+    bottom: 0px; 
+    left: 0;
+    width: 100%;
+    height: 4px;
+    cursor: ns-resize;
+}
+
+.f-resize-handle.f-resize-handle-top {
+    top: 0px;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    cursor: ns-resize;
+}
+
+.f-resize-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: transparent;
+    border: 0px solid #444;
+    border-radius: 2px;
+}
+
+.f-resize-handle:hover {
+    background-color: #ff6d5a;
+    border-color: #ff6d5a;
+}
+
+.actionbuttons {
+    position: absolute;
+    right: 5px;
+    top: 5;
+}
+
+.actionbuttons .act-buttons {
+    display: none;
+}
+
+.notes:hover .act-buttons {
+    display: block;
+}
+
+
+.actionbuttons_nodes {
+    position: absolute;
+    right: 0px;
+    top: -35px;
+    height: 43px;
+    width: 100%;
+}
+
+.actionbuttons_nodes .act-buttons {
+    display: none;
+}
+
+.f-node:hover .act-buttons,
+.actionbuttons_nodes:hover .act-buttons {
+    display: block;
+}
+
+// Node execution status styles (n8n-like)
+.f-node.Success {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.2);
+}
+
+.f-node.Running {
+    border-color: #60a5fa;
+    animation: pulse-running 1.5s ease-in-out infinite;
+}
+
+.execute-success {
+    position: absolute;
+    top: -20px;
+    // right: 5px;
+    color: #4ade80;
+    filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.6));
+}
+
+.execute {
+    position: absolute;
+    // top: 5px;
+    // right: 5px;
+    // color: #60a5fa;
+}
+
+@keyframes pulse-running {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.1);
+    }
+}
+
+// Line alignment guides (n8n style)
+::ng-deep .f-line-alignment-horizontal,
+::ng-deep .f-line-alignment-vertical {
+    stroke: #ff6d5a;
+    stroke-width: 1;
+    stroke-dasharray: 4;
+    opacity: 0.5;
+}
+
+// Workflow blocks drawer (inside container, no mask)
+::ng-deep .workflow-blocks-drawer .ant-drawer {
+    position: absolute;
+}
+
+::ng-deep .workflow-blocks-drawer .ant-drawer-content-wrapper {
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.3);
+}
+
+::ng-deep .workflow-blocks-drawer .ant-drawer-header {
+    background: #2e2e2e;
+    border-bottom: 1px solid #2a2a2a;
+    color: #e5e5e5;
+}
+
+::ng-deep .workflow-blocks-drawer .ant-drawer-body {
+    background: #2e2e2e;
+    padding: 16px;
+}
+
+::ng-deep .workflow-blocks-drawer .ant-drawer-close {
+    color: #e5e5e5;
+}
+
+::ng-deep .workflow-blocks-drawer .ant-drawer-close:hover {
+    color: var(--accent-color);
+}
+
+// Workflow blocks search input styling
+::ng-deep .workflow-blocks-drawer {
+    .ant-input-affix-wrapper {
+        background: var(--bg-tertiary);
+        border-color: var(--border-color);
+        transition: all 0.3s ease;
+        
+        &:hover, &:focus {
+            border-color: var(--accent-color);
+        }
+        
+        input {
+            background: transparent;
+            color: var(--text-primary);
+            
+            &::placeholder {
+                color: var(--text-secondary);
+            }
+        }
+        
+        .ant-input-prefix,
+        .ant-input-suffix {
+            color: var(--text-secondary);
+        }
+    }
+    
+    // Block items
+    .block-item {
+        padding: 8px;
+        margin-bottom: 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: move;
+        background: var(--bg-secondary);
+        transition: all 0.3s ease;
+        position: relative;
+        
+        &:hover {
+            border-color: var(--accent-color);
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        // Plugin badge styling
+        .plugin-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            background: #1890ff;
+            color: white;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        // External icon styling
+        img {
+            background: white;
+            padding: 2px;
+            border-radius: 4px;
+        }
+    }
+}
+
+// Minimap fade in/out animation
+.any-container-or-without-container {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+.minimap-fade-out {
+    animation: fadeOut 0.3s ease-out;
+}
+
+// Icon error fallback styles
+.node-external-icon {
+    &.icon-error {
+        display: none !important;
+    }
+}
+
+// Fallback icon styling for plugins
+nz-icon[nzType="api"] {
+    &.icon-plugin {
+        color: #1890ff !important;
+    }
+}

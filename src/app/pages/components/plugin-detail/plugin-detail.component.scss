@@ -1,0 +1,197 @@
+::ng-deep .plugin-detail-modal {
+  .ant-modal-header {
+    background: #2e2e2e;
+    border-bottom: 1px solid #3a3a3a;
+  }
+
+  .ant-modal-body {
+    background: #212121;
+    color: var(--text-primary);
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .ant-descriptions-bordered {
+    .ant-descriptions-item-label {
+      background: #2a2a2a;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .ant-descriptions-item-content {
+      background: #2e2e2e;
+      color: var(--text-primary);
+    }
+
+    .ant-descriptions-row {
+      border-color: #3a3a3a;
+    }
+  }
+
+  .ant-table {
+    background: transparent;
+    color: var(--text-primary);
+
+    thead > tr > th {
+      background: #2a2a2a;
+      color: var(--text-secondary);
+      border-color: #3a3a3a;
+      font-weight: 600;
+    }
+
+    tbody > tr > td {
+      background: #2e2e2e;
+      border-color: #3a3a3a;
+    }
+
+    tbody > tr:hover > td {
+      background: #252525;
+    }
+  }
+
+  .ant-divider {
+    border-color: #3a3a3a;
+
+    .ant-divider-inner-text {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 14px;
+    }
+  }
+
+  .plugin-documentation {
+    color: var(--text-primary);
+    line-height: 1.8;
+
+    h1, h2, h3, h4, h5, h6 {
+      color: var(--text-primary);
+      margin-top: 20px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    h1 {
+      font-size: 24px;
+      border-bottom: 2px solid #3a3a3a;
+      padding-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 20px;
+      border-bottom: 1px solid #3a3a3a;
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      font-size: 18px;
+    }
+
+    p {
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    code {
+      background: #2a2a2a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #1890ff;
+    }
+
+    pre {
+      background: #0a0a0a;
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid #3a3a3a;
+      overflow-x: auto;
+
+      code {
+        background: transparent;
+        padding: 0;
+        color: #52c41a;
+      }
+    }
+
+    ul, ol {
+      padding-left: 24px;
+      margin-bottom: 12px;
+
+      li {
+        margin-bottom: 6px;
+        color: var(--text-secondary);
+      }
+    }
+
+    blockquote {
+      border-left: 4px solid #1890ff;
+      padding-left: 16px;
+      margin-left: 0;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+
+      th, td {
+        border: 1px solid #3a3a3a;
+        padding: 8px 12px;
+        text-align: left;
+      }
+
+      th {
+        background: #2a2a2a;
+        font-weight: 600;
+      }
+
+      td {
+        background: #2e2e2e;
+      }
+    }
+
+    a {
+      color: #1890ff;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .ant-empty {
+    .ant-empty-description {
+      color: var(--text-secondary);
+    }
+  }
+
+  .ant-badge-status-text {
+    color: var(--text-primary);
+  }
+}
+
+// Custom scrollbar for modal content
+.plugin-detail-modal {
+  .ant-modal-body {
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #2e2e2e;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #3a3a3a;
+      border-radius: 4px;
+
+      &:hover {
+        background: #4a4a4a;
+      }
+    }
+  }
+}

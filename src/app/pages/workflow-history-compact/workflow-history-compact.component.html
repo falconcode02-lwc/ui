@@ -1,0 +1,344 @@
+<div class="page-header-modern">
+  <div class="header-content">
+    <div class="header-left">
+      <div class="header-title">
+        <nz-icon nzType="history" nzTheme="outline"></nz-icon>
+        <span>Workflow History</span>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton" class="search-input-modern">
+        <input type="text" [(ngModel)]="workflowId" nz-input placeholder="Enter workflow ID and press enter"
+          (keyup.enter)="onSearchClick()" />
+      </nz-input-group>
+      <ng-template #suffixIconButton>
+        <button nz-button nzType="primary" (click)="onSearchClick()" nzSearch>
+          <nz-icon nzType="search"></nz-icon>
+        </button>
+      </ng-template>
+    </div>
+
+    <div class="header-right">
+      <button nzType="default" nz-button nzShape="round" (click)="viewInEditor()"
+        *ngIf="workflowId != ''" class="view-in-editor-btn">
+        <nz-icon nzType="export" /> View in Editor
+      </button>
+      <button nzType="primary"   style="margin-left: 10px;" nzShape="round" nzDanger nz-button (click)="terminateWorkflow()"
+        *ngIf="workflowId != '' && status == 'processing'" class="terminate-btn">
+        <nz-icon nzType="close" /> Terminate
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Main Content -->
+<nz-splitter class="main-splitter">
+  <nz-splitter-panel [nzCollapsible]="true" [nzDefaultSize]="'30%'" [nzMax]="'50%'" [nzMin]="'25%'">
+    <div class="timeline-container">
+      <!-- Filter and Search -->
+      <div class="timeline-controls">
+        <nz-input-group nzSearch class="search-box">
+          <input type="text" [(ngModel)]="searchTerm" nz-input placeholder="Search events..." />
+        </nz-input-group>
+
+        <div class="control-row">
+          <div class="filter-buttons">
+            <button nz-button [nzType]="filterStatus === 'all' ? 'primary' : 'default'" (click)="filterStatus = 'all'"
+              class="filter-btn">
+              All
+            </button>
+            <button nz-button [nzType]="filterStatus === 'success' ? 'primary' : 'default'"
+              (click)="filterStatus = 'success'" class="filter-btn filter-success">
+              Success
+            </button>
+            <button nz-button [nzType]="filterStatus === 'error' ? 'primary' : 'default'"
+              (click)="filterStatus = 'error'" class="filter-btn filter-error">
+              Errors
+            </button>
+          </div>
+
+          <button nz-button nzType="default" (click)="toggleSort()" class="sort-btn" nz-tooltip
+            [nzTooltipTitle]="sortOrder === 'desc' ? 'Newest First' : 'Oldest First'">
+            <nz-icon [nzType]="sortOrder === 'desc' ? 'sort-descending' : 'sort-ascending'"></nz-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="timeline-wrapper">
+        <!-- <div class="timeline-line"></div> -->
+        <div class="event-list">
+          <div *ngFor="let ev of getFilteredEvents(); let i = index" class="event-card"
+            [class.event-selected]="ev.eventId == selectEventID" [class.event-hovered]="ev.eventId == hoveredEventId"
+            [class.event-error]="ev.error" [class.event-success]="getEventStatusColor(ev) === 'success'"
+            (click)="openModal(ev)" (mouseenter)="setHoveredEvent(ev.eventId)" (mouseleave)="clearHoveredEvent()">
+
+            <div class="event-indicator">
+              <div class="event-dot" [class.dot-pulsing]="getEventStatusColor(ev) === 'processing'">
+                <nz-icon [nzType]="getEventIcon(ev)" nzTheme="outline"></nz-icon>
+              </div>
+            </div>
+
+            <div class="event-content">
+              <div class="event-header">
+                <div class="event-title">
+                  <span class="event-name">{{ summary(ev) || ev?.timerStartedEventAttributes?.startToFireTimeout
+                    }}</span>
+                  <nz-icon *ngIf="ev?.error" nzType="warning" nzTheme="fill" class="error-icon"></nz-icon>
+                </div>
+                <nz-tag [nzColor]="'gold'" class="event-id-tag">{{ shortId(ev) }}</nz-tag>
+              </div>
+
+              <div class="event-meta">
+                <nz-tag [nzColor]="getEventStatusColor(ev) === 'error' ? 'error' : 'cyan'" class="event-type-tag">
+                  {{ ev?.AType ?? 'Unknown' }}
+                </nz-tag>
+                <span class="event-time">
+                  <nz-icon nzType="clock-circle" nzTheme="outline"></nz-icon>
+                  {{ eventTime(ev) }}
+                </span>
+                <span class="event-duration" *ngIf="getEventDuration(ev)">
+                  <nz-icon nzType="dashboard" nzTheme="outline"></nz-icon>
+                  {{ getEventDuration(ev) }}
+                </span>
+              </div>
+
+              <div class="event-progress-bar" *ngIf="getEventStatusColor(ev) === 'processing'">
+                <div class="progress-fill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <nz-empty *ngIf="getFilteredEvents().length === 0" nzNotFoundImage="simple" nzNotFoundContent="No events found"
+          class="empty-state">
+        </nz-empty>
+      </div>
+    </div>
+  </nz-splitter-panel>
+
+  <nz-splitter-panel [nzCollapsible]="false">
+
+    <!-- Stats Dashboard -->
+    <div class="stats-dashboard" *ngIf="compactEvents.length > 0">
+      <div class="stat-card stat-total">
+        <div class="stat-icon">
+          <nz-icon nzType="dashboard" nzTheme="outline"></nz-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.total }}</div>
+          <div class="stat-label">Total Events</div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-success">
+        <div class="stat-icon">
+          <nz-icon nzType="check-circle" nzTheme="fill"></nz-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.completed }}</div>
+          <div class="stat-label">Completed</div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-error">
+        <div class="stat-icon">
+          <nz-icon nzType="close-circle" nzTheme="fill"></nz-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.failed }}</div>
+          <div class="stat-label">Failed</div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-processing">
+        <div class="stat-icon">
+          <nz-icon nzType="sync" nzSpin></nz-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.processing }}</div>
+          <div class="stat-label">Processing</div>
+        </div>
+      </div>
+
+      <div class="stat-card stat-duration">
+        <div class="stat-icon">
+          <nz-icon nzType="clock-circle" nzTheme="outline"></nz-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatDuration(stats.duration) }}</div>
+          <div class="stat-label">Duration</div>
+        </div>
+      </div>
+    </div>
+    <div class="details-container">
+      <!-- Status Banner -->
+      <div class="status-banner" *ngIf="status">
+        <!-- <div class="status-content status-processing" *ngIf="status == 'processing'">
+          <nz-icon nzType="sync" nzSpin class="status-icon"></nz-icon>
+          <span class="status-text">PROCESSING</span>
+        </div> -->
+        <div class="status-content status-completed" *ngIf="status == 'completed'">
+          <nz-icon nzType="check-circle" class="status-icon"></nz-icon>
+          <span class="status-text">COMPLETED</span>
+        </div>
+        <div class="status-content status-failed" *ngIf="status == 'failed'">
+          <nz-icon nzType="close-circle" class="status-icon"></nz-icon>
+          <span class="status-text">FAILED</span>
+        </div>
+      </div>
+
+      <!-- Input/Output Section -->
+      <div class="io-section" *ngIf="inputdata">
+        <nz-collapse nzBordered class="io-collapse">
+          <nz-collapse-panel [nzHeader]="ioHeader" [nzActive]="false">
+            <ng-template #ioHeader>
+              <div class="section-header-content">
+                <nz-icon nzType="swap" nzTheme="outline"></nz-icon>
+                <span>Workflow Input & Output</span>
+              </div>
+            </ng-template>
+
+            <div class="io-grid">
+              <div class="io-card">
+                <div class="io-card-header">
+                  <nz-icon nzType="login" nzTheme="outline"></nz-icon>
+                  <span>Input</span>
+                </div>
+                <div class="io-card-body">
+                  <code-editor [style.height]="'300px'" [style.width]="'100%'" [ngModel]="inputdata ? inputdata : '...'"
+                    [theme]="'dark'">
+                  </code-editor>
+                </div>
+              </div>
+
+              <div class="io-card">
+                <div class="io-card-header">
+                  <nz-icon nzType="logout" nzTheme="outline"></nz-icon>
+                  <span>Output</span>
+                </div>
+                <div class="io-card-body">
+                  <code-editor [style.height]="'300px'" [style.width]="'100%'"
+                    [ngModel]="resultdata ? resultdata : '...'" [theme]="'dark'">
+                  </code-editor>
+                </div>
+              </div>
+            </div>
+          </nz-collapse-panel>
+        </nz-collapse>
+      </div>
+
+      <!-- Event Details -->
+      <div class="details-section" *ngIf="panels?.length">
+        <div class="section-header">
+          <nz-icon nzType="info-circle" nzTheme="outline"></nz-icon>
+          <span>Event Details</span>
+        </div>
+
+        <nz-collapse nzBordered class="details-collapse">
+          <nz-collapse-panel *ngFor="let event of panels" [nzHeader]="event.eventType" [nzExtra]="eventTime1(event)"
+            [nzActive]="true" class="detail-panel">
+
+            <nz-descriptions nzBordered [nzSize]="'small'" [nzColumn]="{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }">
+              <!-- Event ID -->
+              <nz-descriptions-item nzTitle="Event ID">
+                <nz-tag [nzColor]="'gold'">{{ shortId(event) }}</nz-tag>
+              </nz-descriptions-item>
+
+              <!-- Event Type -->
+              <nz-descriptions-item nzTitle="Event Type">
+                <nz-tag [nzColor]="colorForEvent(event.eventType)">
+                  {{ event.eventType }}
+                </nz-tag>
+              </nz-descriptions-item>
+
+              <!-- Activity Type -->
+              <nz-descriptions-item nzTitle="Activity Type"
+                *ngIf="event?.activityTaskScheduledEventAttributes?.activityType?.name">
+                {{ event?.activityTaskScheduledEventAttributes?.activityType?.name ||
+                event?.activityTaskStartedEventAttributes?.activityType?.name ||
+                'N/A' }}
+              </nz-descriptions-item>
+
+              <!-- Task Queue -->
+              <nz-descriptions-item nzTitle="Task Queue"
+                *ngIf="event?.activityTaskScheduledEventAttributes?.taskQueue?.name">
+                {{ event?.activityTaskScheduledEventAttributes?.taskQueue?.name }}
+              </nz-descriptions-item>
+
+              <!-- Delay -->
+              <nz-descriptions-item nzTitle="Delay" *ngIf="event?.timerStartedEventAttributes?.startToFireTimeout">
+                {{ event?.timerStartedEventAttributes?.startToFireTimeout }}
+              </nz-descriptions-item>
+
+              <!-- Retry Policy -->
+              <nz-descriptions-item nzTitle="Retry Policy"
+                *ngIf="event?.activityTaskScheduledEventAttributes?.retryPolicy">
+                Initial: {{ event?.activityTaskScheduledEventAttributes?.retryPolicy?.initialInterval }},
+                Max Attempts: {{ event?.activityTaskScheduledEventAttributes?.retryPolicy?.maximumAttempts }}
+              </nz-descriptions-item>
+
+              <!-- Timeouts -->
+              <nz-descriptions-item nzTitle="Timeouts" *ngIf="event?.activityTaskScheduledEventAttributes">
+                <div>Schedule→Close: {{ event?.activityTaskScheduledEventAttributes?.scheduleToCloseTimeout }}</div>
+                <div>Start→Close: {{ event?.activityTaskScheduledEventAttributes?.startToCloseTimeout }}</div>
+              </nz-descriptions-item>
+
+              <!-- Function Call -->
+              <nz-descriptions-item nzTitle="Function Call"
+                *ngIf="event?.activityTaskScheduledEventAttributes?.activityType?.name">
+                {{ decodeSummary(event?.userMetadata?.summary?.data) || 'N/A' }}
+              </nz-descriptions-item>
+
+              <!-- Worker Identity -->
+              <nz-descriptions-item nzTitle="Worker Identity"
+                *ngIf="event?.activityTaskStartedEventAttributes?.identity">
+                {{ event?.activityTaskStartedEventAttributes?.identity }}
+              </nz-descriptions-item>
+
+              <!-- Attempt -->
+              <nz-descriptions-item nzTitle="Attempt" *ngIf="event?.activityTaskStartedEventAttributes?.attempt">
+                {{ event?.activityTaskStartedEventAttributes?.attempt }}
+              </nz-descriptions-item>
+
+              <!-- Error -->
+              <nz-descriptions-item nzTitle="Error"
+                *ngIf="event?.error || event?.activityTaskStartedEventAttributes?.lastFailure">
+                <pre class="error-pre">{{ failureSummary(event) }}
+{{ event?.activityTaskStartedEventAttributes?.lastFailure | json }}</pre>
+              </nz-descriptions-item>
+
+              <!-- Activity Result -->
+              <nz-descriptions-item nzTitle="Activity Result"
+                *ngIf="event?.activityTaskCompletedEventAttributes?.result?.payloads?.length">
+                <pre
+                  class="result-pre">{{ decodeActivityResult(event?.activityTaskCompletedEventAttributes?.result?.payloads) | json }}</pre>
+              </nz-descriptions-item>
+
+              <!-- Input -->
+              <nz-descriptions-item nzTitle="Input"
+                *ngIf="event?.activityTaskScheduledEventAttributes?.input?.payloads?.length">
+                <pre
+                  class="input-pre">{{ decodeActivityResult(event?.activityTaskScheduledEventAttributes?.input?.payloads) | json }}</pre>
+              </nz-descriptions-item>
+            </nz-descriptions>
+
+            <!-- Stack Trace Alert -->
+            <div *ngIf="event?.activityTaskStartedEventAttributes?.lastFailure" class="stack-trace-alert">
+              <nz-alert nzType="error" nzMessage="Stack Trace"
+                [nzDescription]="event?.activityTaskStartedEventAttributes?.lastFailure?.cause?.stackTrace" nzShowIcon>
+              </nz-alert>
+            </div>
+          </nz-collapse-panel>
+        </nz-collapse>
+      </div>
+
+      <!-- Empty State -->
+      <nz-empty *ngIf="!events?.length && !inputdata"
+        nzNotFoundContent="No events found. Enter a workflow ID to view history." class="empty-state-main">
+      </nz-empty>
+    </div>
+  </nz-splitter-panel>
+</nz-splitter>

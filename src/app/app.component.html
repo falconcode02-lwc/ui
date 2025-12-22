@@ -1,0 +1,162 @@
+<nz-layout class="app-layout">
+    <nz-sider class="menu-sidebar" nzCollapsible nzWidth="256px" [nzCollapsedWidth]="50" [(nzCollapsed)]="isCollapsed"
+        [nzTrigger]="null">
+        <div class="sidebar-logo">
+            <a href="/" target="_blank">
+                <img src="ff-icon.png" alt="logo">
+                <h1>Falcon Flow</h1>
+            </a>
+        </div>
+        <ul style="    height: calc(100vh - 112px);" nz-menu nzTheme="dark" nzMode="inline"
+            [nzInlineCollapsed]="isCollapsed">
+            <li nz-menu-item nzMatchRouter [routerLink]="['/dashboard']" routerLinkActive="ant-menu-item-selected">
+                <span nz-icon nzType="appstore"></span>
+                <span>Dashboard</span>
+            </li>
+            <li nz-submenu nzMatchRouter nzTitle="Add" nzIcon="plus">
+                <ul>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/workflow']"
+                        routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="pull-request"></span>
+                        <span>Workflow</span>
+                    </li>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/secrets']"
+                        routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="key"></span>
+                        <span>Secret</span>
+                    </li>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/forms']" routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="form"></span>
+                        <span>Form</span>
+                    </li>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/schedular']"
+                        routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="hourglass"></span>
+                        <span>Scheduler</span>
+                    </li>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/plugin-manager']"
+                        routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="api"></span>
+                        <span>Plugin</span>
+                    </li>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/aiagents']"
+                        routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="robot"></span>
+                        <span>AI Agent</span>
+                    </li>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/custom-variables']"
+                        routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="database"></span>
+                        <span>Custom Variable</span>
+                    </li>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/mjml-editor']"
+                        routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="mail"></span>
+                        <span>Templates</span>
+                    </li>
+
+                </ul>
+            </li>
+
+            <li nz-menu-item nzMatchRouter [routerLink]="['/editor']" routerLinkActive="ant-menu-item-selected">
+                <span nz-icon nzType="code-sandbox"></span>
+                <span>Code</span>
+            </li>
+            <li nz-menu-item nzMatchRouter [routerLink]="['/workflow-history-compact']"
+                routerLinkActive="ant-menu-item-selected">
+                <span nz-icon nzType="history"></span>
+                <span>History</span>
+            </li>
+
+
+
+
+            <!-- <li nz-menu-item nzMatchRouter [routerLink]="['/form-viewer']" routerLinkActive="ant-menu-item-selected">
+                <span nz-icon nzType="eye"></span>
+                <span>Form Viewer</span>
+            </li> -->
+
+
+
+            <li nz-menu-item>
+                <a href="/ffdocs/" target="_blank" rel="noopener noreferrer">
+                    <span nz-icon nzType="file-text"></span>
+                    <span>Docs</span>
+                </a>
+            </li>
+
+
+
+        </ul>
+        <div class="profile-section">
+            <ul nz-menu nzTheme="dark" nzMode="inline" [nzInlineCollapsed]="isCollapsed">
+
+                <li nz-menu-item nzMatchRouter [routerLink]="['/profile']" routerLinkActive="ant-menu-item-selected">
+                    <span nz-icon nzType="user"></span>
+                    <span>Profile</span>
+                </li>
+
+            </ul>
+            <!-- 
+
+            <div class="profile-info" *ngIf="!isCollapsed">
+                <div class="name">John Doe</div>
+                <div class="role">Admin</div>
+            </div> -->
+        </div>
+    </nz-sider>
+    <nz-layout>
+        <nz-header>
+            <div class="app-header">
+                <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
+                    <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
+                </span>
+
+                <ng-content select="[header]"></ng-content>
+            </div>
+            <nz-breadcrumb>
+                <nz-breadcrumb-item>
+                    <a routerLink="/">
+                        <nz-icon nzType="home" nzTheme="outline"></nz-icon>
+                        <span>Home</span>
+                    </a>
+                </nz-breadcrumb-item>
+                <nz-breadcrumb-item *ngFor="let crumb of breadcrumbs; let last = last">
+                    <ng-container *ngIf="!last">
+                        <a *ngIf="crumb.url && !crumb.onClick" [routerLink]="crumb.url"
+                            [queryParams]="crumb.queryParams">
+                            <nz-icon *ngIf="crumb.icon" [nzType]="crumb.icon"
+                                [nzTheme]="crumb.iconTheme || 'outline'"></nz-icon>
+                            <span>{{ crumb.label }}</span>
+                        </a>
+                        <a *ngIf="crumb.onClick" (click)="handleBreadcrumbClick(crumb)" style="cursor: pointer;">
+                            <nz-icon *ngIf="crumb.icon" [nzType]="crumb.icon"
+                                [nzTheme]="crumb.iconTheme || 'outline'"></nz-icon>
+                            <span>{{ crumb.label }}</span>
+                        </a>
+                    </ng-container>
+                    <ng-container *ngIf="last">
+                        <span *ngIf="!crumb.onClick" style="color: inherit;">
+                            <nz-icon *ngIf="crumb.icon" [nzType]="crumb.icon"
+                                [nzTheme]="crumb.iconTheme || 'outline'"></nz-icon>
+                            <span>{{ crumb.label }}</span>
+                        </span>
+                        <a *ngIf="crumb.onClick" (click)="handleBreadcrumbClick(crumb)" style="cursor: pointer;">
+                            <nz-icon *ngIf="crumb.icon" [nzType]="crumb.icon"
+                                [nzTheme]="crumb.iconTheme || 'outline'"></nz-icon>
+                            <span>{{ crumb.label }}</span>
+                        </a>
+                    </ng-container>
+                </nz-breadcrumb-item>
+            </nz-breadcrumb>
+
+        </nz-header>
+        <nz-content style="overflow: auto;">
+
+            <router-outlet></router-outlet>
+
+        </nz-content>
+
+    </nz-layout>
+
+</nz-layout>

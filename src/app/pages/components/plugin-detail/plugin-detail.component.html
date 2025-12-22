@@ -1,0 +1,209 @@
+<nz-modal
+  [(nzVisible)]="visible"
+  [nzTitle]="modalTitle"
+  [nzWidth]="800"
+  [nzFooter]="null"
+  (nzOnCancel)="handleCancel()"
+  nzClassName="plugin-detail-modal">
+  
+  <ng-template #modalTitle>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; position: relative;">
+        <!-- External Icon with error handling -->
+        <img 
+          *ngIf="plugin && isExternalIcon(plugin.icon)" 
+          [src]="plugin.icon" 
+          (error)="$any($event.target).style.display='none'; $any($event.target).nextElementSibling.style.display='flex'"
+          style="width: 32px; height: 32px; object-fit: contain; border-radius: 6px; display: block;"
+          [alt]="plugin.pluginName">
+        
+        <!-- Fallback Icon (always rendered, hidden by default if external icon exists) -->
+        <nz-icon 
+          *ngIf="plugin"
+          [nzType]="(plugin && isExternalIcon(plugin.icon)) ? defaultIcon : (plugin.icon || defaultIcon)" 
+          [style.display]="(plugin && isExternalIcon(plugin.icon)) ? 'none' : 'flex'"
+          style="font-size: 32px; color: #1890ff; align-items: center; justify-content: center;"></nz-icon>
+      </div>
+      
+      <span style="font-size: 18px; font-weight: 600;">{{ plugin?.pluginName || 'Plugin Details' }}</span>
+      
+      <nz-badge 
+        *ngIf="plugin"
+        [nzStatus]="plugin.active ? 'success' : 'default'" 
+        [nzText]="getStatusText(plugin.active)">
+      </nz-badge>
+    </div>
+  </ng-template>
+
+  <ng-container *nzModalContent>
+    <div *ngIf="loading" style="text-align: center; padding: 60px 0;">
+      <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+      <div style="margin-top: 16px; color: var(--text-secondary);">Loading plugin details...</div>
+    </div>
+
+    <div *ngIf="!loading && plugin">
+      <!-- Plugin Information -->
+      <nz-descriptions [nzColumn]="2" nzBordered [nzSize]="'small'">
+        <nz-descriptions-item nzTitle="Plugin ID">
+          <code style="background: #2a2a2a; padding: 2px 6px; border-radius: 4px;">{{ plugin.pluginId }}</code>
+        </nz-descriptions-item>
+        
+        <nz-descriptions-item nzTitle="Version">
+          <nz-tag [nzColor]="'blue'">v{{ plugin.version }}</nz-tag>
+        </nz-descriptions-item>
+        
+        <nz-descriptions-item nzTitle="Author">
+          <span style="display: flex; align-items: center; gap: 6px;">
+            <nz-icon nzType="user" style="color: var(--text-secondary);"></nz-icon>
+            {{ plugin.pluginAuthor }}
+          </span>
+        </nz-descriptions-item>
+        
+        <nz-descriptions-item nzTitle="Status">
+          <nz-badge 
+            [nzStatus]="plugin.active ? 'success' : 'default'" 
+            [nzText]="getStatusText(plugin.active)">
+          </nz-badge>
+        </nz-descriptions-item>
+        
+        <nz-descriptions-item nzTitle="Database ID">
+          <code style="background: #2a2a2a; padding: 2px 6px; border-radius: 4px;">{{ plugin.id }}</code>
+        </nz-descriptions-item>
+        
+        <nz-descriptions-item nzTitle="Last Loaded">
+          <span style="display: flex; align-items: center; gap: 6px;">
+            <nz-icon nzType="clock-circle" style="color: var(--text-secondary);"></nz-icon>
+            {{ formatDate(plugin.lastLoadedAt) }}
+          </span>
+        </nz-descriptions-item>
+        
+        <nz-descriptions-item nzTitle="Description" [nzSpan]="2">
+          <div style="color: var(--text-secondary); line-height: 1.6;">
+            {{ plugin.pluginDesc || 'No description available' }}
+          </div>
+        </nz-descriptions-item>
+      </nz-descriptions>
+
+      <!-- Plugin Documentation -->
+      <nz-divider nzText="Documentation" nzOrientation="left"></nz-divider>
+      
+      <div *ngIf="plugin.pluginDocument" 
+           style="background: #2e2e2e; padding: 20px; border-radius: 8px; border: 1px solid #3a3a3a; max-height: 400px; overflow-y: auto;">
+        <markdown 
+          [data]="plugin.pluginDocument"
+          class="plugin-documentation">
+        </markdown>
+      </div>
+      
+      <nz-empty 
+        *ngIf="!plugin.pluginDocument"
+        nzNotFoundContent="No documentation available"
+        [nzNotFoundImage]="'simple'"
+        style="margin: 20px 0;">
+      </nz-empty>
+
+      <!-- Plugin Properties -->
+      <nz-divider nzText="Configuration Properties" nzOrientation="left"></nz-divider>
+      
+      <!-- Debug: Show raw props if no properties found -->
+      <div *ngIf="pluginProperties.length === 0 && plugin.props" 
+           style="background: #2e2e2e; padding: 12px; border-radius: 4px; border: 1px solid #3a3a3a; margin-bottom: 16px;">
+        <div style="color: var(--text-secondary); font-size: 12px; margin-bottom: 8px;">
+          <nz-icon nzType="info-circle" style="margin-right: 6px;"></nz-icon>
+          Raw Props Data (for debugging):
+        </div>
+        <pre style="color: #52c41a; font-size: 11px; margin: 0; max-height: 200px; overflow: auto;">{{ plugin.props }}</pre>
+      </div>
+      
+      <nz-table 
+        *ngIf="pluginProperties.length > 0"
+        [nzData]="pluginProperties" 
+        [nzShowPagination]="false"
+        [nzSize]="'small'"
+        nzBordered>
+        <thead>
+          <tr>
+            <th nzWidth="40px"><nz-icon nzType="setting" style="color: #1890ff;"></nz-icon></th>
+            <th>Property</th>
+            <th>Type</th>
+            <th nzWidth="80px" style="text-align: center;">Required</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let prop of pluginProperties">
+            <td style="text-align: center;">
+              <nz-icon [nzType]="getTypeIcon(prop.type || prop.fieldType)" style="font-size: 16px; color: var(--text-secondary);"></nz-icon>
+            </td>
+            <td>
+              <strong style="color: var(--text-primary);">{{ prop.label || prop.name || prop.fieldName }}</strong>
+              <div *ngIf="prop.id || prop.key" style="font-size: 11px; color: var(--text-tertiary); font-family: monospace;">
+                {{ prop.id || prop.key }}
+              </div>
+            </td>
+            <td>
+              <nz-tag [nzColor]="'default'" style="font-family: monospace; font-size: 11px;">
+                {{ prop.type || prop.fieldType || 'text' }}
+              </nz-tag>
+              <nz-tag *ngIf="prop.language || prop.editorLanguage" [nzColor]="'purple'" style="font-size: 10px;">
+                {{ prop.language || prop.editorLanguage }}
+              </nz-tag>
+            </td>
+            <td style="text-align: center;">
+              <nz-icon 
+                *ngIf="prop.required || prop.isRequired" 
+                nzType="check-circle" 
+                nzTheme="fill" 
+                style="color: #52c41a; font-size: 16px;">
+              </nz-icon>
+              <span *ngIf="!prop.required && !prop.isRequired" style="color: var(--text-tertiary);">—</span>
+            </td>
+            <td>
+              <div style="color: var(--text-secondary); font-size: 12px;">
+                {{ prop.info || prop.description || prop.placeholder || prop.helpText || '—' }}
+              </div>
+              <div *ngIf="prop.defaultValue || prop.default" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">
+                Default: <code style="background: #2a2a2a; padding: 1px 4px; border-radius: 3px;">{{ prop.defaultValue || prop.default }}</code>
+              </div>
+              <div *ngIf="prop.options && prop.options.length > 0" style="margin-top: 6px;">
+                <nz-tag 
+                  *ngFor="let opt of prop.options.slice(0, 5)" 
+                  [nzColor]="'default'" 
+                  style="font-size: 10px; margin: 2px;">
+                  {{ opt.value || opt.label || opt }}
+                </nz-tag>
+                <nz-tag 
+                  *ngIf="prop.options.length > 5" 
+                  [nzColor]="'default'" 
+                  style="font-size: 10px;">
+                  +{{ prop.options.length - 5 }} more
+                </nz-tag>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+      
+      <nz-empty 
+        *ngIf="pluginProperties.length === 0"
+        nzNotFoundContent="No configuration properties defined"
+        [nzNotFoundImage]="'simple'"
+        style="margin: 20px 0;">
+      </nz-empty>
+
+      <!-- Action Buttons -->
+      <div style="margin-top: 24px; text-align: right;">
+        <button nz-button nzType="default" (click)="handleCancel()">
+          Close
+        </button>
+      </div>
+    </div>
+
+    <nz-empty 
+      *ngIf="!loading && !plugin"
+      nzNotFoundContent="Plugin not found"
+      [nzNotFoundImage]="'simple'"
+      style="padding: 60px 0;">
+    </nz-empty>
+  </ng-container>
+</nz-modal>

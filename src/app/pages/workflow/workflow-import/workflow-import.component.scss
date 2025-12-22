@@ -1,0 +1,119 @@
+.workflow-import-container {
+    padding: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+
+    .steps-content {
+        margin-top: 32px;
+        min-height: 400px;
+        padding: 24px;
+        background-color: var(--bg-color, #fafafa);
+        border-radius: 8px;
+
+        .step-content {
+            h3 {
+                margin-bottom: 24px;
+                font-size: 18px;
+                font-weight: 600;
+                color: var(--text-primary, #262626);
+            }
+
+            h4 {
+                margin: 16px 0 12px 0;
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--text-primary, #262626);
+
+                nz-icon {
+                    margin-right: 8px;
+                }
+            }
+
+            .metadata-form {
+                margin-top: 24px;
+            }
+
+            .validation-alert {
+                margin-bottom: 16px;
+
+                ul {
+                    margin: 0;
+                    padding-left: 20px;
+                }
+            }
+
+            .validation-section {
+                margin-top: 24px;
+
+                .section-hint {
+                    color: var(--text-secondary, #8c8c8c);
+                    margin-bottom: 12px;
+                    font-size: 13px;
+                }
+
+                nz-list {
+                    margin-top: 8px;
+                }
+            }
+
+            .workflow-summary {
+                text-align: left;
+                max-width: 600px;
+                margin: 0 auto;
+
+                p {
+                    margin: 8px 0;
+                    font-size: 14px;
+
+                    strong {
+                        display: inline-block;
+                        width: 120px;
+                        color: var(--text-secondary, #8c8c8c);
+                    }
+                }
+
+                .summary-alert {
+                    margin-top: 12px;
+                }
+            }
+        }
+    }
+
+    .steps-action {
+        margin-top: 24px;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+
+        button {
+            min-width: 100px;
+        }
+    }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+    .workflow-import-container {
+        .steps-content {
+            background-color: #1f1f1f;
+
+            .step-content {
+
+                h3,
+                h4 {
+                    color: #e8e8e8;
+                }
+
+                .section-hint {
+                    color: #a6a6a6;
+                }
+
+                .workflow-summary {
+                    p strong {
+                        color: #a6a6a6;
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,41 @@
+<div class="constant-editor">
+    <form nz-form [formGroup]="form">
+
+        <!-- Constant Name -->
+        <nz-form-item>
+            <nz-form-label [nzSpan]="6">Constant Name</nz-form-label>
+            <nz-form-control [nzSpan]="18">
+                <input nz-input placeholder="Enter constant name" formControlName="constantName" />
+            </nz-form-control>
+        </nz-form-item>
+
+        <!-- Key–Value Pairs -->
+        <div formArrayName="pairs">
+            <div *ngFor="let pair of pairs.controls; let i = index" [formGroupName]="i" class="pair-row">
+                <nz-form-item>
+                    <nz-form-label [nzSpan]="4">Key</nz-form-label>
+                    <nz-form-control [nzSpan]="8">
+                        <input nz-input placeholder="Key" formControlName="key" />
+                    </nz-form-control>
+
+                    <nz-form-label [nzSpan]="4">Value</nz-form-label>
+                    <nz-form-control [nzSpan]="6">
+                        <input nz-input placeholder="Value" formControlName="value" />
+                    </nz-form-control>
+
+                    <button nz-button nzType="default" nzDanger (click)="removePair(i)" *ngIf="pairs.length > 1">
+            Remove
+          </button>
+                </nz-form-item>
+            </div>
+        </div>
+
+        <!-- Add button -->
+        <button nz-button nzType="dashed" (click)="addPair()" style="margin-top: 12px;">
+      + Add Key–Value
+    </button>
+
+        <!-- Debug JSON -->
+        <pre>{{ form.value | json }}</pre>
+    </form>
+</div>

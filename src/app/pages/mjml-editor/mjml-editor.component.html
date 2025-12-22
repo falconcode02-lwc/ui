@@ -1,0 +1,712 @@
+<div class="mjml-editor-container">
+    <!-- Floating Toolbar -->
+    <div class="floating-toolbar" *ngIf="showFloatingToolbar()" [style.top.px]="floatingToolbarPosition().top"
+        [style.left.px]="floatingToolbarPosition().left">
+        <button nz-button nzSize="small" (mousedown)="$event.preventDefault()" (click)="formatSelectedText('bold')"
+            nz-tooltip="Bold">
+            <strong>B</strong>
+        </button>
+        <button nz-button nzSize="small" (mousedown)="$event.preventDefault()" (click)="formatSelectedText('italic')"
+            nz-tooltip="Italic">
+            <em>I</em>
+        </button>
+        <button nz-button nzSize="small" (mousedown)="$event.preventDefault()" (click)="formatSelectedText('underline')"
+            nz-tooltip="Underline">
+            <u>U</u>
+        </button>
+        <button nz-button nzSize="small" (mousedown)="$event.preventDefault()"
+            (click)="formatSelectedText('strikethrough')" nz-tooltip="Strikethrough">
+            <s>S</s>
+        </button>
+        <nz-divider nzType="vertical"></nz-divider>
+        <label class="color-picker-wrapper" nz-tooltip="Text Color">
+            <input type="color" #colorPicker (input)="formatSelectedTextColor(colorPicker.value)"
+                (mousedown)="$event.stopPropagation()">
+            <span nz-icon nzType="bg-colors" style="font-size: 14px;"></span>
+        </label>
+        <button nz-button nzSize="small" (mousedown)="$event.preventDefault()" (click)="clearFormatting()"
+            nz-tooltip="Clear">
+            <span nz-icon nzType="clear"></span>
+        </button>
+    </div>
+
+    <nz-page-header class="page-action" nzSize="small">
+        <nz-page-header-title>
+            <nz-icon nzType="mail" nzSize="small"></nz-icon> Email Editor
+        </nz-page-header-title>
+        <nz-page-header-subtitle>
+             
+        </nz-page-header-subtitle>
+        <nz-page-header-extra>
+            <nz-space>
+                 <button *nzSpaceItem  nz-button nzType="text" [disabled]="!canUndo()" (click)="undo()" nz-tooltip="Undo (Ctrl+Z)">
+                    <nz-icon nzType="undo"></nz-icon>
+                </button>
+                <button *nzSpaceItem  nz-button nzType="text" [disabled]="!canRedo()" (click)="redo()" nz-tooltip="Redo (Ctrl+Y)">
+                    <nz-icon nzType="redo"></nz-icon>
+                </button>
+                <nz-divider *nzSpaceItem  nzType="vertical"></nz-divider>
+
+                <!-- Device Preview Modes -->
+                <button *nzSpaceItem  nz-button [nzType]="previewMode() === 'desktop' ? 'primary' : 'text'"
+                    (click)="previewMode.set('desktop')" nz-tooltip="Desktop">
+                    <nz-icon nzType="desktop"></nz-icon>
+                </button>
+                <button *nzSpaceItem  nz-button [nzType]="previewMode() === 'tablet' ? 'primary' : 'text'"
+                    (click)="previewMode.set('tablet')" nz-tooltip="Tablet">
+                    <nz-icon nzType="tablet"></nz-icon>
+                </button>
+                <button *nzSpaceItem  nz-button [nzType]="previewMode() === 'mobile' ? 'primary' : 'text'"
+                    (click)="previewMode.set('mobile')" nz-tooltip="Mobile">
+                    <nz-icon nzType="mobile"></nz-icon>
+                </button>
+                <button *nzSpaceItem nz-button nzType="default" (click)="togglePreview()">
+                    <nz-icon [nzType]="showPreview() ? 'eye-invisible' : 'eye'"></nz-icon>
+                    {{ showPreview() ? 'Hide' : 'Show' }} Preview
+                </button>
+                <button *nzSpaceItem nz-button nzType="default" (click)="exportMjml()">
+                    <nz-icon nzType="file-text"></nz-icon> Export MJML
+                </button>
+                <button *nzSpaceItem nz-button nzType="primary" (click)="exportHtml()">
+                    <nz-icon nzType="html5"></nz-icon> Export HTML
+                </button>
+                <button *nzSpaceItem nz-button nzType="default" nzDanger (click)="clearCanvas()"
+                    nz-popconfirm="Are you sure you want to clear the canvas?" (nzOnConfirm)="clearCanvas()">
+                    <nz-icon nzType="delete"></nz-icon>
+                </button>
+            </nz-space>
+        </nz-page-header-extra>
+    </nz-page-header>
+     
+    <!-- Main Editor Layout -->
+    <div class="editor-content">
+        <!-- Left Sidebar - Block Components -->
+        <div class="blocks-sidebar">
+            <div class="sidebar-header">
+                <h3>Blocks</h3>
+            </div>
+
+            <nz-tabset [(nzSelectedIndex)]="activeCategoryIndex" nzSize="small">
+                <nz-tab nzTitle="Layout">
+                    <div class="block-templates" cdkDropList [cdkDropListData]="blockTemplates['layout']"
+                        [cdkDropListConnectedTo]="['canvas']" cdkDropListSortingDisabled>
+                        <div *ngFor="let template of blockTemplates['layout']" class="block-template" cdkDrag
+                            [cdkDragData]="template">
+                            <div class="block-template-icon">
+                                <nz-icon [nzType]="template.icon" nzTheme="outline"></nz-icon>
+                            </div>
+                            <div class="block-template-info">
+                                <div class="block-template-label">{{ template.label }}</div>
+                                <div class="block-template-description">{{ template.description }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </nz-tab>
+                <nz-tab nzTitle="Content">
+                    <div class="block-templates" cdkDropList [cdkDropListData]="blockTemplates['content']"
+                        [cdkDropListConnectedTo]="['canvas']" cdkDropListSortingDisabled>
+                        <div *ngFor="let template of blockTemplates['content']" class="block-template" cdkDrag
+                            [cdkDragData]="template">
+                            <div class="block-template-icon">
+                                <nz-icon [nzType]="template.icon" nzTheme="outline"></nz-icon>
+                            </div>
+                            <div class="block-template-info">
+                                <div class="block-template-label">{{ template.label }}</div>
+                                <div class="block-template-description">{{ template.description }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </nz-tab>
+
+
+
+                <!-- <nz-tab nzTitle="Media">
+          <div class="block-templates" cdkDropList [cdkDropListData]="blockTemplates['media']"
+               [cdkDropListConnectedTo]="['canvas']" cdkDropListSortingDisabled>
+            <div *ngFor="let template of blockTemplates['media']" 
+                 class="block-template" 
+                 cdkDrag 
+                 [cdkDragData]="template">
+              <div class="block-template-icon">
+                <nz-icon [nzType]="template.icon" nzTheme="outline"></nz-icon>
+              </div>
+              <div class="block-template-info">
+                <div class="block-template-label">{{ template.label }}</div>
+                <div class="block-template-description">{{ template.description }}</div>
+              </div>
+            </div>
+          </div>
+        </nz-tab> -->
+            </nz-tabset>
+        </div>
+
+        <!-- Center Canvas -->
+        <div class="canvas-area" [class.with-preview]="showPreview()">
+            <div class="canvas-wrapper" [attr.data-device]="previewMode()">
+                <div class="canvas-container" cdkDropList id="canvas" [cdkDropListData]="blocks()"
+                    (cdkDropListDropped)="onTemplateDrag($event)">
+
+                    <!-- Empty State -->
+                    <div *ngIf="blocks().length === 0" class="canvas-empty">
+                        <nz-icon nzType="inbox" style="font-size: 48px; color: #999;"></nz-icon>
+                        <p>Drag and drop blocks here to start building your email</p>
+                    </div>
+
+                    <!-- Email Blocks -->
+                    <div *ngFor="let block of blocks(); trackBy: trackByBlockId" class="email-block"
+                        [class.selected]="selectedBlock()?.id === block.id" cdkDrag (click)="selectBlock(block)">
+
+                        <div class="block-overlay">
+                            <div class="block-label">
+                                <nz-icon [nzType]="block.icon"></nz-icon>
+                                {{ block.label }}
+                            </div>
+                            <div class="block-actions">
+                                <button nz-button nzType="text" nzSize="small"
+                                    (click)="moveBlock(block.id, 'up'); $event.stopPropagation()" nz-tooltip="Move up">
+                                    <nz-icon nzType="arrow-up"></nz-icon>
+                                </button>
+                                <button nz-button nzType="text" nzSize="small"
+                                    (click)="moveBlock(block.id, 'down'); $event.stopPropagation()"
+                                    nz-tooltip="Move down">
+                                    <nz-icon nzType="arrow-down"></nz-icon>
+                                </button>
+                                <button nz-button nzType="text" nzSize="small"
+                                    (click)="duplicateBlock(block); $event.stopPropagation()" nz-tooltip="Duplicate">
+                                    <nz-icon nzType="copy"></nz-icon>
+                                </button>
+                                <button nz-button nzType="text" nzSize="small" nzDanger
+                                    (click)="deleteBlock(block.id,$event); " nz-tooltip="Delete">
+                                    <nz-icon nzType="delete"></nz-icon>
+                                </button>
+                                <span cdkDragHandle class="drag-handle">
+                                    <nz-icon nzType="drag"></nz-icon>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Block Content Preview -->
+                        <div class="block-content" [ngSwitch]="block.type">
+                            <!-- Text Block -->
+                            <div *ngSwitchCase="'text'" [style.fontSize]="block.properties.fontSize"
+                                [style.color]="block.properties.color" [style.textAlign]="block.properties.align"
+                                [style.fontWeight]="block.properties.fontWeight"
+                                [style.fontFamily]="block.properties.fontFamily"
+                                [style.fontStyle]="block.properties.fontStyle"
+                                [style.padding]="block.properties.paddingTop + ' ' + block.properties.paddingRight + ' ' + block.properties.paddingBottom + ' ' + block.properties.paddingLeft"
+                                contenteditable="true" (mouseup)="saveSelection()" (keyup)="saveSelection()"
+                                (blur)="updateBlockProperty(block, 'content', $any($event.target).innerHTML)"
+                                (keydown.enter)="$event.preventDefault()"
+                                [innerHTML]="block.properties.content || 'Enter text here'">
+                            </div>
+
+                            <!-- Button Block -->
+                            <div *ngSwitchCase="'button'" [style.textAlign]="block.properties.align"
+                                [style.padding]="block.properties.paddingTop + ' ' + block.properties.paddingRight + ' ' + block.properties.paddingBottom + ' ' + block.properties.paddingLeft">
+                                <a class="email-button" [style.backgroundColor]="block.properties.backgroundColor"
+                                    [style.color]="block.properties.color"
+                                    [style.borderRadius]="block.properties.borderRadius">
+                                    {{ block.properties.content }}
+                                </a>
+                            </div>
+
+                            <!-- Image Block -->
+                            <div *ngSwitchCase="'image'" [style.textAlign]="block.properties.align"
+                                [style.padding]="block.properties.paddingTop + ' ' + block.properties.paddingRight + ' ' + block.properties.paddingBottom + ' ' + block.properties.paddingLeft">
+                                <img [src]="block.properties.src" [alt]="block.properties.alt"
+                                    [style.maxWidth]="block.properties.width" style="display: inline-block;">
+                            </div>
+
+                            <!-- Divider Block -->
+                            <div *ngSwitchCase="'divider'"
+                                [style.padding]="block.properties.paddingTop + ' ' + block.properties.paddingRight + ' ' + block.properties.paddingBottom + ' ' + block.properties.paddingLeft">
+                                <hr [style.borderColor]="block.properties.borderColor"
+                                    [style.borderWidth]="block.properties.borderWidth"
+                                    [style.borderStyle]="block.properties.borderStyle">
+                            </div>
+
+                            <!-- Spacer Block -->
+                            <div *ngSwitchCase="'spacer'" [style.height]="block.properties.height"
+                                style="background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,109,90,0.1) 10px, rgba(255,109,90,0.1) 20px);">
+                            </div>
+
+                            <!-- Columns Block -->
+                            <div *ngSwitchCase="'columns'" class="columns-layout"
+                                [style.backgroundColor]="block.properties.backgroundColor"
+                                [style.padding]="block.properties.paddingTop + ' ' + block.properties.paddingRight + ' ' + block.properties.paddingBottom + ' ' + block.properties.paddingLeft">
+                                <div *ngFor="let column of block.children; let colIndex = index" class="column-item">
+                                    <div class="column-header">
+                                        <span class="column-label">{{ column.label }}</span>
+                                        <div class="column-actions">
+                                            <button nz-button nzType="text" nzSize="small"
+                                                (click)="addColumnToBlock(block, colIndex); $event.stopPropagation()"
+                                                nz-tooltip="Add column after">
+                                                <nz-icon nzType="plus"></nz-icon>
+                                            </button>
+                                            <button nz-button nzType="text" nzSize="small" nzDanger
+                                                *ngIf="block.children && block.children.length > 1"
+                                                (click)="removeColumnFromBlock(block, colIndex); $event.stopPropagation()"
+                                                nz-tooltip="Remove column">
+                                                <nz-icon nzType="close"></nz-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Column Drop Zone -->
+                                    <div class="column-content" cdkDropList [cdkDropListData]="column.children || []"
+                                        [cdkDropListConnectedTo]="['block-templates', 'email-canvas']"
+                                        (cdkDropListDropped)="onColumnDrop($event, block, column)">
+
+                                        <div *ngIf="!column.children || column.children.length === 0"
+                                            class="column-empty">
+                                            <span nz-icon nzType="inbox" nzTheme="outline"></span>
+                                            <p>Drag blocks here or</p>
+
+                                        </div>
+
+                                        <!-- Add Component Button (when column has content) -->
+                                        <div *ngIf="column.children && column.children.length > 0"
+                                            class="column-add-button">
+                                            <button nz-button nzType="dashed" nzSize="small" nzBlock nz-dropdown
+                                                [nzDropdownMenu]="addBlockMenuBottom"
+                                                (click)="$event.stopPropagation()">
+                                                <span nz-icon nzType="plus"></span>
+                                                Add Component
+                                            </button>
+                                            <nz-dropdown-menu #addBlockMenuBottom="nzDropdownMenu">
+                                                <ul nz-menu>
+                                                    <li nz-menu-item (click)="addBlockToColumn(block, column, 'text')">
+                                                        <span nz-icon nzType="font-size"></span> Text
+                                                    </li>
+                                                    <li nz-menu-item
+                                                        (click)="addBlockToColumn(block, column, 'button')">
+                                                        <span nz-icon nzType="link"></span> Button
+                                                    </li>
+                                                    <li nz-menu-item (click)="addBlockToColumn(block, column, 'image')">
+                                                        <span nz-icon nzType="file-image"></span> Image
+                                                    </li>
+                                                    <li nz-menu-item
+                                                        (click)="addBlockToColumn(block, column, 'divider')">
+                                                        <span nz-icon nzType="minus"></span> Divider
+                                                    </li>
+                                                    <li nz-menu-item
+                                                        (click)="addBlockToColumn(block, column, 'spacer')">
+                                                        <span nz-icon nzType="column-height"></span> Spacer
+                                                    </li>
+                                                </ul>
+                                            </nz-dropdown-menu>
+                                        </div>
+
+                                        <!-- Nested blocks in column -->
+                                        <div *ngFor="let childBlock of column.children; let childIndex = index"
+                                            class="email-block nested-block"
+                                            [class.selected]="selectedBlock()?.id === childBlock.id"
+                                            (click)="selectBlock(childBlock); $event.stopPropagation()" cdkDrag>
+
+                                            <div class="block-overlay">
+                                                <div class="block-actions">
+                                                    <button nz-button nzType="text" nzSize="small"
+                                                        (click)="duplicateBlock(childBlock); $event.stopPropagation()"
+                                                        nz-tooltip="Duplicate">
+                                                        <span nz-icon nzType="copy"></span>
+                                                    </button>
+                                                    <button nz-button nzType="text" nzSize="small" nzDanger
+                                                        (click)="$event.stopPropagation()" nz-tooltip="Delete"
+                                                        nz-popconfirm nzPopconfirmTitle="Delete this block?"
+                                                        (nzOnConfirm)="deleteBlock(childBlock)">
+                                                        <span nz-icon nzType="delete"></span>
+                                                    </button>
+                                                </div>
+                                                <div class="drag-handle" cdkDragHandle>
+                                                    <span nz-icon nzType="drag"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="block-content" [ngSwitch]="childBlock.type">
+                                                <!-- Text Block -->
+                                                <div *ngSwitchCase="'text'"
+                                                    [style.fontSize]="childBlock.properties.fontSize"
+                                                    [style.color]="childBlock.properties.color"
+                                                    [style.textAlign]="childBlock.properties.align"
+                                                    [style.fontWeight]="childBlock.properties.fontWeight"
+                                                    [style.fontFamily]="childBlock.properties.fontFamily"
+                                                    [style.fontStyle]="childBlock.properties.fontStyle"
+                                                    [style.padding]="childBlock.properties.paddingTop + ' ' + childBlock.properties.paddingRight + ' ' + childBlock.properties.paddingBottom + ' ' + childBlock.properties.paddingLeft"
+                                                    contenteditable="true" (mouseup)="saveSelection()"
+                                                    (keyup)="saveSelection()"
+                                                    (blur)="updateBlockProperty(childBlock, 'content', $any($event.target).innerHTML)"
+                                                    (keydown.enter)="$event.preventDefault()"
+                                                    [innerHTML]="childBlock.properties.content || 'Enter text here'">
+                                                </div>
+
+                                                <!-- Button Block -->
+                                                <div *ngSwitchCase="'button'"
+                                                    [style.textAlign]="childBlock.properties.align"
+                                                    [style.padding]="childBlock.properties.paddingTop + ' ' + childBlock.properties.paddingRight + ' ' + childBlock.properties.paddingBottom + ' ' + childBlock.properties.paddingLeft">
+                                                    <a class="email-button"
+                                                        [style.backgroundColor]="childBlock.properties.backgroundColor"
+                                                        [style.color]="childBlock.properties.color"
+                                                        [style.borderRadius]="childBlock.properties.borderRadius">
+                                                        {{ childBlock.properties.content }}
+                                                    </a>
+                                                </div>
+
+                                                <!-- Image Block -->
+                                                <div *ngSwitchCase="'image'"
+                                                    [style.textAlign]="childBlock.properties.align"
+                                                    [style.padding]="childBlock.properties.paddingTop + ' ' + childBlock.properties.paddingRight + ' ' + childBlock.properties.paddingBottom + ' ' + childBlock.properties.paddingLeft">
+                                                    <img [src]="childBlock.properties.src"
+                                                        [alt]="childBlock.properties.alt"
+                                                        [style.maxWidth]="childBlock.properties.width"
+                                                        style="display: inline-block;">
+                                                </div>
+
+                                                <!-- Divider Block -->
+                                                <div *ngSwitchCase="'divider'"
+                                                    [style.padding]="childBlock.properties.paddingTop + ' ' + childBlock.properties.paddingRight + ' ' + childBlock.properties.paddingBottom + ' ' + childBlock.properties.paddingLeft">
+                                                    <hr [style.borderColor]="childBlock.properties.borderColor"
+                                                        [style.borderWidth]="childBlock.properties.borderWidth"
+                                                        [style.borderStyle]="childBlock.properties.borderStyle">
+                                                </div>
+
+                                                <!-- Spacer Block -->
+                                                <div *ngSwitchCase="'spacer'"
+                                                    [style.height]="childBlock.properties.height"
+                                                    style="background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,109,90,0.1) 10px, rgba(255,109,90,0.1) 20px);">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button nz-button nzType="primary" nzSize="small" nz-dropdown
+                                                [nzDropdownMenu]="addBlockMenu" (click)="$event.stopPropagation()">
+                                                <span nz-icon nzType="plus"></span>
+                                                Add Component
+                                            </button>
+                                            <nz-dropdown-menu #addBlockMenu="nzDropdownMenu">
+                                                <ul nz-menu>
+                                                    <li nz-menu-item (click)="addBlockToColumn(block, column, 'text')">
+                                                        <span nz-icon nzType="font-size"></span> Text
+                                                    </li>
+                                                    <li nz-menu-item
+                                                        (click)="addBlockToColumn(block, column, 'button')">
+                                                        <span nz-icon nzType="link"></span> Button
+                                                    </li>
+                                                    <li nz-menu-item (click)="addBlockToColumn(block, column, 'image')">
+                                                        <span nz-icon nzType="file-image"></span> Image
+                                                    </li>
+                                                    <li nz-menu-item
+                                                        (click)="addBlockToColumn(block, column, 'divider')">
+                                                        <span nz-icon nzType="minus"></span> Divider
+                                                    </li>
+                                                    <li nz-menu-item
+                                                        (click)="addBlockToColumn(block, column, 'spacer')">
+                                                        <span nz-icon nzType="column-height"></span> Spacer
+                                                    </li>
+                                                </ul>
+                                            </nz-dropdown-menu>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hero Block -->
+                            <div *ngSwitchCase="'hero'" class="hero-block"
+                                [style.backgroundImage]="'url(' + block.properties.backgroundUrl + ')'"
+                                [style.backgroundColor]="block.properties.backgroundColor"
+                                [style.minHeight]="block.properties.height"
+                                [style.padding]="block.properties.paddingTop + ' ' + block.properties.paddingRight + ' ' + block.properties.paddingBottom + ' ' + block.properties.paddingLeft">
+                                <div *ngFor="let child of block.children">
+                                    <div [style.fontSize]="child.properties.fontSize"
+                                        [style.color]="child.properties.color"
+                                        [style.textAlign]="child.properties.align"
+                                        [style.fontWeight]="child.properties.fontWeight">
+                                        {{ child.properties.content }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Social Block -->
+                            <div *ngSwitchCase="'social'" [style.textAlign]="block.properties.align"
+                                [style.padding]="block.properties.paddingTop + ' ' + block.properties.paddingRight + ' ' + block.properties.paddingBottom + ' ' + block.properties.paddingLeft">
+                                <div class="social-icons" [class.vertical]="block.properties.mode === 'vertical'">
+                                    <a *ngFor="let link of block.properties.socialLinks" [href]="link.href"
+                                        class="social-icon" [style.fontSize]="block.properties.iconSize">
+                                        <nz-icon [nzType]="link.name"></nz-icon>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar - Preview or Properties -->
+        <div class="right-sidebar" *ngIf="showPreview() || selectedBlock() || showMjmlCode()">
+            <nz-tabset [(nzSelectedIndex)]="selectedTabIndex">
+                <!-- Preview Tab -->
+                <nz-tab *ngIf="showPreview()" nzTitle="Preview">
+                    <div class="preview-container">
+                        <div *ngIf="!previewHtml() && blocks().length === 0" class="preview-empty">
+                            <nz-icon nzType="eye" style="font-size: 48px; color: #999;"></nz-icon>
+                            <p>Add blocks to see preview</p>
+                        </div>
+                        <iframe *ngIf="previewHtml()" [srcdoc]="previewHtml()" class="preview-iframe">
+                        </iframe>
+                    </div>
+                </nz-tab>
+
+                <!-- MJML Code Tab -->
+                <nz-tab nzTitle="MJML Code">
+                    <div class="code-editor-container">
+                        <div class="code-actions">
+                            <button nz-button nzType="default" nzSize="small" (click)="copyMjmlCode()">
+                                <nz-icon nzType="copy"></nz-icon> Copy
+                            </button>
+                            <button nz-button nzType="primary" nzSize="small" (click)="updateFromMjmlCode()">
+                                <nz-icon nzType="reload"></nz-icon> Apply Changes
+                            </button>
+                        </div>
+                        <code-editor [style.height]="'calc(100vh - 180px)'" [(ngModel)]="mjmlCodeText"
+                            [theme]="editorTheme" [language]="'xml'" [indentWithTab]="true" [indentUnit]="'  '"
+                            [lineWrapping]="true" placeholder="MJML code will appear here...">
+                        </code-editor>
+                    </div>
+                </nz-tab>
+
+                <!-- Properties Tab -->
+                <nz-tab *ngIf="selectedBlock()" nzTitle="Properties">
+                    <div class="properties-panel" *ngIf="selectedBlock()">
+                        <h4>{{ selectedBlock()!.label }} Properties</h4>
+
+                        <!-- Common Properties -->
+                        <nz-divider nzText="Spacing"></nz-divider>
+                        <nz-form-item>
+                            <nz-form-label>Padding Top</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input [ngModel]="selectedBlock()!.properties.paddingTop"
+                                    (ngModelChange)="updateBlockProperty(selectedBlock()!, 'paddingTop', $event)">
+                            </nz-form-control>
+                        </nz-form-item>
+                        <nz-form-item>
+                            <nz-form-label>Padding Bottom</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input [ngModel]="selectedBlock()!.properties.paddingBottom"
+                                    (ngModelChange)="updateBlockProperty(selectedBlock()!, 'paddingBottom', $event)">
+                            </nz-form-control>
+                        </nz-form-item>
+                        <nz-form-item>
+                            <nz-form-label>Padding Left</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input [ngModel]="selectedBlock()!.properties.paddingLeft"
+                                    (ngModelChange)="updateBlockProperty(selectedBlock()!, 'paddingLeft', $event)">
+                            </nz-form-control>
+                        </nz-form-item>
+                        <nz-form-item>
+                            <nz-form-label>Padding Right</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input [ngModel]="selectedBlock()!.properties.paddingRight"
+                                    (ngModelChange)="updateBlockProperty(selectedBlock()!, 'paddingRight', $event)">
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <!-- Type-specific Properties -->
+                        <ng-container [ngSwitch]="selectedBlock()!.type">
+                            <!-- Text Properties -->
+                            <ng-container *ngSwitchCase="'text'">
+                                <nz-divider nzText="Text"></nz-divider>
+                                <nz-form-item>
+                                    <nz-form-label>Content</nz-form-label>
+                                    <nz-form-control>
+                                        <textarea nz-input rows="4" [ngModel]="selectedBlock()!.properties.content"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'content', $event)"></textarea>
+                                    </nz-form-control>
+                                </nz-form-item>
+
+                                <nz-divider nzText="Rich Text Formatting"></nz-divider>
+                                <div class="rich-text-toolbar">
+                                    <p style="font-size: 11px; margin-bottom: 8px;">
+                                        Select text in the canvas and use these buttons to format:
+                                    </p>
+                                    <div class="format-buttons">
+                                        <button nz-button nzSize="small" (mousedown)="$event.preventDefault()"
+                                            (click)="formatSelectedText('bold')" nz-tooltip="Bold">
+                                            <strong>B</strong>
+                                        </button>
+                                        <button nz-button nzSize="small" (mousedown)="$event.preventDefault()"
+                                            (click)="formatSelectedText('italic')" nz-tooltip="Italic">
+                                            <em>I</em>
+                                        </button>
+                                        <button nz-button nzSize="small" (mousedown)="$event.preventDefault()"
+                                            (click)="formatSelectedText('underline')" nz-tooltip="Underline">
+                                            <u>U</u>
+                                        </button>
+                                        <button nz-button nzSize="small" (mousedown)="$event.preventDefault()"
+                                            (click)="formatSelectedText('strikethrough')" nz-tooltip="Strikethrough">
+                                            <s>S</s>
+                                        </button>
+                                        <nz-divider nzType="vertical"></nz-divider>
+                                        <label class="color-picker-wrapper" nz-tooltip="Text Color">
+                                            <input type="color" #colorPicker
+                                                (input)="formatSelectedTextColor(colorPicker.value)"
+                                                (mousedown)="$event.stopPropagation()">
+                                            <span nz-icon nzType="bg-colors" style="font-size: 16px;"></span>
+                                        </label>
+                                        <button nz-button nzSize="small" (mousedown)="$event.preventDefault()"
+                                            (click)="clearFormatting()" nz-tooltip="Clear Formatting">
+                                            <span nz-icon nzType="clear"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <nz-divider nzText="Font"></nz-divider>
+                                <nz-form-item>
+                                    <nz-form-label>Font Family</nz-form-label>
+                                    <nz-form-control>
+                                        <nz-select
+                                            [ngModel]="selectedBlock()!.properties.fontFamily || 'Arial, sans-serif'"
+                                            style="width: 100%;"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'fontFamily', $event)">
+                                            <nz-option nzValue="Arial, sans-serif" nzLabel="Arial"></nz-option>
+                                            <nz-option nzValue="Georgia, serif" nzLabel="Georgia"></nz-option>
+                                            <nz-option nzValue="'Times New Roman', serif"
+                                                nzLabel="Times New Roman"></nz-option>
+                                            <nz-option nzValue="'Courier New', monospace"
+                                                nzLabel="Courier New"></nz-option>
+                                            <nz-option nzValue="Helvetica, sans-serif" nzLabel="Helvetica"></nz-option>
+                                            <nz-option nzValue="Verdana, sans-serif" nzLabel="Verdana"></nz-option>
+                                            <nz-option nzValue="'Trebuchet MS', sans-serif"
+                                                nzLabel="Trebuchet MS"></nz-option>
+                                        </nz-select>
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Font Size</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input [ngModel]="selectedBlock()!.properties.fontSize"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'fontSize', $event)"
+                                            placeholder="14px">
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Font Weight</nz-form-label>
+                                    <nz-form-control>
+                                        <nz-select [ngModel]="selectedBlock()!.properties.fontWeight || 'normal'"
+                                            style="width: 100%;"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'fontWeight', $event)">
+                                            <nz-option nzValue="normal" nzLabel="Normal"></nz-option>
+                                            <nz-option nzValue="bold" nzLabel="Bold"></nz-option>
+                                            <nz-option nzValue="lighter" nzLabel="Light"></nz-option>
+                                            <nz-option nzValue="100" nzLabel="100 (Thin)"></nz-option>
+                                            <nz-option nzValue="200" nzLabel="200"></nz-option>
+                                            <nz-option nzValue="300" nzLabel="300"></nz-option>
+                                            <nz-option nzValue="400" nzLabel="400 (Normal)"></nz-option>
+                                            <nz-option nzValue="500" nzLabel="500"></nz-option>
+                                            <nz-option nzValue="600" nzLabel="600 (Semi Bold)"></nz-option>
+                                            <nz-option nzValue="700" nzLabel="700 (Bold)"></nz-option>
+                                            <nz-option nzValue="800" nzLabel="800"></nz-option>
+                                            <nz-option nzValue="900" nzLabel="900 (Black)"></nz-option>
+                                        </nz-select>
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Font Style</nz-form-label>
+                                    <nz-form-control>
+                                        <nz-select [ngModel]="selectedBlock()!.properties.fontStyle || 'normal'"
+                                            style="width: 100%;"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'fontStyle', $event)">
+                                            <nz-option nzValue="normal" nzLabel="Normal"></nz-option>
+                                            <nz-option nzValue="italic" nzLabel="Italic"></nz-option>
+                                            <nz-option nzValue="oblique" nzLabel="Oblique"></nz-option>
+                                        </nz-select>
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Color</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input type="color" [ngModel]="selectedBlock()!.properties.color"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'color', $event)">
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Align</nz-form-label>
+                                    <nz-form-control>
+                                        <nz-select [ngModel]="selectedBlock()!.properties.align" style="width: 100%;"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'align', $event)">
+                                            <nz-option nzValue="left" nzLabel="Left"></nz-option>
+                                            <nz-option nzValue="center" nzLabel="Center"></nz-option>
+                                            <nz-option nzValue="right" nzLabel="Right"></nz-option>
+                                            <nz-option nzValue="justify" nzLabel="Justify"></nz-option>
+                                        </nz-select>
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </ng-container>
+
+                            <!-- Button Properties -->
+                            <ng-container *ngSwitchCase="'button'">
+                                <nz-divider nzText="Button"></nz-divider>
+                                <nz-form-item>
+                                    <nz-form-label>Text</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input [ngModel]="selectedBlock()!.properties.content"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'content', $event)">
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Link</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input [ngModel]="selectedBlock()!.properties.href"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'href', $event)">
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Background Color</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input type="color"
+                                            [ngModel]="selectedBlock()!.properties.backgroundColor"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'backgroundColor', $event)">
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Text Color</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input type="color" [ngModel]="selectedBlock()!.properties.color"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'color', $event)">
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </ng-container>
+
+                            <!-- Image Properties -->
+                            <ng-container *ngSwitchCase="'image'">
+                                <nz-divider nzText="Image"></nz-divider>
+                                <nz-form-item>
+                                    <nz-form-label>Image URL</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input [ngModel]="selectedBlock()!.properties.src"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'src', $event)">
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Alt Text</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input [ngModel]="selectedBlock()!.properties.alt"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'alt', $event)">
+                                    </nz-form-control>
+                                </nz-form-item>
+                                <nz-form-item>
+                                    <nz-form-label>Width</nz-form-label>
+                                    <nz-form-control>
+                                        <input nz-input [ngModel]="selectedBlock()!.properties.width"
+                                            (ngModelChange)="updateBlockProperty(selectedBlock()!, 'width', $event)">
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </ng-container>
+                        </ng-container>
+                    </div>
+                </nz-tab>
+            </nz-tabset>
+        </div>
+    </div>
+</div>

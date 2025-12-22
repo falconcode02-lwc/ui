@@ -1,0 +1,40 @@
+<nz-layout class="login-main-wrapper">
+    <nz-row class="login-row" nzJustify="center" style="height: 100%;">
+
+        <nz-col nzXs="0" nzSm="10" nzMd="10" nzLg="10" class="login-banner">
+            <div class="banner-content">
+                <h1>Welcome to Falcon</h1>
+                <p>Modern workflow automation for teams and creators.<br />Secure, fast, and beautiful.</p>
+                <!-- <img [src]="bannerImage" alt="Workflow Banner" /> -->
+            </div>
+        </nz-col>
+        <nz-col nzXs="24" nzSm="10" nzMd="10" nzLg="10" class="login-col"
+            style="display: flex; align-items: center;justify-content: center;">
+            <form nz-form [formGroup]="loginForm" (ngSubmit)="onSubmit()"  class="login-form">
+                <h2 class="login-title">Sign In</h2>
+                <nz-space nzDirection="vertical">
+                    <nz-form-item *nzSpaceItem>
+                        <nz-form-control>
+                            <input nz-input nzSize="large" formControlName="username" placeholder="Username" />
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item *nzSpaceItem>
+                        <nz-form-control>
+                            <input nz-input type="password" nzSize="large" formControlName="password"
+                                placeholder="Password" />
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <button *nzSpaceItem nz-button nzBlock nzType="primary" nzSize="large"
+                        [disabled]="loginForm.invalid">Login</button>
+                </nz-space>
+                <div class="login-footer">
+                    <a class="forgot-link">Forgot password?</a>
+                </div>
+
+            </form>
+        </nz-col>
+
+    </nz-row>
+</nz-layout>

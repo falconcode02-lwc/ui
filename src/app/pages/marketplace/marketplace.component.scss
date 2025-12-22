@@ -1,0 +1,393 @@
+// Marketplace Component Styles
+:host {
+    display: block;
+}
+
+// Plugin Cards - Dark Theme with Orange Accent
+nz-card {
+    transition: all 0.3s ease;
+    background: var(--card-bg, #1f1f1f) !important;
+    border-color: var(--border-color, #3a3a3a) !important;
+    
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(255, 109, 90, 0.2);
+        border-color: var(--accent-color, #ff6d5a) !important;
+    }
+
+    ::ng-deep .ant-card-body {
+        background: var(--card-bg, #1f1f1f);
+        color: var(--text-primary, #e8e8e8);
+    }
+
+    ::ng-deep .ant-card-meta-title {
+        color: var(--text-primary, #e8e8e8);
+    }
+
+    ::ng-deep .ant-card-meta-description {
+        color: var(--text-secondary, #a8a8a8);
+    }
+
+    ::ng-deep .ant-card-actions {
+        background: var(--card-bg, #1f1f1f);
+        border-top-color: var(--border-color, #3a3a3a);
+        
+        > li {
+            border-right-color: var(--border-color, #3a3a3a);
+        }
+    }
+}
+
+// Ribbon Badge Styling
+::ng-deep nz-badge {
+    display: block;
+    width: 100%;
+
+    .ant-badge-ribbon {
+        font-size: 11px;
+        font-weight: 600;
+    }
+}
+
+// Search Input - Dark Theme
+nz-input-group {
+    .ant-input {
+        border-radius: 8px;
+        background: var(--input-bg, #2a2a2a);
+        border-color: var(--border-color, #3a3a3a);
+        color: var(--text-primary, #e8e8e8);
+
+        &::placeholder {
+            color: var(--text-tertiary, #666);
+        }
+
+        &:hover, &:focus {
+            border-color: var(--accent-color, #ff6d5a);
+            background: var(--input-bg, #2a2a2a);
+        }
+    }
+
+    ::ng-deep .ant-input-prefix,
+    ::ng-deep .ant-input-suffix {
+        color: var(--text-secondary, #a8a8a8);
+    }
+}
+
+// Modal - Dark Theme
+::ng-deep .ant-modal-content {
+    background: var(--bg-primary, #2e2e2e);
+    
+    .ant-modal-header {
+        background: var(--bg-primary, #2e2e2e);
+        border-bottom-color: var(--border-color, #3a3a3a);
+        
+        .ant-modal-title {
+            color: var(--text-primary, #e8e8e8);
+        }
+    }
+
+    .ant-modal-body {
+        background: var(--bg-primary, #2e2e2e);
+        color: var(--text-primary, #e8e8e8);
+    }
+
+    .ant-modal-close {
+        color: var(--text-secondary, #a8a8a8);
+
+        &:hover {
+            color: var(--text-primary, #e8e8e8);
+        }
+    }
+}
+
+// Drawer Content - Dark Theme with Higher Z-Index
+::ng-deep nz-drawer {
+    z-index: 2000 !important; // Higher than modal (1000)
+
+    .ant-drawer-mask {
+        z-index: 2000 !important;
+    }
+
+    .ant-drawer-content-wrapper {
+        z-index: 2000 !important;
+    }
+
+    .ant-drawer-content {
+        background: var(--bg-primary, #2e2e2e);
+    }
+
+    .ant-drawer-header {
+        background: var(--bg-primary, #2e2e2e);
+        border-bottom-color: var(--border-color, #3a3a3a);
+        
+        .ant-drawer-title {
+            color: var(--text-primary, #e8e8e8);
+        }
+    }
+
+    .ant-drawer-body {
+        padding: 24px;
+        background: var(--bg-primary, #2e2e2e);
+        color: var(--text-primary, #e8e8e8);
+    }
+
+    .ant-drawer-close {
+        color: var(--text-secondary, #a8a8a8);
+
+        &:hover {
+            color: var(--text-primary, #e8e8e8);
+        }
+    }
+}
+
+// Documentation Section - Dark Theme
+markdown {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary, #e8e8e8);
+    
+    h1, h2, h3, h4, h5, h6 {
+        margin-top: 16px;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-primary, #e8e8e8);
+    }
+    
+    code {
+        background: var(--code-bg, #2a2a2a);
+        color: var(--code-text, #e06c75);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+        font-size: 13px;
+    }
+    
+    pre {
+        background: var(--code-block-bg, #1e1e1e);
+        color: var(--code-block-text, #f8f8f2);
+        padding: 16px;
+        border-radius: 4px;
+        overflow-x: auto;
+        border: 1px solid var(--border-color, #3a3a3a);
+        
+        code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+        }
+    }
+    
+    ul, ol {
+        padding-left: 24px;
+        margin: 8px 0;
+    }
+    
+    li {
+        margin: 4px 0;
+        color: var(--text-primary, #e8e8e8);
+    }
+    
+    a {
+        color: var(--accent-color, #ff6d5a);
+        text-decoration: none;
+        
+        &:hover {
+            text-decoration: underline;
+            color: var(--accent-hover, #ff8b7a);
+        }
+    }
+
+    p {
+        color: var(--text-primary, #e8e8e8);
+    }
+
+    blockquote {
+        border-left: 4px solid var(--accent-color, #ff6d5a);
+        padding-left: 12px;
+        color: var(--text-secondary, #a8a8a8);
+    }
+}
+
+// Empty State - Dark Theme
+::ng-deep nz-empty {
+    padding: 60px 0;
+
+    .ant-empty-description {
+        color: var(--text-secondary, #a8a8a8);
+    }
+}
+
+// Pagination - Dark Theme
+::ng-deep nz-pagination {
+    display: flex;
+    justify-content: center;
+
+    .ant-pagination-item {
+        background: var(--card-bg, #1f1f1f);
+        border-color: var(--border-color, #3a3a3a);
+
+        a {
+            color: var(--text-primary, #e8e8e8);
+        }
+
+        &:hover {
+            border-color: var(--accent-color, #ff6d5a);
+        }
+
+        &.ant-pagination-item-active {
+            background: var(--accent-color, #ff6d5a);
+            border-color: var(--accent-color, #ff6d5a);
+
+            a {
+                color: #fff;
+            }
+        }
+    }
+
+    .ant-pagination-prev,
+    .ant-pagination-next {
+        .ant-pagination-item-link {
+            background: var(--card-bg, #1f1f1f);
+            border-color: var(--border-color, #3a3a3a);
+            color: var(--text-primary, #e8e8e8);
+
+            &:hover {
+                border-color: var(--accent-color, #ff6d5a);
+                color: var(--accent-color, #ff6d5a);
+            }
+        }
+    }
+
+    .ant-pagination-options {
+        .ant-select-selector {
+            background: var(--card-bg, #1f1f1f);
+            border-color: var(--border-color, #3a3a3a);
+            color: var(--text-primary, #e8e8e8);
+        }
+    }
+}
+
+// Descriptions - Dark Theme
+::ng-deep nz-descriptions {
+    .ant-descriptions-item-label {
+        color: var(--text-secondary, #a8a8a8);
+        background: var(--bg-secondary, #252525);
+    }
+
+    .ant-descriptions-item-content {
+        color: var(--text-primary, #e8e8e8);
+        background: var(--card-bg, #1f1f1f);
+    }
+
+    &.ant-descriptions-bordered {
+        .ant-descriptions-view {
+            border-color: var(--border-color, #3a3a3a);
+        }
+
+        .ant-descriptions-item-label,
+        .ant-descriptions-item-content {
+            border-color: var(--border-color, #3a3a3a);
+        }
+    }
+}
+
+// Divider - Dark Theme
+::ng-deep nz-divider {
+    .ant-divider-inner-text {
+        color: var(--text-primary, #e8e8e8);
+    }
+
+    &.ant-divider-with-text::before,
+    &.ant-divider-with-text::after {
+        border-top-color: var(--border-color, #3a3a3a);
+    }
+}
+
+// Tag Styles - Dark Theme
+::ng-deep nz-tag {
+    margin: 2px;
+    background: var(--tag-bg, #2a2a2a);
+    border-color: var(--border-color, #3a3a3a);
+    color: var(--text-primary, #e8e8e8);
+}
+
+// Badge - Dark Theme
+::ng-deep nz-badge {
+    .ant-badge-status-text {
+        color: var(--text-primary, #e8e8e8);
+    }
+}
+
+// Rate Component - Dark Theme
+::ng-deep nz-rate {
+    font-size: 14px;
+
+    .ant-rate-star {
+        color: var(--text-tertiary, #666);
+
+        &.ant-rate-star-full {
+            color: var(--warning-color, #faad14);
+        }
+    }
+}
+
+// Loading State
+.ant-spin-nested-loading {
+    min-height: 400px;
+}
+
+// Spin - Dark Theme
+::ng-deep nz-spin {
+    .ant-spin-text {
+        color: var(--text-secondary, #a8a8a8);
+    }
+
+    .ant-spin-dot-item {
+        background-color: var(--accent-color, #ff6d5a);
+    }
+}
+
+// Button - Dark Theme with Orange Accent
+::ng-deep button.ant-btn {
+    &.ant-btn-default {
+        background: var(--card-bg, #1f1f1f);
+        border-color: var(--border-color, #3a3a3a);
+        color: var(--text-primary, #e8e8e8);
+
+        &:hover {
+            border-color: var(--accent-color, #ff6d5a);
+            color: var(--accent-color, #ff6d5a);
+        }
+    }
+
+    &.ant-btn-primary {
+        background: var(--accent-color, #ff6d5a);
+        border-color: var(--accent-color, #ff6d5a);
+
+        &:hover {
+            background: var(--accent-hover, #ff8b7a);
+            border-color: var(--accent-hover, #ff8b7a);
+        }
+    }
+
+    &.ant-btn-link {
+        color: var(--accent-color, #ff6d5a);
+
+        &:hover {
+            color: var(--accent-hover, #ff8b7a);
+        }
+    }
+
+    &[disabled] {
+        background: var(--bg-secondary, #252525);
+        border-color: var(--border-color, #3a3a3a);
+        color: var(--text-tertiary, #666);
+    }
+}
+
+// Grid Responsive
+@media (max-width: 768px) {
+    .plugin-grid {
+        grid-template-columns: 1fr !important;
+    }
+}

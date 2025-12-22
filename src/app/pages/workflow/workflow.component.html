@@ -1,0 +1,1009 @@
+<agent-management></agent-management>
+
+<nz-splitter nzLayout="vertical">
+
+    <nz-splitter-panel class="editorPanel">
+
+
+        <!-- <f-flow fDraggable [vCellSize]="26" fBehavior="fixed" [hCellSize]="26" fType="segment" [fCellSizeWhileDragging]="adjustCellSizeWhileDragging()" (fLoaded)="onLoaded()">
+            <f-background>
+                <f-circle-pattern [color]="'#989898'" [vSize]="26" [hSize]="26"> </f-circle-pattern>
+
+            </f-background>
+            <f-canvas #canvas fZoom>
+
+                {{nodes | json}}
+                <f-node [fNodeId]="n.id" *ngFor="let n of nodes" [fNodePosition]="n.position">
+                    <ng-template fNodeTitle>{{ n.text }}</ng-template>
+                    <div fNodeBody [innerHTML]="n.meta.html"></div>
+
+                    <ng-container *ngFor="let out of n.outputs">
+                        <f-node-output [fOutputId]="out.id"></f-node-output>
+                    </ng-container>
+                    <ng-container *ngFor="let inp of n.inputs">
+                        <f-node-input [fInputId]="inp.id"></f-node-input>
+                    </ng-container>
+                </f-node>
+
+
+                <f-connection *ngFor="let c of connections" [fOutputId]="c.source" [fInputId]="c.target" [fType]="c.type" [fBehavior]="c.behavior">
+                    <svg viewBox="0 0 10 10" fMarker [type]="eMarkerType.START" [height]="10" [width]="10" [refX]="5" [refY]="5">
+        <circle cx="5" cy="5" r="2" stroke="none"  fill="#989898"></circle>
+      </svg>
+                    <svg viewBox="0 0 700 700" fMarker [type]="eMarkerType.END" [height]="5" [width]="5" [refX]="4" [refY]="2.5">
+        <path fill="#989898" d="M0,0L700,350L0,700L150,350z"/>
+      </svg>
+                   
+                </f-connection>
+
+            </f-canvas>
+            <div class="any-container-or-without-container">
+                <f-minimap [fMinSize]="2000"></f-minimap>
+            </div>
+        </f-flow> -->
+
+        <div style="position: absolute;width: 100%;height: 100%;display: flex;z-index: 1111;background-color: #252525f0;align-items: center; justify-content: center;"
+            *ngIf="isSpinning">
+
+           <nz-icon nzType="loading" />&nbsp;
+           Loading...
+        </div>
+
+        <div style="position: relative; width: 100%; height: 100%;" (click)="onWrapperClick($event)">
+            <!-- Right Side Drawer for Blocks -->
+            <nz-drawer [nzClosable]="true" [nzVisible]="isBlockDrawerVisible" nzPlacement="right"
+                nzTitle="Workflow Blocks" (nzOnClose)="closeBlockDrawer()" [nzWidth]="320" [nzMask]="false"
+                [nzMaskClosable]="false" nzWrapClassName="workflow-blocks-drawer" (click)="$event.stopPropagation()">
+                <ng-container *nzDrawerContent>
+                    <!-- Search Input -->
+                    <div style="margin-bottom: 16px; padding: 0 4px;">
+                        <nz-input-group [nzPrefix]="prefixIconSearch" [nzSuffix]="suffixIconClear">
+                            <input type="text" nz-input placeholder="Search blocks and plugins..."
+                                [(ngModel)]="blockSearchTerm" (input)="changeDetectorRef.detectChanges()"
+                                style="border-radius: 6px;" />
+                        </nz-input-group>
+                        <ng-template #prefixIconSearch>
+                            <nz-icon nzType="search" style="color: var(--text-secondary);"></nz-icon>
+                        </ng-template>
+                        <ng-template #suffixIconClear>
+                            <nz-icon *ngIf="blockSearchTerm" nzType="close-circle" nzTheme="fill"
+                                (click)="blockSearchTerm = ''; loadPlugins(); changeDetectorRef.detectChanges()"
+                                style="color: var(--text-secondary); cursor: pointer;"></nz-icon>
+                        </ng-template>
+                    </div>
+
+                    <!-- Marketplace Button -->
+                    <div style="margin-bottom: 16px; padding: 0 4px;">
+                        <button nz-button nzType="default" nzBlock (click)="openMarketplace()"
+                            style="height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <nz-icon nzType="shop" style="font-size: 18px;"></nz-icon>
+                            <span style="font-weight: 500;">Plugin Marketplace</span>
+                        </button>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div *ngIf="isLoadingPlugins" style="text-align: center; padding: 20px;">
+                        <nz-spin nzSimple></nz-spin>
+                        <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">Loading plugins...
+                        </div>
+                    </div>
+
+                    <!-- No results message -->
+                    <div *ngIf="blockSearchTerm && !hasSearchResults()"
+                        style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                        <nz-icon nzType="search" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></nz-icon>
+                        <div style="font-size: 14px; margin-bottom: 8px;">No blocks found</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Try a different search term</div>
+                    </div>
+
+                    <div *ngFor="let sec of toolbox" style="margin-bottom: 20px;">
+                        <ng-container *ngIf="(sec.blocks | filter:filterBlocksBySearch.bind(this)).length > 0">
+                            <nz-divider nzPlain>
+                                <span style="display: flex; align-items: center; gap: 8px;">
+                                    {{sec.name}}
+                                    <nz-badge *ngIf="sec.name === 'Plugins'" [nzCount]="sec.blocks.length"
+                                        [nzStyle]="{ backgroundColor: '#52c41a' }"></nz-badge>
+                                </span>
+                            </nz-divider>
+                            <div fExternalItem [fData]="item"
+                                *ngFor="let item of sec.blocks | filter:filterBlocksBySearch.bind(this)"
+                                class="block-item" style="padding: 8px; margin-bottom: 8px; border: 1px solid #3a3a3a; border-radius: 8px; background: #2a2a2a; transition: all 0.3s; 
+                                position: relative; user-select: none; -webkit-user-select: none;-moz-user-select: none; -ms-user-select: none; ">
+                                <div (click)="onItemClick(item)"
+                                    style="display: flex; align-items: center; gap: 12px; cursor: move; pointer-events: none;">
+                                    <div
+                                        style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; position: relative;pointer-events: none;">
+                                        <!-- External Icon (Image URL) with error handling -->
+                                        <img *ngIf="item.isExternalIcon" [src]="item.icon"
+                                            (error)="$any($event.target).style.display='none'; $any($event.target).nextElementSibling.style.display='flex'"
+                                            style="width: 24px; height: 24px; object-fit: contain; border-radius: 4px; display: block;pointer-events: none"
+                                            [alt]="item.name">
+
+                                        <!-- Fallback Icon (always rendered, hidden by default if external icon exists) -->
+                                        <nz-icon [nzType]="item.isExternalIcon ? 'api' : (item.icon || 'api')"
+                                            class="icon{{item.type}}"
+                                            [style.display]="item.isExternalIcon ? 'none' : 'flex'"
+                                            style="font-size: 24px; align-items: center; justify-content: center;"
+                                            nzTheme="outline"></nz-icon>
+                                    </div>
+
+                                    <div style="flex: 1;">
+                                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                            <span style="font-weight: 500; color: var(--text-primary);">
+                                                {{item.name}}
+                                            </span>
+                                            <nz-badge *ngIf="item.isPlugin" nzText="Plugin"
+                                                [nzStyle]="{ backgroundColor: '#1890ff', fontSize: '10px', padding: '0 4px' }">
+                                            </nz-badge>
+                                        </div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">
+                                            {{item.description}}
+                                        </div>
+                                        <div *ngIf="item.pluginData"
+                                            style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;">
+                                            ID: {{item.pluginData.plugin_id}} • v{{item.pluginData.plugin_version}} •
+                                            {{item.pluginData.plugin_author}}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Plugin Info Button -->
+                                <button *ngIf="item.isPlugin" nz-button nzType="text" nzSize="small" nz-tooltip
+                                    [nzTooltipTitle]="item.pluginData?.id ? 'View plugin details' : 'Plugin ID not available'"
+                                    (click)="item.pluginData?.id ? openPluginDetail(item.pluginData.id, $event) : null"
+                                    [disabled]="!item.pluginData?.id"
+                                    style="position: absolute; top: 4px; right: 4px; padding: 2px 6px; height: 24px; min-width: 24px;">
+                                    <nz-icon nzType="info-circle"
+                                        [style.color]="item.pluginData?.id ? '#1890ff' : '#666'"
+                                        style="font-size: 14px;"></nz-icon>
+                                </button>
+                            </div>
+                        </ng-container>
+                    </div>
+                </ng-container>
+            </nz-drawer>
+            <nz-dropdown-menu #menu="nzDropdownMenu" >
+                <ul nz-menu style="width: 200px;">
+                 
+
+                    <!-- <li nz-menu-item > <nz-icon nzType="play-circle" /> Execute</li> -->
+                    
+                    <li nz-menu-item (click)="isBlockDrawerVisible = true"> <nz-icon nzType="plus" /> Add New</li>
+                    <li nz-menu-item (click)="onDuplicateClick()"> <nz-icon nzType="copy" /> Duplicate</li>
+                    <li nz-menu-item (click)="addNotes()"> <nz-icon nzType="file-text" /> Add Note</li>
+                    <li nz-menu-item (click)="deleteNode()" nzDanger> <nz-icon nzType="delete" /> Delete</li>
+                    <li nz-menu-item (click)="onMoreClick(undefined)"> <nz-icon nzType="ellipsis" /> Properties</li>
+                </ul>
+            </nz-dropdown-menu>
+            <f-flow #FFlowComponent fDraggable fEmitOnNodeIntersect [vCellSize]="26" fBehavior="fixed" [hCellSize]="26"
+                fType="segment" [fCellSizeWhileDragging]="adjustCellSizeWhileDragging()" (fLoaded)="onLoaded()"
+                [fDisabled]="true" (fCreateNode)="onCreateNode($event)" (fCreateConnection)="onConnectionAdded($event)"
+                (fNodeIntersectedWithConnections)="onNodeIntersectedWithConnection($event)"
+                (fReassignConnection)="onConnectionDropped($event)" (fDropToGroup)="onDropToGroup($event)"
+                (fDragStarted)="onDragStarted($event)" (fDragEnded)="onDragEnded($event)"
+                (fNodeMoved)="onNodeMoved($event)" (fMoveNodes)="moveNodes($event)"
+                (fCanvasPositionChanged)="onCanvasMove()" (fScaleChanged)="onCanvasZoom()"
+                (contextmenu)="contextMenu($event, menu)">
+                <f-selection-area></f-selection-area>
+                <f-line-alignment [fAlignThreshold]="40"></f-line-alignment>
+                <!-- <f-line-alignment></f-line-alignment> -->
+                <f-background>
+                    <f-circle-pattern [color]="'#585858'" [vSize]="10" [hSize]="10"> </f-circle-pattern>
+
+                </f-background>
+                <f-canvas fZoom>
+                    <f-snap-connection fBehavior="fixed" fType="segment" [fSnapThreshold]="3">
+                        <svg viewBox="0 0 5 5" fMarker [type]="eMarkerType.START" [height]="5" [width]="5" [refX]="5"
+                            [refY]="5">
+
+                        </svg>
+                        <svg viewBox="0 0 6 6" fMarker [type]="eMarkerType.END" [height]="6" [width]="6" [refX]="5"
+                            [refY]="3">
+                            <path d="M0,0 L6,3 0,6Z" stroke="none"></path>
+                        </svg>
+                    </f-snap-connection>
+
+
+                    @for (group of groups(); track group.id) {
+                    <div fGroup fDragHandle [fGroupId]="group.id" [fIncludePadding]="true"
+                        [fAutoSizeToFitChildren]="true" [fAutoExpandOnChildHit]="true"
+                        [fGroupPosition]="group.position">
+                        <span class="groupTitle">{{group.name}}
+                            <button nz-button nzType="link" nzShape="circle" (click)="openRename(group, 'group')"
+                                [nzSize]="'small'">
+                                <nz-icon nzType="edit" />
+                            </button></span>
+                    </div>
+                    }
+                    <!-- <f-connection fType="segment" [fSelectionDisabled]="true" [fBehavior]="eConnectionBehaviour.FIXED" fOutputId="output1" fInputId="input1" fBehavior="floating">
+
+                    <svg viewBox="0 0 10 10" fMarker [type]="eMarkerType.START" [height]="10" [width]="10" [refX]="5" [refY]="5">
+        <circle cx="5" cy="5" r="2" stroke="none"  fill="#989898"></circle>
+      </svg>
+                    <svg viewBox="0 0 700 700" fMarker [type]="eMarkerType.END" [height]="5" [width]="5" [refX]="4" [refY]="2.5">
+        <path fill="#989898" d="M0,0L700,350L0,700L150,350z"/>
+      </svg>
+
+                    <div fConnectionContent>
+                        Any Content
+                    </div>
+                </f-connection>
+
+
+               
+
+
+                </f-connection> -->
+                    @for (stknote of stickynotes(); track stknote.id) {
+                    <div fGroup fDragHandle class="notes" [fGroupId]="stknote.id" (dblclick)="editNote($event, stknote)"
+                        [(fGroupSize)]="stknote.size" [(fGroupPosition)]="stknote.position"
+                        [style.backgroundColor]="stknote?.color?.bgColor"
+                        [style.borderColor]="stknote?.color?.darkColor">
+
+                        <div class="actionbuttons">
+                            <div class="act-buttons">
+                                <nz-space [nzSize]="'small'">
+                                    <button *nzSpaceItem nz-button nzType="primary" (click)="editNote($event, stknote)"
+                                        nzShape="circle" [nzSize]="'small'">
+                                        <nz-icon nzType="edit" />
+                                    </button>
+
+                                    <button *nzSpaceItem nz-button nzDanger nzType="primary"
+                                        (click)="removeNote(stknote.id)" nzShape="circle" [nzSize]="'small'">
+                                        <nz-icon nzType="delete" />
+                                    </button>
+                                </nz-space>
+                            </div>
+                        </div>
+
+                        <div fResizeHandle [fResizeHandleType]="eResizeHandleType.RIGHT_BOTTOM"></div>
+                        <div fResizeHandle [fResizeHandleType]="eResizeHandleType.RIGHT_TOP"></div>
+                        <div fResizeHandle [fResizeHandleType]="eResizeHandleType.LEFT_TOP"></div>
+                        <div fResizeHandle [fResizeHandleType]="eResizeHandleType.LEFT_BOTTOM"></div>
+
+                        <div fResizeHandle [fResizeHandleType]="eResizeHandleType.LEFT"></div>
+                        <div fResizeHandle [fResizeHandleType]="eResizeHandleType.RIGHT"></div>
+                        <div fResizeHandle [fResizeHandleType]="eResizeHandleType.BOTTOM"></div>
+                        <div fResizeHandle [fResizeHandleType]="eResizeHandleType.TOP"></div>
+                        <div class="note-content">
+                            <markdown class="variable-binding" [data]="stknote.note"></markdown>
+
+                        </div>
+                    </div>
+                    }
+
+
+                    <f-connection-for-create fBehavior="floating">
+                        <svg viewBox="0 0 10 10" fMarker [type]="eMarkerType.START" [height]="10" [width]="10"
+                            [refX]="5" [refY]="5">
+
+                        </svg>
+                        <svg viewBox="0 0 6 6" fMarker [type]="eMarkerType.END" [height]="6" [width]="6" [refX]="5"
+                            [refY]="3">
+                            <path d="M0,0 L6,3 0,6Z" stroke="none" [attr.fill]="'#ff6d5a'">
+                            </path>
+                        </svg>
+                    </f-connection-for-create>
+
+
+                    <div *ngFor="let n of nodes()" (contextmenu)="openMenu($event, n)" (dblclick)="onMoreClick(n)"
+                        fNodeParentId="{{n.parentId}}" class="{{n.type}} {{n.runstatus}}" [fNodeId]="n.id"
+                        isSelfConnectable="false" fDragHandle fNode [(fNodePosition)]="n.position"
+                        fInputConnectableSide="left" fOutputConnectableSide="right"
+                        (fNodePositionChange)="onNodeDrag($event)" (click)="selectedNode = n"
+                        [ngStyle]="{width: (n.type == 'aiagent'? '120px': (n.type == 'childwf'?'120px':'')), height: (n.type == 'switches'?  (60+(n.data?.switchval?.length * 15)) +'px':'')}">
+
+
+                        <div class="actionbuttons_nodes" *ngIf="n.type != 'start'">
+                            <div class="act-buttons">
+                                <nz-space [nzSize]="'small'">
+                                    <button *nzSpaceItem nz-button nzType="default" (click)="onMoreClick(n)"
+                                        nzShape="circle" [nzSize]="'small'" title="Properties">
+                                        <nz-icon nzType="ellipsis" />
+                                    </button>
+                                   
+                                    <button *nzSpaceItem nz-button nzType="default" (click)="onDuplicateClick()"
+                                        nzShape="circle" [nzSize]="'small'" title="Duplicate">
+                                        <nz-icon nzType="copy" />
+                                    </button>
+
+                                    <button *nzSpaceItem nz-button nzDanger nzType="default" (click)="confirmDelete(n)"
+                                        nzShape="circle" [nzSize]="'small'" title="Delete">
+                                        <nz-icon nzType="delete" />
+                                    </button>
+                                </nz-space>
+                            </div>
+                        </div>
+
+                        <div class="execute-success" *ngIf="n?.runstatus == 'Success'">
+                            <nz-icon nzType="check-circle" nzTheme="twotone" nzTwotoneColor="#52c41a" />
+
+                        </div>
+                        <nz-badge [nzCount]="n?.runCounter " *ngIf="n?.runCounter > 1"
+                            [nzOffset]="[48, -40]"></nz-badge>
+
+                        <div class="execute" *ngIf="n?.runstatus == 'Running'">
+                            <nz-icon nzType="sync" [nzSpin]="true" />
+                        </div>
+                        <div class="execute {{n?.runstatus}}" *ngIf="n?.runstatus == 'FAILED'">
+                            <nz-icon nzType="warning" style="color:red" />
+                        </div>
+
+
+                        <!-- <nz-badge [nzCount]="n.data?.call ? n.data?.call.length : 0" *ngIf="n.data?.call"
+                            [nzOffset]="[-38, -40]"></nz-badge> -->
+
+                        <!-- External Icon (Image URL) with error handling -->
+                        <img *ngIf="isExternalIcon(n.meta?.icon)" [src]="n.meta.icon"
+                            class="node-external-icon icon{{n.type}}" [alt]="n.meta.html"
+                            (error)="$any($event.target).style.display='none'; $any($event.target).nextElementSibling.style.display='block'"
+                            style="display: block;pointer-events: none;">
+
+                        <!-- Fallback Icon (always rendered, hidden by default if external icon exists) -->
+                        <nz-icon [nzType]="isExternalIcon(n.meta?.icon) ? 'api' : (n.meta?.icon || 'api')"
+                            class="icon{{n.type}}" [style.display]="isExternalIcon(n.meta?.icon) ? 'none' : 'block'"
+                            style='font-size:32px;color:#ddd' nzTheme='outline'></nz-icon>
+
+
+                        <span *ngIf="(n.data?.call ? n.data?.call.length : 0) > 1"
+                            class="activityCallCounts">{{n.data?.call ? n.data?.call.length : 0}}</span>
+
+                        @if (n.input == true) {
+                        <div fNodeInput [fInputId]="n.id" [fInputMultiple]="true" class="left"></div>
+                        }
+
+                        @if (n.type == "aiagent") {
+                        <!-- <div class="ai-model">
+                        <div class="fitter">
+                            <button nz-button nzType="link" nzShape="circle" [nzSize]="'small'" (click)="onMoreClick(n)">
+                                <nz-icon nzType="plus" />
+                            </button>
+                        </div>
+                         
+
+                    </div>
+                    <div class="ai-memory">
+                        <div class="fitter">
+                            <button nz-button nzType="link" nzShape="circle" [nzSize]="'small'"  (click)="onMoreClick(n)">
+                                <nz-icon nzType="plus" />
+                            </button>
+                        </div>
+                         
+                    </div>
+                    <div class="ai-tools">
+                        
+
+                    </div> -->
+
+                        }
+                        <div class="outputHolder" *ngIf="n.type == 'switches'">
+                            <div fNodeOutput *ngFor="let item of n.data?.switchval" [fOutputId]="item.id"
+                                [fOutputMultiple]="true"><span>{{item.key}}</span></div>
+                            <!-- <div fNodeOutput [fOutputId]="'2'" [fOutputMultiple]="true"><span>Data 2</span></div>
+                        <div fNodeOutput [fOutputId]="'3'" [fOutputMultiple]="true"><span>Data 2</span></div> -->
+
+                        </div>
+
+                        <div class="outputHolder" *ngIf="n.output == true && n.type != 'switches'">
+                            <div fNodeOutput [fOutputId]="n.id" [fOutputMultiple]="true"></div>
+
+                            @if (n.type == 'condition') {
+                            <div style="height: 10px;"></div>
+                            <div fNodeOutput style="background-color:rgb(150, 0, 0);" [fOutputId]="n.id + '_false'"
+                                [fOutputMultiple]="false">
+                                <span class="true">{{n.data?.truelabel || 'True'}}</span>
+                                <span class="false">{{n.data?.falselabel || 'False'}}</span>
+
+                            </div>
+                            }
+                        </div>
+                        <ng-template #contentTemplate>
+
+
+                            <nz-space>
+                                <button *nzSpaceItem nz-button nzType="dashed" nz-popconfirm
+                                    nzPopconfirmTitle="Are you sure you want to delete?"
+                                    (nzOnConfirm)="confirmDelete(n)" (nzOnCancel)="cancel()" nzShape="circle"
+                                    [nzSize]="'small'">
+                                    <nz-icon nzType="delete" />
+                                </button>
+
+                                <button *nzSpaceItem nz-button nzType="dashed" nzShape="circle" [nzSize]="'small'"
+                                    (click)="onMoreClick(n)">
+                                    <nz-icon nzType="ellipsis" />
+                                </button>
+
+                            </nz-space>
+                        </ng-template>
+
+                        <span class="title">{{n.meta.html}}</span>
+                        <div class="subtitle">
+                            <span class="tt">{{n.data?.name}}</span>
+
+
+                            <span class="st">{{n.data?.conditionInline
+                                ||n.data?.conditionCall
+                                || n.data?.call || (n.data?.waitSeconds ? n.data?.waitSeconds + ' sec' : '') ||
+                                n.data?.childwf || n.data?.aiagent}}</span>
+                        </div>
+                    </div>
+
+                    @for (connection of connections(); track connection.id){
+
+                    <f-connection [fBehavior]="connection.behavior || 'fixed'"
+                        (contextmenu)="openMenu($event, connection)" [fType]="connection.type || 'offset_straight'"
+                        [fOffset]="30" [fStartColor]="connection.startColor || '#ddd'"
+                        [fEndColor]="connection.endColor || '#ddd'" [fOutputId]="connection.sourcePortId"
+                        [fInputId]="connection.targetPortId" [fConnectionId]="connection.id" [fReassignDisabled]="false"
+                        class="{{connection?.cls}}" [class.dashed-connection]="connection.category === 'virtual'">
+
+
+                        <!-- <svg viewBox="0 0 10 10" fMarker [type]="eMarkerType.START" [height]="10" [width]="10" [refX]="5"
+                        [refY]="5">
+                        <circle
+                        cx="5"
+                        cy="5"
+                        r="2"
+                        stroke="none"
+                        [attr.fill]="connection.startColor || '#ddd'"
+                    ></circle>
+                    </svg> -->
+                        <svg viewBox="0 0 6 6" fMarker [type]="eMarkerType.END" [height]="6" [width]="6" [refX]="5"
+                            [refY]="3">
+                            <path d="M0,0 L6,3 0,6Z" stroke="none" class="endArrow"
+                                [attr.fill]="connection.endColor || '#c3c9d4'">
+                            </path>
+                        </svg>
+                        <!-- <svg viewBox="0 0 10 10" fMarker [type]="eMarkerType.SELECTED_START" [height]="10" [width]="10"
+                        [refX]="5" [refY]="5">
+                        <circle cx="5" cy="5" r="2" stroke="none"></circle>
+                    </svg> -->
+                        <svg viewBox="0 0 6 6" fMarker [type]="eMarkerType.SELECTED_END" [height]="6" [width]="6"
+                            [refX]="5" [refY]="3">
+                            <path d="M0,0 L6,3 0,6Z" stroke="none" class="endArrow"
+                                [attr.fill]="connection.endColor || '#ff6d5a'">
+                            </path>
+
+                        </svg>
+
+                        <div fConnectionContent>
+                            connection content
+                            <!-- <button nz-button nzDanger nzType="primary" 
+                            (click)="confirmDeleteConnection(connection.id)"
+                            nzShape="circle" [nzSize]="'small'" >
+                            <nz-icon nzType="delete" />
+                        </button> -->
+                        </div>
+                        <!-- <div fConnectionContent>sdass{{connection | json}}</div> -->
+                    </f-connection>
+
+                    }
+
+                </f-canvas>
+                <div class="any-container-or-without-container" *ngIf="showMinimap" (mouseenter)="onMinimapHover(true)"
+                    (mouseleave)="onMinimapHover(false)">
+                    <f-minimap [fMinSize]="2000"></f-minimap>
+                </div>
+
+            </f-flow>
+        </div>
+
+        <nz-dropdown-menu #menu="nzDropdownMenu">
+            <ul nz-menu>
+                <li nz-menu-item nzDanger (click)="confirmDelete(selectedforDelete)">Remove</li>
+            </ul>
+        </nz-dropdown-menu>
+
+
+
+
+        <div style="position: absolute;bottom: 20px;left: 15px;z-index: 1000;">
+            <nz-space [nzSize]="'small'">
+                <!-- Undo/Redo buttons -->
+                <!-- <button *nzSpaceItem nz-button nzType="default" nz-tooltip nzTooltipTitle="Undo (Ctrl+Z)"
+                        (click)="state.undo()" [disabled]="!state.canUndo()" [nzSize]="'large'">
+                        <nz-icon nzType="undo" />
+                    </button>
+
+                    <button *nzSpaceItem nz-button nzType="default" nz-tooltip nzTooltipTitle="Redo (Ctrl+Y)"
+                        (click)="state.redo()" [disabled]="!state.canRedo()" [nzSize]="'large'">
+                        <nz-icon nzType="redo" />
+                    </button> -->
+
+                <!-- Zoom buttons -->
+                <button *nzSpaceItem nz-button nzType="primary" nz-tooltip nzTooltipTitle="Zoom In (Ctrl+↑)"
+                    (click)="canvzoom('zoom-in')" [nzSize]="'large'">
+                    <nz-icon nzType="zoom-in" />
+                </button>
+
+                <button *nzSpaceItem nz-button nzType="primary" nz-tooltip nzTooltipTitle="Zoom Out (Ctrl+↓)"
+                    (click)="canvzoom('zoom-out')" [nzSize]="'large'">
+                    <nz-icon nzType="zoom-out" />
+                </button><button *nzSpaceItem nz-button nzType="primary" nz-tooltip
+                    nzTooltipTitle="Fit To Screen (Ctrl+L)" (click)="canvzoom('expand')" [nzSize]="'large'">
+                    <nz-icon nzType="expand" />
+                </button> <button *nzSpaceItem nz-button nzType="primary" nz-tooltip nzTooltipTitle="Clear"
+                    (click)="clearCanvas()" [nzSize]="'large'">
+                    <nz-icon nzType="clear" />
+                </button>
+
+
+                <button nz-button [nzSize]="'large'" *nzSpaceItem nzType="primary" nz-tooltip
+                    nzTooltipTitle="Run Workflow (Ctrl+R)" [disabled]="selectedWorkflow.id == 0"
+                    (click)="runWorkflow('open')">
+                    <nz-icon nzType="play-circle" /> {{isWorkflowRunning ? 'Update' : 'Run'}}
+                </button>
+            </nz-space>
+        </div>
+    </nz-splitter-panel>
+    <!-- 
+    <nz-splitter-panel [nzCollapsible]="true" [nzDefaultSize]="'0'" [nzMax]="'200'" [nzCollapsed]="false">
+        <div *ngFor="let sec of toolbox">
+           
+            <div style="display: flex;justify-content: center;">
+                <div style="user-select: none;width: 80px;height: 65px;"
+                    *ngFor="let item of sec.blocks | filter:findVisibleTool">
+                    <nz-card fExternalItem [fData]="item" style="user-select: none;width: 80px;"
+                        class="card-style blocks" (click)="onItemClick(item)" style="margin-bottom: 1px;">
+                        <nz-icon nzType="{{item.icon}}" class="icon{{item.type}}" style="font-size: 22px"
+                            nzTheme="outline" /> 
+                            {{item.name}}
+                    </nz-card>
+                </div>
+                
+            </div>
+        </div>
+    </nz-splitter-panel> -->
+</nz-splitter>
+
+
+
+
+
+
+
+<nz-modal [(nzVisible)]="isPropertyPanelVisible" [nzWidth]="'100%'" [nzStyle]="{ top: '0', padding: '0'}"
+    [nzBodyStyle]="{ height: '100vh', padding: '0' }" [nzFooter]="null" (nzOnCancel)="onPropertyPanelClose()"
+    [nzWrapClassName]="'fullscreen-modal dark-modal'">
+    <!-- <ng-template #nodeTitleTpl>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <ng-container *ngIf="getNodeIconUrl(selectedNode); else titleFallbackIcon">
+                <img [src]="getNodeIconUrl(selectedNode)!" alt="icon"
+                     style="width:20px;height:20px;object-fit:contain;border-radius:4px;" />
+            </ng-container>
+            <ng-template #titleFallbackIcon>
+                <nz-icon [nzType]="getNodeIconName(selectedNode)"
+                         [style.color]="getNodeAccentColor(selectedNode)"
+                         style="font-size:18px;"></nz-icon>
+            </ng-template>
+            <span>{{ selectedNode?.data?.name || selectedNode?.meta?.html || selectedNode?.id }}</span>
+            <nz-badge *ngIf="isPluginNode(selectedNode)" nzText="Plugin"
+                      [nzStyle]="{ backgroundColor: getNodeAccentColor(selectedNode), fontSize: '10px', padding: '0 4px' }">
+            </nz-badge>
+        </div>
+    </ng-template> -->
+    <ng-container *nzModalContent>
+        <div style="display:flex; height:100%; width:100%; position:relative;">
+            <!-- explicit close button top-right (ensures visibility even if default close is hidden) -->
+            <button nz-button nzType="link" (click)="onPropertyPanelClose()" class="modal-close-btn" aria-label="Close">
+                <nz-icon nzType="close" nzTheme="outline"></nz-icon>
+            </button>
+            <!-- Left: Inputs -->
+            <div style="width:30%; border-right:1px solid #212121; overflow:auto; padding:16px; background:#212121;">
+                <h3 style="margin-top:0">Inputs</h3>
+                <div *ngIf="selectedNode?.inputs?.length; else noInputs">
+                    <div *ngFor="let inp of selectedNode.inputs"
+                        style="padding:6px 0; border-bottom:1px dashed #212121">
+                        <div style="font-weight:600">{{ inp.id || inp }}</div>
+                        <div style="font-size:12px;color:#666">{{ inp?.meta?.label || inp?.name || '' }}</div>
+                    </div>
+                </div>
+                <ng-template #noInputs>
+                    <div style="color:#999"></div>
+                </ng-template>
+
+                <nz-divider nzText="Previous Nodes" nzOrientation="left" style="margin:12px 0;"></nz-divider>
+                <div *ngIf="getPreviousNodes(selectedNode).length; else noPrevNodes">
+                    <div *ngFor="let pn of getPreviousNodes(selectedNode)" (click)="selectNode(pn)"
+                        [style.borderRight]="'3px solid ' + getNodeAccentColor(pn)"
+                        style="display:flex; align-items:center; gap:10px; padding:8px 6px; border-bottom:1px dashed #212121; cursor:pointer; border-radius:6px;">
+                        <nz-icon nzType="arrow-left" style="font-size:16px; color:#666;"></nz-icon>
+                        <ng-container *ngIf="getNodeIconUrl(pn); else prevIconFallback">
+                            <img [src]="getNodeIconUrl(pn)!" alt="icon"
+                                style="width:24px;height:24px;object-fit:contain;border-radius:4px;" />
+                        </ng-container>
+                        <ng-template #prevIconFallback>
+                            <nz-icon [nzType]="getNodeIconName(pn)" [style.color]="getNodeAccentColor(pn)"
+                                style="font-size:24px;"></nz-icon>
+                        </ng-template>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                {{ getNodeDisplayName(pn) }}</div>
+                            <div style="font-size:12px; color:#999;">Type: {{ pn.type }}</div>
+                            <div *ngIf="getNodeDescription(pn)"
+                                style="font-size:12px; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                {{ getNodeDescription(pn) }}</div>
+                            <div *ngIf="isPluginNode(pn)" style="font-size:11px; color:#8aa; margin-top:2px;">
+                                <ng-container *ngIf="getPluginInfo(pn) as info">
+                                    <span *ngIf="info.name">{{info.name}}</span>
+                                    <span *ngIf="info.version"> • v{{info.version}}</span>
+                                    <span *ngIf="info.author"> • {{info.author}}</span>
+                                    <span *ngIf="info.id"> • ID: {{info.id}}</span>
+                                </ng-container>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <ng-template #noPrevNodes>
+                    <div style="color:#999">No previous nodes</div>
+                </ng-template>
+            </div>
+
+            <!-- Center: Form -->
+            <div style="flex:1; overflow:auto; display:flex; align-items:flex-start; justify-content:center;">
+                <div style="width:880px;">
+
+                    <app-form-viewer @fadeInOut #propertyPanel *ngIf="showPropePanel"
+                        (onAutoCompleteAddNewClick)="autoCompleteAddNewClick($event)"
+                        (onAutoCompleteEditClick)="autoCompleteEditClick($event)"
+                        [preloadedSchema]="getFormSchemaForNode()" [hideHeaderActions]="true"
+                        (formValuesChange)="onFormUpdate($event)">
+                    </app-form-viewer>
+
+                </div>
+            </div>
+
+            <!-- Right: Outputs -->
+            <div style="width:30%; border-left:1px solid #212121; overflow:auto; padding:16px; background:#212121;">
+                <h3 style="margin-top:0">Outputs</h3>
+                <div *ngIf="selectedNode?.outputs?.length; else noOutputs">
+                    <div *ngFor="let out of selectedNode.outputs"
+                        style="padding:6px 0; border-bottom:1px dashed #212121">
+                        <div style="font-weight:600">{{ out.id || out }}</div>
+                        <div style="font-size:12px;color:#666">{{ out?.meta?.label || out?.name || '' }}</div>
+                    </div>
+                </div>
+                <ng-template #noOutputs>
+                    <div style="color:#999"></div>
+                </ng-template>
+
+                <nz-divider nzText="Next Nodes" nzOrientation="left" style="margin:12px 0;"></nz-divider>
+                <div *ngIf="getNextNodes(selectedNode).length; else noNextNodes">
+                    <div *ngFor="let nn of getNextNodes(selectedNode)" (click)="selectNode(nn)"
+                        [style.borderLeft]="'3px solid ' + getNodeAccentColor(nn)"
+                        style="display:flex; align-items:center; gap:10px; padding:8px 6px; border-bottom:1px dashed #212121; cursor:pointer; border-radius:6px;">
+                        <ng-container *ngIf="getNodeIconUrl(nn); else nextIconFallback">
+                            <img [src]="getNodeIconUrl(nn)!" alt="icon"
+                                style="width:24px;height:24px;object-fit:contain;border-radius:4px;" />
+                        </ng-container>
+                        <ng-template #nextIconFallback>
+                            <nz-icon [nzType]="getNodeIconName(nn)" [style.color]="getNodeAccentColor(nn)"
+                                style="font-size:24px;"></nz-icon>
+                        </ng-template>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                {{ getNodeDisplayName(nn) }}</div>
+                            <div style="font-size:12px; color:#999;">Type: {{ nn.type }}</div>
+                            <div *ngIf="getNodeDescription(nn)"
+                                style="font-size:12px; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                {{ getNodeDescription(nn) }}</div>
+                            <div *ngIf="isPluginNode(nn)" style="font-size:11px; color:#8aa; margin-top:2px;">
+                                <ng-container *ngIf="getPluginInfo(nn) as info">
+                                    <span *ngIf="info.name">{{info.name}}</span>
+                                    <span *ngIf="info.version"> • v{{info.version}}</span>
+                                    <span *ngIf="info.author"> • {{info.author}}</span>
+                                    <span *ngIf="info.id"> • ID: {{info.id}}</span>
+                                </ng-container>
+                            </div>
+                        </div>
+                        <nz-icon nzType="arrow-right" style="font-size:16px; color:#666;"></nz-icon>
+                    </div>
+                </div>
+                <ng-template #noNextNodes>
+                    <div style="color:#999">No next nodes</div>
+                </ng-template>
+            </div>
+        </div>
+    </ng-container>
+</nz-modal>
+<nz-modal nzDraggable [(nzVisible)]="openSecretManagerForm" nzTitle="Secret Manager" [nzWidth]="'70%'" nzOkText="Ok"
+    nzCancelText="Cancel" (nzOnOk)="handleSecretManagerOk()" (nzOnCancel)="handleSecretManagerCancel()">
+    <ng-container *nzModalContent>
+        <app-form-viewer #secretPropertyPanel style="width: 100%;"
+         [preloadedSchema]="getFormSchemaForSecret()"
+            [hideHeaderActions]="true" (formValuesChange)="onFormSecretUpdate($event)">
+        </app-form-viewer>
+
+    </ng-container>
+</nz-modal>
+
+
+<nz-modal nzDraggable [(nzVisible)]="isEditOpen" nzTitle="Workflow" nzOkText="Ok" nzCancelText="Cancel"
+    (nzOnOk)="handleEditOk()" (nzOnCancel)="handleEditCancel()" >
+    <ng-container *nzModalContent>
+
+        <app-workflow-form #workflowform [controllers]="controllers" [setReadOnly]="setReadOnly" [workflowFormData]="selectedWorkflow"
+            (formUpdated)="onFormWorkflowUpdate($event)"></app-workflow-form>
+    </ng-container>
+</nz-modal>
+
+<nz-modal nzDraggable [(nzVisible)]="isRenameModalVisible" nzTitle="Title" nzOkText="Ok" nzCancelText="Cancel"
+    (nzOnOk)="handleOk()" (nzOnCancel)="handleCancel()">
+    <ng-container *nzModalContent>
+        <input nz-input placeholder="Basic usage" [(ngModel)]="renameValue" />
+    </ng-container>
+</nz-modal>
+
+<nz-modal nzDraggable [(nzVisible)]="isRunWorkflowOpen" nzTitle="Run Workflow" nzOkText="Run" nzCancelText="Cancel"
+    (nzOnOk)="runWorkflow('')" (nzOnCancel)="handleCloseRunWorkflow()">
+
+    <ng-container *nzModalContent>
+
+        <nz-divider nzDashed [nzText]="text">
+            <ng-template #text>
+                <nz-segmented [nzOptions]="options" (nzValueChange)="handleValueChange($event)" nzSize="small"
+                    [ngModel]="runOptionSelected" />
+            </ng-template>
+        </nz-divider>
+        <code-editor [style.width]="'100%'" [theme]="'dark'" [(ngModel)]="apiRequest" [style.height]="'200px'"
+            [theme]="'dark'" [lineWrapping]="true" [highlightWhitespace]="false" [language]="'json'"
+            [languages]="languages" />
+    </ng-container>
+</nz-modal>
+
+<ng-template #customMessageTemplate let-data="data">
+    {{data.message}}
+    <br>
+    <a (click)="gotoWorkflow(data)" *ngIf="data.id">Click to view >> {{data.id}} </a>
+
+</ng-template>
+
+<nz-modal nzDraggable [(nzVisible)]="isNoteEditModal" nzMask="false" [nzTitle]="markdownExpr" nzOkText="Done"
+    nzCancelText="Cancel" (nzOnCancel)="isNoteEditModal = false" (nzOnOk)="isNoteEditModal = false">
+
+    <ng-container *nzModalContent>
+
+        <span>Colors </span>
+        <div>
+            <button *ngFor="let item of noteColors" nz-button [style.backgroundColor]="item.bgColor"
+                [style.color]="item.darkColor" [style.borderColor]="item.darkColor" nzShape="circle" [nzSize]="'small'"
+                style="margin-right: 4px;" (click)="onNoteColorChange(item)">
+                <nz-icon nzType="x" />
+            </button>
+        </div>
+
+
+        <br>
+
+        Markdown Expression
+        <code-editor [style.width]="'100%'" [theme]="'dark'" [(ngModel)]="selectedNote.note" [style.height]="'300px'"
+            [theme]="'dark'" [lineWrapping]="true" [highlightWhitespace]="false" [language]="'json'"
+            [languages]="languages" />
+    </ng-container>
+</nz-modal>
+
+<ng-template #markdownExpr [nzModalTitle]>
+
+    <div style="display: flex; gap: 5px;"> Edit Note
+    </div>
+</ng-template>
+
+<div style="position: absolute;top: 130px;right: 10px;z-index: 1000;" *ngIf="!setReadOnly">
+    <nz-space [nzSize]="'small'" nzDirection="vertical">
+        <button *nzSpaceItem nz-button nzType="primary" nz-tooltip nzTooltipTitle="Save Workflow (Ctrl+S)"
+            (click)="saveWorkflow()" [nzSize]="'large'" [disabled]="isWorkflowRunning">
+            <nz-icon nzType="save" />
+        </button>
+        <button *nzSpaceItem nz-button nzType="default" nz-tooltip nzTooltipTitle="Add new block (Ctrl+B)"
+            (click)="toggleBlockDrawer()" [nzSize]="'large'" [disabled]="isWorkflowRunning">
+            <nz-icon nzType="plus" />
+        </button>
+
+
+
+        <button *nzSpaceItem nz-button nzType="default" nz-tooltip nzTooltipTitle="Add Note (Ctrl+M)"
+            (click)="addNotes()" [nzSize]="'large'" [disabled]="isWorkflowRunning">
+            <nz-icon nzType="file-text" />
+        </button>
+
+        <button *nzSpaceItem nz-button nzType="default" nz-tooltip nzTooltipTitle="Keyboard Shortcuts (Ctrl+/ or F1)"
+            (click)="showShortcutsHelp()" [nzSize]="'large'">
+            <nz-icon nzType="question-circle" />
+        </button>
+
+    </nz-space>
+</div>
+
+<!-- Keyboard Shortcuts Help Modal -->
+<nz-modal [(nzVisible)]="isShortcutsHelpVisible" nzTitle="Keyboard Shortcuts" [nzFooter]="null" [nzWidth]="600"
+    (nzOnCancel)="closeShortcutsHelp()">
+    <ng-container *nzModalContent>
+        <div style="padding: 16px;">
+            <nz-divider nzText="Workflow Actions" nzOrientation="left"></nz-divider>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="save" style="margin-right: 8px;"></nz-icon>
+                        Save Workflow
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+S</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="play-circle" style="margin-right: 8px;"></nz-icon>
+                        Run Workflow
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+R</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="edit" style="margin-right: 8px;"></nz-icon>
+                        Edit Workflow
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+E</kbd>
+                    </td>
+                </tr>
+            </table>
+
+            <nz-divider nzText="Canvas Actions" nzOrientation="left"></nz-divider>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="plus" style="margin-right: 8px;"></nz-icon>
+                        Add Block
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+B</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="file-text" style="margin-right: 8px;"></nz-icon>
+                        Add Note
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+M</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="delete" style="margin-right: 8px;"></nz-icon>
+                        Delete Selected
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Delete</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="zoom-in" style="margin-right: 8px;"></nz-icon>
+                        Zoom In
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+↑</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="zoom-out" style="margin-right: 8px;"></nz-icon>
+                        Zoom Out
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+↓</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="expand" style="margin-right: 8px;"></nz-icon>
+                        Fit to Screen
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+L</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="expand" style="margin-right: 8px;"></nz-icon>
+                        Multiple Mouse Drag Selection
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Shift+Mouse
+                            Left Click</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="expand" style="margin-right: 8px;"></nz-icon>
+                        Multiple Selection
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+Mouse
+                            Left Click</kbd>
+                    </td>
+                </tr>
+            </table>
+
+            <nz-divider nzText="Navigation" nzOrientation="left"></nz-divider>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="close" style="margin-right: 8px;"></nz-icon>
+                        Close Panel/Modal
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Esc</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="undo" style="margin-right: 8px;"></nz-icon>
+                        Undo
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+Z</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="redo" style="margin-right: 8px;"></nz-icon>
+                        Redo
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+Shift+Z</kbd>
+                        or
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+Y</kbd>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #3a3a3a;">
+                    <td style="padding: 12px 8px; font-weight: 500;">
+                        <nz-icon nzType="question-circle" style="margin-right: 8px;"></nz-icon>
+                        Show Shortcuts
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; color: var(--text-secondary);">
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">Ctrl+/</kbd>
+                        or
+                        <kbd
+                            style="background: #2a2a2a; padding: 4px 8px; border-radius: 4px; font-family: monospace;">F1</kbd>
+                    </td>
+                </tr>
+            </table>
+
+            <div
+                style="margin-top: 20px; padding: 12px; background: #2a2a2a; border-radius: 8px; font-size: 12px; color: var(--text-secondary);">
+                <nz-icon nzType="info-circle" style="margin-right: 8px;"></nz-icon>
+                <strong>Note:</strong> On Mac, use <kbd
+                    style="background: #2e2e2e; padding: 2px 6px; border-radius: 3px;">Cmd</kbd> instead of <kbd
+                    style="background: #2e2e2e; padding: 2px 6px; border-radius: 3px;">Ctrl</kbd>
+            </div>
+        </div>
+    </ng-container>
+</nz-modal>
+
+<!-- Plugin Detail Modal -->
+<app-plugin-detail [(visible)]="isPluginDetailVisible" [pluginId]="selectedPluginId" (onClose)="closePluginDetail()">
+</app-plugin-detail>
+
+<!-- Plugin Marketplace Modal -->
+<app-marketplace [(visible)]="isMarketplaceVisible" (onClose)="closeMarketplace()"
+    (onPluginInstalled)="onPluginInstalled($event)">
+</app-marketplace>

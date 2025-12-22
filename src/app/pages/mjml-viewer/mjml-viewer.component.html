@@ -1,0 +1,92 @@
+<div class="mjml-viewer-container">
+  <!-- Header -->
+  <div class="mjml-viewer-header">
+    <h2><nz-icon nzType="eye"></nz-icon> MJML Email Viewer</h2>
+    <div class="header-actions">
+      <label nz-button nzType="default">
+        <nz-icon nzType="upload"></nz-icon> Load MJML
+        <input type="file" accept=".mjml,.xml" (change)="loadMjmlFile($event)" style="display: none;">
+      </label>
+      <button nz-button nzType="default" (click)="toggleCode()">
+        <nz-icon [nzType]="showCode() ? 'eye-invisible' : 'code'"></nz-icon>
+        {{ showCode() ? 'Hide Code' : 'Show Code' }}
+      </button>
+      <button nz-button nzType="default" (click)="refresh()">
+        <nz-icon nzType="reload"></nz-icon> Refresh
+      </button>
+      <button nz-button nzType="default" (click)="printPreview()">
+        <nz-icon nzType="printer"></nz-icon> Print
+      </button>
+      <button nz-button nzType="primary" (click)="downloadHtml()">
+        <nz-icon nzType="html5"></nz-icon> Download HTML
+      </button>
+      <button nz-button nzType="primary" (click)="downloadMjml()">
+        <nz-icon nzType="export"></nz-icon> Download MJML
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="mjml-viewer-content">
+    <!-- Code Panel (Optional) -->
+    <div class="code-panel" *ngIf="showCode()"
+         nz-resizable
+         [nzMinWidth]="300"
+         [nzMaxWidth]="800"
+         [style.width.px]="codeWidth"
+         (nzResize)="onCodeResize($event)">
+      <nz-resize-handle nzDirection="right"></nz-resize-handle>
+      <div class="panel-header">
+        <h3><nz-icon nzType="code"></nz-icon> MJML Code</h3>
+      </div>
+      <code-editor 
+        [style.height]="'calc(100vh - 120px)'" 
+        [ngModel]="mjmlCode()"
+        [theme]="editorOptions.theme"
+        [disabled]="editorOptions.disabled"
+        [readonly]="editorOptions.readOnly"
+        [placeholder]="editorOptions.placeholder"
+        [indentWithTab]="editorOptions.indentWithTab"
+        [indentUnit]="editorOptions.indentUnit"
+        [lineWrapping]="editorOptions.lineWrapping"
+        [highlightWhitespace]="editorOptions.highlightWhitespace"
+        [language]="editorOptions.language">
+      </code-editor>
+    </div>
+
+    <!-- Preview Panel -->
+    <div class="preview-panel" [class.full-width]="!showCode()">
+      <div class="panel-header">
+        <h3><nz-icon nzType="eye"></nz-icon> Email Preview</h3>
+        <nz-spin *ngIf="isLoading()" nzSimple [nzSize]="'small'"></nz-spin>
+      </div>
+      
+      <div class="preview-content">
+        <div *ngIf="!mjmlCode()" class="empty-state">
+          <nz-empty 
+            nzNotFoundImage="simple"
+            nzNotFoundContent="No MJML content loaded. Upload a file or paste MJML code to view.">
+            <label nz-button nzType="primary" nz-empty-default>
+              <nz-icon nzType="upload"></nz-icon> Load MJML File
+              <input type="file" accept=".mjml,.xml" (change)="loadMjmlFile($event)" style="display: none;">
+            </label>
+          </nz-empty>
+        </div>
+
+        <iframe 
+          *ngIf="previewHtml() && mjmlCode()"
+          [srcdoc]="previewHtml()"
+          class="preview-iframe"
+          sandbox="allow-same-origin allow-popups">
+        </iframe>
+
+        <div *ngIf="mjmlCode() && !previewHtml() && !isLoading()" class="preview-error">
+          <nz-empty 
+            nzNotFoundImage="simple"
+            nzNotFoundContent="Failed to render preview. Check MJML syntax.">
+          </nz-empty>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

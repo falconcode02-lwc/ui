@@ -1,0 +1,660 @@
+<div class="mjml-builder-container">
+    <!-- Header -->
+    <div class="mjml-builder-header">
+        <h2><nz-icon nzType="mail"></nz-icon> MJML Email Builder</h2>
+        <div class="header-actions">
+            <button nz-button nzType="default" (click)="togglePreview()">
+                <nz-icon [nzType]="showPreview() ? 'eye-invisible' : 'eye'"></nz-icon>
+                {{ showPreview() ? 'Hide Preview' : 'Show Preview' }}
+            </button>
+            <button nz-button nzType="default" (click)="toggleCodeEditor()">
+                <nz-icon [nzType]="showCodeEditor() ? 'eye-invisible' : 'code'"></nz-icon>
+                {{ showCodeEditor() ? 'Hide Code' : 'Show Code' }}
+            </button>
+            <button nz-button nzType="primary" (click)="exportMjml()">
+                <nz-icon nzType="export"></nz-icon> Export MJML
+            </button>
+            <button nz-button nzType="primary" (click)="exportHtml()">
+                <nz-icon nzType="html5"></nz-icon> Export HTML
+            </button>
+            <label nz-button nzType="default" style="margin: 0;">
+                <nz-icon nzType="import"></nz-icon> Import MJML
+                <input type="file" accept=".mjml" (change)="importMjml($event)" style="display: none;">
+            </label>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="mjml-builder-content">
+        <!-- Optional Code Editor Panel -->
+        <div class="code-editor-panel" *ngIf="showCodeEditor()">
+            <div class="panel-header">
+                <h3>MJML Code</h3>
+            </div>
+            <code-editor [style.height]="'calc(100vh - 200px)'" [ngModel]="mjmlCode()"
+                (ngModelChange)="mjmlCode.set($event)" [theme]="editorOptions.theme" [setup]="editorOptions.setup"
+                [disabled]="editorOptions.disabled" [readonly]="editorOptions.readonly"
+                [placeholder]="editorOptions.placeholder" [indentWithTab]="editorOptions.indentWithTab"
+                [extensions]="extensions" [indentUnit]="editorOptions.indentUnit"
+                [lineWrapping]="editorOptions.lineWrapping" [highlightWhitespace]="editorOptions.highlightWhitespace"
+                [language]="editorOptions.language" [languages]="languages">
+            </code-editor>
+        </div>
+
+        <!-- Builder Panels: Preview (left) + Canvas (center) + Component Palette (right) -->
+        <div class="builder-panels" [class.with-code]="showCodeEditor()">
+            <!-- Preview Panel with Resizable -->
+            <div class="preview-panel" *ngIf="showPreview()"
+                nz-resizable
+                [nzMinWidth]="300"
+                [nzMaxWidth]="800"
+                [style.width.px]="previewWidth"
+                (nzResize)="onPreviewResize($event)">
+                <nz-resize-handle nzDirection="right"></nz-resize-handle>
+                <div class="panel-header">
+                    <h3><nz-icon nzType="eye"></nz-icon> Live Preview</h3>
+                    <button nz-button nzSize="small" nzType="text" (click)="updatePreview()" nzTitle="Refresh preview">
+                        <nz-icon nzType="reload"></nz-icon>
+                    </button>
+                </div>
+                <div class="preview-content">
+                    <iframe 
+                        *ngIf="previewHtml()"
+                        [srcdoc]="previewHtml()"
+                        class="preview-iframe"
+                        sandbox="allow-same-origin">
+                    </iframe>
+                    <div *ngIf="!previewHtml()" class="preview-empty">
+                        <nz-empty nzNotFoundContent="Add components to see preview"></nz-empty>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas -->
+            <div class="canvas-panel" cdkDropListGroup>
+                <div class="panel-header">
+                    <h3>Email Canvas</h3>
+                </div>
+
+                <!-- Canvas Action Bar -->
+                <div class="canvas-action-bar">
+                    <div class="global-actions">
+                        <button nz-button nzType="primary" nzSize="small" (click)="addSection()">
+                            <nz-icon nzType="plus"></nz-icon> Add Section
+                        </button>
+                        <button nz-button nzType="default" nzSize="small" nzDanger (click)="clearCanvas()">
+                            <nz-icon nzType="reload"></nz-icon> Clear
+                        </button>
+                    </div>
+                </div>
+
+                <div class="email-canvas">
+                    <div *ngIf="components().length === 0" class="empty-canvas">
+                        <nz-empty nzNotFoundContent="Click 'Add Section' to start building"></nz-empty>
+                    </div>
+
+                    <div *ngFor="let component of components(); trackBy: trackByComponentId" class="component-item"
+                        [class.selected]="selectedComponent()?.id === component.id"
+                        (click)="selectComponent(component)">
+
+                        <div class="component-header">
+                            <div class="component-type-badge">
+                                <nz-icon [nzType]="component.icon"></nz-icon>
+                                <span>{{ component.label }}</span>
+                            </div>
+                        </div>
+
+                        <div class="component-actions">
+                            <button nz-button nzType="text" nzSize="small"
+                                (click)="moveComponentInCanvas(component.id, 'up'); $event.stopPropagation()"
+                                nzTitle="Move up">
+                                <nz-icon nzType="arrow-up"></nz-icon>
+                            </button>
+                            <button nz-button nzType="text" nzSize="small"
+                                (click)="moveComponentInCanvas(component.id, 'down'); $event.stopPropagation()"
+                                nzTitle="Move down">
+                                <nz-icon nzType="arrow-down"></nz-icon>
+                            </button>
+                            <button nz-button nzType="text" nzSize="small"
+                                (click)="selectComponent(component); $event.stopPropagation()"
+                                nzTitle="Edit">
+                                <nz-icon nzType="edit"></nz-icon>
+                            </button>
+                            <button nz-button nzType="text" nzSize="small" nzDanger
+                                (click)="deleteComponent(component.id); $event.stopPropagation()"
+                                nzTitle="Delete">
+                                <nz-icon nzType="delete"></nz-icon>
+                            </button>
+                            <span cdkDragHandle class="drag-handle">
+                                <nz-icon nzType="drag"></nz-icon>
+                            </span>
+                        </div>
+
+                        <div class="component-content" [ngSwitch]="component.type">
+                            <!-- Text -->
+                            <div *ngSwitchCase="'text'" [style.padding]="getPadding(component.properties)"
+                                [style.fontSize]="component.properties.fontSize"
+                                [style.color]="component.properties.color"
+                                [style.textAlign]="component.properties.align">
+                                {{ component.properties.content }}
+                            </div>
+
+                            <!-- Button -->
+                            <div *ngSwitchCase="'button'" [style.textAlign]="component.properties.align"
+                                [style.padding]="getPadding(component.properties)">
+                                <a [href]="component.properties.href"
+                                    [style.backgroundColor]="component.properties.backgroundColor"
+                                    [style.color]="component.properties.color"
+                                    [style.borderRadius]="component.properties.borderRadius"
+                                    style="display: inline-block; padding: 12px 24px; text-decoration: none;">
+                                    {{ component.properties.content }}
+                                </a>
+                            </div>
+
+                            <!-- Image -->
+                            <div *ngSwitchCase="'image'" [style.textAlign]="component.properties.align"
+                                [style.padding]="getPadding(component.properties)">
+                                <img [src]="component.properties.src" [alt]="component.properties.alt"
+                                    [style.width]="component.properties.width" style="max-width: 100%;">
+                            </div>
+
+                            <!-- Divider -->
+                            <div *ngSwitchCase="'divider'" [style.padding]="getPadding(component.properties)">
+                                <hr [style.borderColor]="component.properties.borderColor"
+                                    [style.borderWidth]="component.properties.borderWidth" style="border-style: solid;">
+                            </div>
+
+                            <!-- Spacer -->
+                            <div *ngSwitchCase="'spacer'" [style.height]="component.properties.spacerHeight"
+                                style="background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px);">
+                            </div>
+
+                            <!-- Social -->
+                            <div *ngSwitchCase="'social'" [style.textAlign]="component.properties.align"
+                                [style.padding]="getPadding(component.properties)">
+                                <div [style.display]="component.properties.mode === 'horizontal' ? 'inline-flex' : 'flex'"
+                                    [style.flexDirection]="component.properties.mode === 'horizontal' ? 'row' : 'column'"
+                                    style="gap: 8px;">
+                                    <a *ngFor="let link of component.properties.socialLinks" [href]="link.href"
+                                        style="text-decoration: none;">
+                                        <nz-icon [nzType]="link.name"
+                                            [style.fontSize]="component.properties.iconSize"></nz-icon>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Section -->
+                            <div *ngSwitchCase="'section'"
+                                [style.backgroundColor]="component.properties.backgroundColor"
+                                [style.padding]="getPadding(component.properties)">
+                                
+                                <div class="section-action-bar">
+                                    <button nz-button nzType="dashed" nzSize="small" (click)="addColumnToSection(component); $event.stopPropagation()">
+                                        <nz-icon nzType="plus"></nz-icon> Add Column
+                                    </button>
+                                </div>
+
+                                <div class="section-columns-container">
+                                    <ng-container *ngIf="component.children && component.children.length > 0; else emptySection">
+                                        <div *ngFor="let column of component.children; trackBy: trackByComponentId"
+                                            [style.backgroundColor]="column.properties.backgroundColor"
+                                            class="section-column-container">
+
+                                            <div class="column-header">
+                                                <div class="column-type-badge">
+                                                    <nz-icon [nzType]="column.icon"></nz-icon>
+                                                    <span>{{ column.label }}</span>
+                                                </div>
+                                                <div class="column-actions-inline">
+                                                    <button nz-button nzType="text" nzSize="small"
+                                                        (click)="selectComponent(column); $event.stopPropagation()"
+                                                        nzTitle="Edit">
+                                                        <nz-icon nzType="edit"></nz-icon>
+                                                    </button>
+                                                    <button nz-button nzType="text" nzSize="small" nzDanger
+                                                        (click)="deleteChildComponent(component, column.id); $event.stopPropagation()"
+                                                        nzTitle="Delete">
+                                                        <nz-icon nzType="delete"></nz-icon>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="column-content-area">
+                                                <div class="column-add-button-container">
+                                                    <button nz-button nzType="dashed" nzSize="small" nz-dropdown [nzDropdownMenu]="contentMenu"
+                                                        (click)="$event.stopPropagation()">
+                                                        <nz-icon nzType="plus"></nz-icon> Add Content
+                                                    </button>
+                                                    <nz-dropdown-menu #contentMenu="nzDropdownMenu">
+                                                        <ul nz-menu>
+                                                            <li nz-menu-item (click)="addContentToColumn(column, 'text')">
+                                                                <nz-icon nzType="font-size"></nz-icon> Text
+                                                            </li>
+                                                            <li nz-menu-item (click)="addContentToColumn(column, 'button')">
+                                                                <nz-icon nzType="link"></nz-icon> Button
+                                                            </li>
+                                                            <li nz-menu-item (click)="addContentToColumn(column, 'image')">
+                                                                <nz-icon nzType="picture"></nz-icon> Image
+                                                            </li>
+                                                            <li nz-menu-item (click)="addContentToColumn(column, 'divider')">
+                                                                <nz-icon nzType="minus"></nz-icon> Divider
+                                                            </li>
+                                                            <li nz-menu-item (click)="addContentToColumn(column, 'spacer')">
+                                                                <nz-icon nzType="column-height"></nz-icon> Spacer
+                                                            </li>
+                                                            <li nz-menu-item (click)="addContentToColumn(column, 'social')">
+                                                                <nz-icon nzType="share-alt"></nz-icon> Social
+                                                            </li>
+                                                            <li nz-menu-item (click)="addContentToColumn(column, 'raw')">
+                                                                <nz-icon nzType="code"></nz-icon> Raw HTML
+                                                            </li>
+                                                        </ul>
+                                                    </nz-dropdown-menu>
+                                                </div>
+
+                                                <div *ngFor="let item of column.children; trackBy: trackByComponentId"
+                                                    class="nested-content-item"
+                                                    (click)="selectComponent(item); $event.stopPropagation()">
+                                                    
+                                                    <div class="nested-item-header">
+                                                        <div class="nested-type-badge">
+                                                            <nz-icon [nzType]="item.icon"></nz-icon>
+                                                            <span>{{ item.label }}</span>
+                                                        </div>
+                                                        <div class="nested-item-actions">
+                                                            <button nz-button nzType="text" nzSize="small"
+                                                                (click)="selectComponent(item); $event.stopPropagation()"
+                                                                nzTitle="Edit">
+                                                                <nz-icon nzType="edit"></nz-icon>
+                                                            </button>
+                                                            <button nz-button nzType="text" nzSize="small" nzDanger
+                                                                (click)="deleteChildComponent(column, item.id); $event.stopPropagation()"
+                                                                nzTitle="Delete">
+                                                                <nz-icon nzType="close"></nz-icon>
+                                                            </button>
+                                                            <span cdkDragHandle class="drag-handle" (click)="$event.stopPropagation()">
+                                                                <nz-icon nzType="drag"></nz-icon>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="nested-item-preview" [ngSwitch]="item.type">
+                                                        <!-- Text Preview -->
+                                                        <div *ngSwitchCase="'text'" 
+                                                            [style.fontSize]="item.properties.fontSize"
+                                                            [style.color]="item.properties.color"
+                                                            [style.textAlign]="item.properties.align"
+                                                            class="preview-text">
+                                                            {{ item.properties.content }}
+                                                        </div>
+                                                        
+                                                        <!-- Button Preview -->
+                                                        <div *ngSwitchCase="'button'" 
+                                                            [style.textAlign]="item.properties.align"
+                                                            class="preview-button-wrapper">
+                                                            <span class="preview-button"
+                                                                [style.backgroundColor]="item.properties.backgroundColor"
+                                                                [style.color]="item.properties.color"
+                                                                [style.borderRadius]="item.properties.borderRadius">
+                                                                {{ item.properties.content }}
+                                                            </span>
+                                                        </div>
+                                                        
+                                                        <!-- Image Preview -->
+                                                        <div *ngSwitchCase="'image'" 
+                                                            [style.textAlign]="item.properties.align"
+                                                            class="preview-image-wrapper">
+                                                            <img [src]="item.properties.src" 
+                                                                [alt]="item.properties.alt"
+                                                                class="preview-image">
+                                                        </div>
+                                                        
+                                                        <!-- Divider Preview -->
+                                                        <div *ngSwitchCase="'divider'" class="preview-divider">
+                                                            <hr [style.borderColor]="item.properties.borderColor"
+                                                                [style.borderWidth]="item.properties.borderWidth">
+                                                        </div>
+                                                        
+                                                        <!-- Spacer Preview -->
+                                                        <div *ngSwitchCase="'spacer'" class="preview-spacer"
+                                                            [style.height]="item.properties.spacerHeight">
+                                                        </div>
+                                                        
+                                                        <!-- Social Preview -->
+                                                        <div *ngSwitchCase="'social'" class="preview-social">
+                                                            <span *ngFor="let link of item.properties.socialLinks" class="social-icon">
+                                                                {{ link.name }}
+                                                            </span>
+                                                        </div>
+                                                        
+                                                        <!-- Raw HTML Preview -->
+                                                        <div *ngSwitchCase="'raw'" class="preview-raw">
+                                                            <code>{{ item.properties.content }}</code>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </ng-container>
+
+                                    <ng-template #emptySection>
+                                        <div class="section-empty-drop-zone">
+                                            Drop columns here
+                                        </div>
+                                    </ng-template>
+                                </div>
+                            </div>
+
+                            <!-- Column (standalone) -->
+                            <div *ngSwitchCase="'column'" [style.backgroundColor]="component.properties.backgroundColor"
+                                [style.padding]="getPadding(component.properties)" class="standalone-column">
+                                <div cdkDropList class="column-drop-zone" [cdkDropListData]="component.children || []"
+                                    (cdkDropListDropped)="onColumnDrop($event, component)"
+                                    [id]="'column-' + component.id" [cdkDropListConnectedTo]="getAllDropZoneIds()">
+
+                                    <div *ngIf="!component.children || component.children.length === 0"
+                                        class="column-empty">Drop content here</div>
+
+                                    <div *ngFor="let item of component.children; trackBy: trackByComponentId"
+                                        class="nested-content-item" cdkDrag>
+                                        <div class="nested-item-content">
+                                            <nz-icon [nzType]="item.icon"></nz-icon>
+                                            <span>{{ item.label }}</span>
+                                        </div>
+                                        <div class="nested-item-actions">
+                                            <button nz-button nzType="text" nzSize="small"
+                                                (click)="selectComponent(item); $event.stopPropagation()">
+                                                <nz-icon nzType="edit"></nz-icon>
+                                            </button>
+                                            <button nz-button nzType="text" nzSize="small" nzDanger
+                                                (click)="deleteChildComponent(component, item.id); $event.stopPropagation()">
+                                                <nz-icon nzType="close"></nz-icon>
+                                            </button>
+                                            <span cdkDragHandle class="drag-handle"><nz-icon
+                                                    nzType="drag"></nz-icon></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Raw HTML -->
+                            <div *ngSwitchCase="'raw'"
+                                style="padding: 8px; border: 1px solid rgba(255, 109, 90, 0.3); background: rgba(255, 109, 90, 0.05); border-radius: 4px;">
+                                <div style="color: #ff6d5a; font-size: 12px; margin-bottom: 4px;">
+                                    <i nz-icon nzType="code"></i> Raw HTML ({{ component.properties.content?.length || 0
+                                    }} characters)
+                                </div>
+                                <div
+                                    style="font-size: 11px; color: #666; font-family: monospace; max-height: 100px; overflow: auto;">
+                                    {{ component.properties.content }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Components Panel -->
+            <!-- <div class="components-panel">
+                <div class="panel-header">
+                    <h3>Components</h3>
+                </div>
+                <div class="component-templates" cdkDropList id="componentTemplates"
+                    [cdkDropListData]="componentTemplates" [cdkDropListConnectedTo]="getAllDropZoneIds()"
+                    cdkDropListSortingDisabled>
+                    <div *ngFor="let template of componentTemplates; trackBy: trackByTemplateType"
+                        class="component-template-item" cdkDrag [cdkDragData]="template">
+                        <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                        <div class="component-template-content">
+                            <nz-icon [nzType]="template.icon" class="component-icon"></nz-icon>
+                            <div class="component-info">
+                                <div class="component-label">{{ template.label }}</div>
+                                <div class="component-description">{{ template.description }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+        </div>
+    </div>
+
+    <!-- Properties Drawer -->
+    <nz-drawer [nzVisible]="isPropertiesDrawerVisible()" [nzWidth]="400" nzPlacement="right"
+        nzTitle="Component Properties" (nzOnClose)="closePropertiesDrawer()">
+        <ng-container *nzDrawerContent>
+            <div *ngIf="selectedComponent()" class="properties-panel">
+                <!-- Common Properties -->
+                <h4>Spacing</h4>
+                <nz-form-item>
+                    <nz-form-label>Padding Top</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input [(ngModel)]="selectedComponent()!.properties.paddingTop" 
+                               (ngModelChange)="onPropertyChange()" placeholder="10px">
+                    </nz-form-control>
+                </nz-form-item>
+                <nz-form-item>
+                    <nz-form-label>Padding Bottom</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input [(ngModel)]="selectedComponent()!.properties.paddingBottom" 
+                               (ngModelChange)="onPropertyChange()" placeholder="10px">
+                    </nz-form-control>
+                </nz-form-item>
+                <nz-form-item>
+                    <nz-form-label>Padding Left</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input [(ngModel)]="selectedComponent()!.properties.paddingLeft" placeholder="25px">
+                    </nz-form-control>
+                </nz-form-item>
+                <nz-form-item>
+                    <nz-form-label>Padding Right</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input [(ngModel)]="selectedComponent()!.properties.paddingRight" placeholder="25px">
+                    </nz-form-control>
+                </nz-form-item>
+
+                <nz-divider></nz-divider>
+
+                <!-- Text Properties -->
+                <div *ngIf="selectedComponent()!.type === 'text'">
+                    <h4>Text Properties</h4>
+                    <nz-form-item>
+                        <nz-form-label>Content</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input [(ngModel)]="selectedComponent()!.properties.content"
+                                placeholder="Enter text" rows="4"></textarea>
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-label>Font Size</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedComponent()!.properties.fontSize" placeholder="14px">
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-label>Color</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input type="color" [(ngModel)]="selectedComponent()!.properties.color">
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-label>Alignment</nz-form-label>
+                        <nz-form-control>
+                            <nz-select [(ngModel)]="selectedComponent()!.properties.align" style="width: 100%;">
+                                <nz-option nzValue="left" nzLabel="Left"></nz-option>
+                                <nz-option nzValue="center" nzLabel="Center"></nz-option>
+                                <nz-option nzValue="right" nzLabel="Right"></nz-option>
+                                <nz-option nzValue="justify" nzLabel="Justify"></nz-option>
+                            </nz-select>
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+
+                <!-- Button Properties -->
+                <div *ngIf="selectedComponent()!.type === 'button'">
+                    <h4>Button Properties</h4>
+                    <nz-form-item>
+                        <nz-form-label>Button Text</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedComponent()!.properties.content"
+                                placeholder="Click Me">
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-label>Link URL</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedComponent()!.properties.href"
+                                placeholder="https://example.com">
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-label>Background Color</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input type="color" [(ngModel)]="selectedComponent()!.properties.backgroundColor">
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-label>Text Color</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input type="color" [(ngModel)]="selectedComponent()!.properties.color">
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+
+                <!-- Image Properties -->
+                <div *ngIf="selectedComponent()!.type === 'image'">
+                    <h4>Image Properties</h4>
+                    <nz-form-item>
+                        <nz-form-label>Image URL</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedComponent()!.properties.src"
+                                placeholder="https://example.com/image.jpg">
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-label>Alt Text</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedComponent()!.properties.alt"
+                                placeholder="Image description">
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-label>Width</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedComponent()!.properties.width" placeholder="600px">
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+
+                <!-- Divider Properties -->
+                <div *ngIf="selectedComponent()!.type === 'divider'">
+                    <h4>Divider Properties</h4>
+                    <nz-form-item>
+                        <nz-form-label>Border Color</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input type="color" [(ngModel)]="selectedComponent()!.properties.borderColor">
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-label>Border Width</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedComponent()!.properties.borderWidth" placeholder="1px">
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+
+                <!-- Spacer Properties -->
+                <div *ngIf="selectedComponent()!.type === 'spacer'">
+                    <h4>Spacer Properties</h4>
+                    <nz-form-item>
+                        <nz-form-label>Height</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedComponent()!.properties.spacerHeight"
+                                placeholder="20px">
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+
+                <!-- Social Properties -->
+                <div *ngIf="selectedComponent()!.type === 'social'">
+                    <h4>Social Properties</h4>
+                    <nz-form-item>
+                        <nz-form-label>Mode</nz-form-label>
+                        <nz-form-control>
+                            <nz-select [(ngModel)]="selectedComponent()!.properties.mode" style="width: 100%;">
+                                <nz-option nzValue="horizontal" nzLabel="Horizontal"></nz-option>
+                                <nz-option nzValue="vertical" nzLabel="Vertical"></nz-option>
+                            </nz-select>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-divider nzText="Social Links"></nz-divider>
+
+                    <div *ngFor="let link of selectedComponent()!.properties.socialLinks; let i = index"
+                        style="margin-bottom: 12px;">
+                        <div style="display: flex; gap: 8px; align-items: flex-start;">
+                            <nz-select [(ngModel)]="link.name" style="flex: 1;">
+                                <nz-option nzValue="facebook" nzLabel="Facebook"></nz-option>
+                                <nz-option nzValue="twitter" nzLabel="Twitter"></nz-option>
+                                <nz-option nzValue="linkedin" nzLabel="LinkedIn"></nz-option>
+                                <nz-option nzValue="instagram" nzLabel="Instagram"></nz-option>
+                                <nz-option nzValue="youtube" nzLabel="YouTube"></nz-option>
+                                <nz-option nzValue="github" nzLabel="GitHub"></nz-option>
+                            </nz-select>
+                            <input nz-input [(ngModel)]="link.href" placeholder="https://..." style="flex: 1.5;">
+                            <button nz-button nzType="text" nzDanger nzSize="small" (click)="removeSocialLink(i)">
+                                <nz-icon nzType="close"></nz-icon>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button nz-button nzType="dashed" nzBlock (click)="addSocialLink()">
+                        <nz-icon nzType="plus"></nz-icon> Add Social Link
+                    </button>
+                </div>
+
+                <!-- Section Properties -->
+                <div *ngIf="selectedComponent()!.type === 'section'">
+                    <h4>Section Properties</h4>
+                    <nz-form-item>
+                        <nz-form-label>Background Color</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input type="color" [(ngModel)]="selectedComponent()!.properties.backgroundColor">
+                        </nz-form-control>
+                    </nz-form-item>
+                    <nz-form-item>
+                        <nz-form-control>
+                            <label nz-checkbox [(ngModel)]="selectedComponent()!.properties.fullWidth">Full
+                                Width</label>
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+
+                <!-- Column Properties -->
+                <div *ngIf="selectedComponent()!.type === 'column'">
+                    <h4>Column Properties</h4>
+                    <nz-form-item>
+                        <nz-form-label>Background Color</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input type="color" [(ngModel)]="selectedComponent()!.properties.backgroundColor">
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+
+                <!-- Raw HTML Properties -->
+                <div *ngIf="selectedComponent()!.type === 'raw'">
+                    <h4>Raw HTML Properties</h4>
+                    <nz-form-item>
+                        <nz-form-label>HTML Content</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input [(ngModel)]="selectedComponent()!.properties.content"
+                                placeholder="Enter your custom HTML code here..."
+                                [nzAutosize]="{ minRows: 10, maxRows: 20 }"></textarea>
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+            </div>
+        </ng-container>
+    </nz-drawer>
+</div>

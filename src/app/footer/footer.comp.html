@@ -1,0 +1,16 @@
+<div class="bottom-panel">
+    <div class="bottom-left"> <span class="footter-chip blue">FalconFlow &#64;2025</span></div>
+    <div class="bottom-center">
+
+        <span>{{centerMsg}}</span>
+    </div>
+    <div class="bottom-right">
+        <span style="margin-left: 10px;align-self: flex-end;" *ngIf="status.line>-1">Ln
+            {{status.line}}, Col {{status.column}} Wrd:
+            {{status.wordCount}}
+        </span>
+
+        <span class="footter-chip blue">Version {{version}}</span>
+    </div>
+
+</div>

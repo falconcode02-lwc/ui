@@ -1,0 +1,116 @@
+{
+  "title": "Product Selection Form",
+  "description": "Example of dependent dropdowns using template expressions",
+  "height": "100%",
+  "width": "100%",
+  "submitUrl": "https://api.example.com/submit",
+  "successMessage": "Your selection has been saved!",
+  "errorMessage": "Failed to save selection. Please try again.",
+  "submitButtonLabel": "Place Order",
+  "resetButtonLabel": "Clear Form",
+  "showResetButton": true,
+  "fields": [
+    {
+      "id": "category",
+      "type": "select",
+      "label": "Product Category",
+      "placeholder": "Select a category",
+      "required": true,
+      "icon": "appstore",
+      "info": "Choose the main product category",
+      "defaultVisible": true,
+      "defaultEnabled": true,
+      "multiple": false,
+      "apiBinding": {
+        "url": "https://api.example.com/categories",
+        "method": "GET",
+        "keyProperty": "id",
+        "valueProperty": "name",
+        "headers": [
+          {
+            "key": "Authorization",
+            "value": "Bearer your-token-here"
+          }
+        ]
+      }
+    },
+    {
+      "id": "subcategory",
+      "type": "select",
+      "label": "Subcategory",
+      "placeholder": "Select category first",
+      "required": true,
+      "icon": "bars",
+      "info": "Options will load based on selected category",
+      "defaultVisible": true,
+      "defaultEnabled": true,
+      "multiple": false,
+      "apiBinding": {
+        "url": "https://api.example.com/subcategories?categoryId={{category}}",
+        "method": "GET",
+        "keyProperty": "id",
+        "valueProperty": "name",
+        "headers": [
+          {
+            "key": "Authorization",
+            "value": "Bearer your-token-here"
+          }
+        ]
+      }
+    },
+    {
+      "id": "product",
+      "type": "select",
+      "label": "Product",
+      "placeholder": "Select category and subcategory first",
+      "required": true,
+      "icon": "shopping",
+      "info": "Available products based on your selections",
+      "defaultVisible": true,
+      "defaultEnabled": true,
+      "multiple": false,
+      "apiBinding": {
+        "url": "https://api.example.com/products",
+        "method": "POST",
+        "keyProperty": "data.sku",
+        "valueProperty": "data.name",
+        "bodyData": {
+          "categoryId": "{{category}}",
+          "subcategoryId": "{{subcategory}}",
+          "inStock": true
+        },
+        "headers": [
+          {
+            "key": "Authorization",
+            "value": "Bearer your-token-here"
+          },
+          {
+            "key": "X-API-Key",
+            "value": "your-api-key"
+          }
+        ]
+      }
+    },
+    {
+      "id": "quantity",
+      "type": "number",
+      "label": "Quantity",
+      "placeholder": "Enter quantity",
+      "required": true,
+      "icon": "number",
+      "defaultValue": 1,
+      "defaultVisible": true,
+      "defaultEnabled": true
+    },
+    {
+      "id": "notes",
+      "type": "textarea",
+      "label": "Additional Notes",
+      "placeholder": "Any special requirements or notes",
+      "required": false,
+      "icon": "edit",
+      "defaultVisible": true,
+      "defaultEnabled": true
+    }
+  ]
+}

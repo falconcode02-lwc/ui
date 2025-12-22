@@ -1,0 +1,1217 @@
+<div class="form-builder-container">
+
+
+    <nz-page-header class="page-action" nzSize="small">
+        <nz-page-header-title>
+            <nz-icon nzType="form" nzTheme="outline"></nz-icon>
+            Form Builder
+        </nz-page-header-title>
+        <nz-page-header-subtitle>
+
+        </nz-page-header-subtitle>
+        <nz-page-header-extra>
+            <nz-space>
+                <button nzShape="round" *nzSpaceItem nz-button nzType="default" (click)="navigateToFormList()"
+                    nz-tooltip nzTooltipTitle="Back to Forms List">
+                    <nz-icon nzType="unordered-list"></nz-icon>
+                    List
+                </button>
+                <button nzShape="round" *nzSpaceItem nz-button nzType="default" (click)="openFormConfig()" nz-tooltip
+                    nzTooltipTitle="Form Configuration">
+                    <nz-icon nzType="setting"></nz-icon>
+                    Config
+                </button>
+                <button nzShape="round" *nzSpaceItem nz-button nzType="default" (click)="togglePreview()" nz-tooltip
+                    [nzTooltipTitle]="isPreviewMode() ? 'Edit Mode' : 'Preview Mode'">
+                    <nz-icon [nzType]="isPreviewMode() ? 'edit' : 'eye'"></nz-icon>
+                    {{ isPreviewMode() ? 'Edit' : 'Preview' }}
+                </button>
+                <label *nzSpaceItem nz-button nzType="default" for="import-file" nz-tooltip
+                    nzTooltipTitle="Import Form JSON">
+                    <nz-icon nzType="upload"></nz-icon>
+                    Import
+                    <input id="import-file" type="file" accept=".json" (change)="importForm($event)"
+                        style="display: none;">
+                </label>
+                <button nzShape="round" *nzSpaceItem nz-button nzType="default" (click)="clearForm()" nz-tooltip
+                    nzTooltipTitle="Clear All Fields">
+                    <nz-icon nzType="clear"></nz-icon>
+                    Clear
+                </button>
+                <button nzShape="round" *nzSpaceItem nz-button nzType="default" (click)="exportForm()" nz-tooltip
+                    nzTooltipTitle="Export Form JSON">
+                    <nz-icon nzType="download"></nz-icon>
+                    Export
+                </button>
+                <button nzShape="round" *nzSpaceItem nz-button nzType="primary" (click)="openSaveModal()" nz-tooltip
+                    nzTooltipTitle="Save Form">
+                    <nz-icon nzType="save"></nz-icon>
+                    Save
+                </button>
+            </nz-space>
+        </nz-page-header-extra>
+    </nz-page-header>
+
+
+    <div class="form-builder-content">
+        <!-- Left Panel - Field Templates -->
+        <div class="field-templates-panel" *ngIf="!isPreviewMode()">
+            <h3>Field Types</h3>
+            <div class="field-templates" cdkDropList [cdkDropListData]="fieldTemplates"
+                [cdkDropListConnectedTo]="['formCanvas']" cdkDropListSortingDisabled>
+
+                <div *ngFor="let template of fieldTemplates; trackBy: trackByFieldId" class="field-template-item"
+                    cdkDrag>
+                    <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                    <div class="field-template-content">
+                        <nz-icon [nzType]="template.icon" class="field-icon"></nz-icon>
+                        <div class="field-info">
+                            <div class="field-label">{{ template.label }}</div>
+                            <div class="field-description">{{ template.description }}</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel - Form Canvas -->
+        <div class="form-canvas-panel" [class.full-width]="isPreviewMode()">
+            <div class="canvas-header">
+                <h3>{{ isPreviewMode() ? 'Form Preview' : 'Form Canvas' }}</h3>
+                <span class="field-count">{{ formFields().length }} fields</span>
+            </div>
+
+            <!-- Preview Mode - Show Form Viewer Component -->
+            <div *ngIf="isPreviewMode()" class="preview-container">
+                <app-form-viewer [preloadedSchema]="previewSchema()" [isPreview]="true"></app-form-viewer>
+            </div>
+
+            <!-- Edit Mode - Form Builder Canvas -->
+            <div *ngIf="!isPreviewMode()" class="form-canvas" cdkDropList id="formCanvas"
+                [cdkDropListData]="formFields()" [cdkDropListConnectedTo]="['fieldTemplates']"
+                (cdkDropListDropped)="onFieldDrop($event)">
+
+                <div class="drop-zone-indicator" *ngIf="formFields().length === 0">
+                    <div class="drop-zone-content">
+                        <nz-icon nzType="plus-circle" nzTheme="outline"></nz-icon>
+                        <span>Drop here</span>
+                    </div>
+                </div>
+
+                <div *ngFor="let field of formFields(); trackBy: trackByFieldId" class="form-field-item"
+                    [class.selected]="selectedField()?.id === field.id" cdkDrag>
+
+                    <!-- Field Card -->
+                    <div class="field-card" (click)="selectField(field)">
+                        <div class="field-header">
+                            <div class="field-type">
+                                <nz-icon [nzType]="field.icon" class="field-icon"></nz-icon>
+                                <span class="type-label">{{ field.type }}</span>
+                            </div>
+                            <div class="field-actions">
+                                <button nz-button nzType="text" nzSize="small"
+                                    (click)="duplicateField(field); $event.stopPropagation()" nz-tooltip
+                                    nzTooltipTitle="Duplicate">
+                                    <nz-icon nzType="copy"></nz-icon>
+                                </button>
+                                <button nz-button nzType="text" nzSize="small" nzDanger
+                                    (click)="deleteField(field.id); $event.stopPropagation()" nz-tooltip
+                                    nzTooltipTitle="Delete">
+                                    <nz-icon nzType="delete"></nz-icon>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="field-content">
+                            <div class="field-label">{{ field.label }}</div>
+                            <div class="field-placeholder" *ngIf="field.placeholder">{{ field.placeholder }}</div>
+                            <div class="field-meta">
+                                <span class="badge" *ngIf="field.required">Required</span>
+                                <span class="badge" *ngIf="field.options">{{ field.options.length }} options</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="drag-placeholder" *cdkDragPlaceholder></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Right Panel - Properties Drawer -->
+        <nz-drawer [nzVisible]="isPropertiesDrawerVisible()" [nzWidth]="500" nzPlacement="right"
+            nzTitle="Field Properties" (nzOnClose)="closePropertiesDrawer()">
+            <ng-container *nzDrawerContent>
+                <div *ngIf="selectedField()" class="properties-panel">
+                    <nz-form-item>
+                        <nz-form-label>Field Type</nz-form-label>
+                        <nz-form-control>
+                            <nz-select [(ngModel)]="selectedField()!.type" disabled style="width: 100%;">
+                                <nz-option [nzValue]="selectedField()!.type"
+                                    [nzLabel]="selectedField()!.type"></nz-option>
+                            </nz-select>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Field ID</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedField()!.id" placeholder="Unique field identifier">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Used as form control
+                                name</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Label</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedField()!.label" placeholder="Field label">
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Info Text</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input [(ngModel)]="selectedField()!.info"
+                                placeholder="Info tooltip text (shown next to label)" rows="2">
+              </textarea>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Displays info icon with
+                                tooltip</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Secondary Text</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input [(ngModel)]="selectedField()!.secondaryText"
+                                placeholder="Additional descriptive text below the label" rows="2">
+              </textarea>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Displays below the field
+                                label as helper text</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Placeholder</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedField()!.placeholder" placeholder="Placeholder text">
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <!-- Code Editor Language -->
+                    <nz-form-item *ngIf="selectedField()!.type === 'codeeditor'">
+                        <nz-form-label>Language</nz-form-label>
+                        <nz-form-control>
+                            <nz-select [(ngModel)]="selectedField()!.language" nzPlaceHolder="Select language"
+                                style="width: 100%;">
+                                <nz-option nzValue="javascript" nzLabel="JavaScript"></nz-option>
+                                <nz-option nzValue="typescript" nzLabel="TypeScript"></nz-option>
+                                <nz-option nzValue="python" nzLabel="Python"></nz-option>
+                                <nz-option nzValue="java" nzLabel="Java"></nz-option>
+                                <nz-option nzValue="json" nzLabel="JSON"></nz-option>
+                                <nz-option nzValue="xml" nzLabel="XML"></nz-option>
+                                <nz-option nzValue="html" nzLabel="HTML"></nz-option>
+                                <nz-option nzValue="css" nzLabel="CSS"></nz-option>
+                                <nz-option nzValue="sql" nzLabel="SQL"></nz-option>
+                                <nz-option nzValue="JQ" nzLabel="JQ"></nz-option>
+                            </nz-select>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Syntax highlighting
+                                language</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-control>
+                            <label nz-checkbox [(ngModel)]="selectedField()!.required">
+                                Required field
+                            </label>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <!-- Required Either - Alternative fields -->
+                    <nz-form-item>
+                        <nz-form-label>
+                            Required Either
+                            <nz-icon nzType="info-circle" nzTheme="outline"
+                                nz-tooltip="At least one field from this group must be filled. Select other fields that can be used as alternatives."
+                                style="margin-left: 4px; color: var(--text-secondary); cursor: help; font-size: 14px;">
+                            </nz-icon>
+                        </nz-form-label>
+                        <nz-form-control>
+                            <nz-select [(ngModel)]="selectedField()!.requiredEither" nzMode="multiple"
+                                nzPlaceHolder="Select alternative fields" nzAllowClear style="width: 100%;">
+                                <nz-option *ngFor="let field of getOtherFields()" [nzValue]="field.id"
+                                    [nzLabel]="field.label + ' (' + field.id + ')'">
+                                </nz-option>
+                            </nz-select>
+                            <small style="color: var(--text-secondary); font-size: 11px;">
+                                At least one field from the selected group must be filled
+                            </small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <!-- Multi-select option for dropdown & autocomplete -->
+                    <nz-form-item
+                        *ngIf="selectedField()!.type === 'select' || selectedField()!.type === 'autocomplete'">
+                        <nz-form-control>
+                            <label nz-checkbox [(ngModel)]="selectedField()!.multiple">
+                                Allow multiple selection
+                            </label>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Enable multi-select
+                                dropdown</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <!-- Layout option for radio and checkbox -->
+                    <nz-form-item *ngIf="selectedField()!.type === 'radio' || selectedField()!.type === 'checkbox'">
+                        <nz-form-label>Layout</nz-form-label>
+                        <nz-form-control>
+                            <nz-select [(ngModel)]="selectedField()!.layout" nzPlaceHolder="Select layout"
+                                style="width: 100%;">
+                                <nz-option nzValue="vertical" nzLabel="Vertical"></nz-option>
+                                <nz-option nzValue="horizontal" nzLabel="Horizontal"></nz-option>
+                            </nz-select>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Options display
+                                direction</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <!-- Number input options -->
+                    <div *ngIf="selectedField()!.type === 'number'">
+                        <nz-form-item>
+                            <nz-form-label>Minimum Value</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="number" [(ngModel)]="selectedField()!.min"
+                                    placeholder="e.g., 0" />
+                                <small style="color: var(--text-secondary); font-size: 11px;">Minimum allowed
+                                    value</small>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-form-item>
+                            <nz-form-label>Maximum Value</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="number" [(ngModel)]="selectedField()!.max"
+                                    placeholder="e.g., 100" />
+                                <small style="color: var(--text-secondary); font-size: 11px;">Maximum allowed
+                                    value</small>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-form-item>
+                            <nz-form-label>Step Increment</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="number" [(ngModel)]="selectedField()!.step"
+                                    placeholder="e.g., 0.01 for decimals" step="0.01" />
+                                <small style="color: var(--text-secondary); font-size: 11px;">Step value (e.g., 1
+                                    for
+                                    integers, 0.01 for 2 decimals, 0.001 for 3 decimals)</small>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </div>
+
+                    <!-- File Upload Options -->
+                    <div *ngIf="selectedField()!.type === 'file'">
+                        <nz-form-item>
+                            <nz-form-label>Maximum File Size (MB)</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="number" [(ngModel)]="selectedField()!.maxFileSize"
+                                    placeholder="e.g., 5" min="0.1" step="0.1" />
+                                <small style="color: var(--text-secondary); font-size: 11px;">Maximum allowed file
+                                    size in megabytes</small>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-form-item>
+                            <nz-form-label>Maximum File Count</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="number" [(ngModel)]="selectedField()!.maxFileCount"
+                                    placeholder="e.g., 1" min="1" step="1" />
+                                <small style="color: var(--text-secondary); font-size: 11px;">Maximum number of files
+                                    that can be uploaded</small>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-form-item>
+                            <nz-form-label>Allowed Extensions</nz-form-label>
+                            <nz-form-control>
+                                <nz-select [(ngModel)]="selectedField()!.allowedExtensions" nzMode="tags"
+                                    nzPlaceHolder="e.g., .jpg, .png, .pdf" style="width: 100%;">
+                                </nz-select>
+                                <small style="color: var(--text-secondary); font-size: 11px;">
+                                    File extensions allowed (e.g., .jpg, .png, .pdf). Leave empty to allow all types.
+                                    Common formats:
+                                    <br />
+                                    <strong>Images:</strong> .jpg, .jpeg, .png, .gif, .webp, .svg
+                                    <br />
+                                    <strong>Documents:</strong> .pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx
+                                    <br />
+                                    <strong>Archives:</strong> .zip, .rar, .7z
+                                </small>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-form-item>
+                            <nz-form-control>
+                                <label nz-checkbox [(ngModel)]="selectedField()!.showPreview">
+                                    Show file preview
+                                </label>
+                                <small style="color: var(--text-secondary); font-size: 11px;">Display image previews
+                                    for uploaded files</small>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-divider nzText="Upload API Configuration" nzOrientation="left"
+                            style="font-size: 12px;"></nz-divider>
+
+                        <nz-form-item>
+                            <nz-form-label>Upload URL</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input [(ngModel)]="selectedField()!.uploadUrl"
+                                    placeholder="https://api.example.com/upload" />
+                                <small style="color: var(--text-secondary); font-size: 11px;">
+                                    API endpoint to upload files. Leave empty for client-side only handling.
+                                    Use <code
+                                        style="background: var(--bg-tertiary); padding: 2px 4px; border-radius: 3px;">{{'{{'}}fieldId{{'}}'}}</code>
+                                    to reference other field values in the URL.
+                                </small>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-form-item>
+                            <nz-form-label>Upload Headers</nz-form-label>
+                            <nz-form-control>
+                                <small
+                                    style="color: var(--text-secondary); font-size: 11px; display: block; margin-bottom: 8px;">
+                                    Add custom headers for authentication or other requirements
+                                </small>
+
+                                <div *ngIf="selectedField()!.uploadHeaders && selectedField()!.uploadHeaders!.length > 0"
+                                    style="margin-bottom: 8px;">
+                                    <div *ngFor="let header of selectedField()!.uploadHeaders; let i = index"
+                                        style="display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start;">
+                                        <input nz-input [(ngModel)]="header.key"
+                                            placeholder="Header Name (e.g., Authorization)" style="flex: 1;">
+                                        <input nz-input [(ngModel)]="header.value"
+                                            placeholder="Header Value (e.g., Bearer token123)" style="flex: 1.5;">
+                                        <button nz-button nzType="text" nzDanger nzSize="small"
+                                            (click)="removeUploadHeader(i)">
+                                            <nz-icon nzType="close"></nz-icon>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button nz-button nzType="dashed" nzBlock (click)="addUploadHeader()">
+                                    <nz-icon nzType="plus"></nz-icon>
+                                    Add Header
+                                </button>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </div>
+
+                    <nz-divider nzText="Default State"></nz-divider>
+
+                    <!-- Button Action Configuration -->
+                    <div *ngIf="selectedField()!.type === 'button'">
+                        <nz-form-item>
+                            <nz-form-label>Button Action (JavaScript)</nz-form-label>
+                            <nz-form-control>
+                                <textarea nz-input [(ngModel)]="selectedField()!.customJs"
+                                    placeholder="console.log(form);" rows="6" style="font-family: monospace;">
+                                </textarea>
+                                <small style="color: var(--text-secondary); font-size: 11px;">
+                                    Available variables: <code>form</code> (current form values), <code>api</code> (fetch wrapper)
+                                </small>
+                            </nz-form-control>
+                        </nz-form-item>
+                        
+                        <nz-form-item>
+                            <nz-form-control>
+                                <label nz-checkbox [(ngModel)]="selectedField()!.hideLabel">
+                                    Hide Label
+                                </label>
+                                <small style="color: var(--text-secondary); font-size: 11px;">Hide the button label text</small>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </div>
+
+                    <!-- Switch Configuration -->
+                    <div *ngIf="selectedField()!.type === 'switch'">
+                        <nz-form-item>
+                            <nz-form-label>Checked Text</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input [(ngModel)]="selectedField()!.checkedText" placeholder="On">
+                                <small style="color: var(--text-secondary); font-size: 11px;">Text shown when switch is on</small>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-form-item>
+                            <nz-form-label>Unchecked Text</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input [(ngModel)]="selectedField()!.uncheckedText" placeholder="Off">
+                                <small style="color: var(--text-secondary); font-size: 11px;">Text shown when switch is off</small>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-form-item>
+                            <nz-form-label>Checked Value</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input [(ngModel)]="selectedField()!.checkedValue" placeholder="true">
+                                <small style="color: var(--text-secondary); font-size: 11px;">Value submitted when switch is on (default: true)</small>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-form-item>
+                            <nz-form-label>Unchecked Value</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input [(ngModel)]="selectedField()!.uncheckedValue" placeholder="false">
+                                <small style="color: var(--text-secondary); font-size: 11px;">Value submitted when switch is off (default: false)</small>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </div>
+
+                    <!-- Divider Configuration -->
+                    <div *ngIf="selectedField()!.type === 'divider'">
+                        <nz-form-item>
+                            <nz-form-label>Text Position</nz-form-label>
+                            <nz-form-control>
+                                <nz-radio-group [(ngModel)]="selectedField()!.layout">
+                                    <label nz-radio nzValue="left">Left</label>
+                                    <label nz-radio nzValue="horizontal">Center</label>
+                                    <label nz-radio nzValue="right">Right</label>
+                                </nz-radio-group>
+                                <small style="color: var(--text-secondary); font-size: 11px;">Position of the divider text</small>
+                            </nz-form-control>
+                        </nz-form-item>
+                    </div>
+
+                    <nz-form-item>
+                        <nz-form-control>
+                            <label nz-checkbox [(ngModel)]="selectedField()!.defaultVisible">
+                                Visible by default
+                            </label>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Field is visible when form
+                                loads</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-control>
+                            <label nz-checkbox [(ngModel)]="selectedField()!.defaultEnabled">
+                                Enabled by default
+                            </label>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Field is enabled when form
+                                loads</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item
+                        *ngIf="selectedField()!.type !== 'file' && selectedField()!.type !== 'daterange' && selectedField()!.type !== 'codeeditor'">
+                        <nz-form-label>Default Value</nz-form-label>
+                        <nz-form-control>
+                            <!-- Text, Email, Password, Number -->
+                            <input
+                                *ngIf="selectedField()!.type === 'text' || selectedField()!.type === 'email' || selectedField()!.type === 'password' || selectedField()!.type === 'number'"
+                                nz-input [(ngModel)]="selectedField()!.defaultValue"
+                                [type]="selectedField()!.type === 'number' ? 'number' : 'text'"
+                                placeholder="Enter default value">
+
+                            <!-- Textarea -->
+                            <textarea *ngIf="selectedField()!.type === 'textarea'" nz-input
+                                [(ngModel)]="selectedField()!.defaultValue" placeholder="Enter default value" rows="3">
+              </textarea>
+
+                            <!-- Date Picker -->
+                            <nz-date-picker *ngIf="selectedField()!.type === 'date'"
+                                [(ngModel)]="selectedField()!.defaultValue" nzPlaceHolder="Select default date"
+                                style="width: 100%;">
+                            </nz-date-picker>
+
+                            <!-- Select Dropdown & Radio & Checkbox -->
+                            <nz-select
+                                *ngIf="selectedField()!.type === 'select' || selectedField()!.type === 'autocomplete' || selectedField()!.type === 'radio' || selectedField()!.type === 'checkbox'"
+                                [(ngModel)]="selectedField()!.defaultValue"
+                                [nzMode]="selectedField()!.multiple || selectedField()!.type === 'checkbox' ? 'multiple' : 'default'"
+                                [nzPlaceHolder]="selectedField()!.multiple ? 'Select default options' : 'Select default option'"
+                                style="width: 100%;">
+                                <nz-option *ngFor="let option of $any(selectedField()!.options)"
+                                    [nzValue]="$any(option).key || option" [nzLabel]="$any(option).value || option">
+                                </nz-option>
+                            </nz-select>
+                            
+                            <!-- Switch -->
+                            <nz-switch *ngIf="selectedField()!.type === 'switch'"
+                                [(ngModel)]="selectedField()!.defaultValue">
+                            </nz-switch>
+
+                            <small style="color: var(--text-secondary); font-size: 11px;">Initial value when form
+                                loads</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <!-- Date Range Default Value -->
+                    <nz-form-item *ngIf="selectedField()!.type === 'daterange'">
+                        <nz-form-label>Default Date Range</nz-form-label>
+                        <nz-form-control>
+                            <nz-range-picker [(ngModel)]="selectedField()!.defaultValue"
+                                nzPlaceHolder="['Start Date', 'End Date']" style="width: 100%;">
+                            </nz-range-picker>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Initial date range when
+                                form
+                                loads</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <!-- Code Editor Default Value -->
+                    <nz-form-item *ngIf="selectedField()!.type === 'codeeditor'">
+                        <nz-form-label>Default Code</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input [(ngModel)]="selectedField()!.defaultValue"
+                                placeholder="Enter default code" rows="6">
+              </textarea>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Initial code when form
+                                loads</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <!-- Visibility Condition -->
+                    <nz-divider nzText="Visibility"></nz-divider>
+
+                    <nz-form-item>
+                        <nz-form-control>
+                            <label nz-checkbox [(ngModel)]="hasVisibilityCondition"
+                                (ngModelChange)="toggleVisibilityCondition()">
+                                Conditional visibility
+                            </label>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Show this field based on
+                                another field's value</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <div *ngIf="hasVisibilityCondition() && selectedField()!.visibilityCondition">
+                        <nz-form-item>
+                            <nz-form-label>Condition Type</nz-form-label>
+                            <nz-form-control>
+                                <nz-radio-group [(ngModel)]="selectedField()!.visibilityCondition!.type">
+                                    <label nz-radio-button nzValue="simple">Simple</label>
+                                    <label nz-radio-button nzValue="code">JS Code</label>
+                                </nz-radio-group>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <ng-container
+                            *ngIf="selectedField()!.visibilityCondition!.type !== 'code'; else visibilityCodeTpl">
+                            <nz-form-item>
+                                <nz-form-label>Show when field</nz-form-label>
+                                <nz-form-control>
+                                    <nz-select [(ngModel)]="selectedField()!.visibilityCondition!.fieldId"
+                                        nzPlaceHolder="Select field" style="width: 100%;">
+                                        <nz-option *ngFor="let field of getOtherFields()" [nzValue]="field.id"
+                                            [nzLabel]="field.label + ' (' + field.id + ')'">
+                                        </nz-option>
+                                    </nz-select>
+                                    <small style="color: var(--text-secondary); font-size: 11px;">Condition checks field
+                                        ID
+                                        value</small>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <nz-form-item>
+                                <nz-form-label>Condition</nz-form-label>
+                                <nz-form-control>
+                                    <nz-select [(ngModel)]="selectedField()!.visibilityCondition!.operator"
+                                        style="width: 100%;">
+                                        <nz-option nzValue="equals" nzLabel="Equals"></nz-option>
+                                        <nz-option nzValue="notEquals" nzLabel="Not Equals"></nz-option>
+                                        <nz-option nzValue="contains" nzLabel="Contains"></nz-option>
+                                        <nz-option nzValue="isEmpty" nzLabel="Is Empty"></nz-option>
+                                        <nz-option nzValue="isNotEmpty" nzLabel="Is Not Empty"></nz-option>
+                                    </nz-select>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <nz-form-item *ngIf="needsValueInput()">
+                                <nz-form-label>Value</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input [(ngModel)]="selectedField()!.visibilityCondition!.value"
+                                        placeholder="Comparison value">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </ng-container>
+                        <ng-template #visibilityCodeTpl>
+                            <nz-form-item>
+                                <nz-form-label>JavaScript Code</nz-form-label>
+                                <nz-form-control>
+                                    <textarea nz-input [(ngModel)]="selectedField()!.visibilityCondition!.code"
+                                        placeholder="return form.fieldId === 'value';" rows="4"
+                                        style="font-family: monospace;">
+                                    </textarea>
+                                    <small style="color: var(--text-secondary); font-size: 11px;">
+                                        Return true to show the field. Available variables: <code>form</code> (all field
+                                        values)
+                                    </small>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </ng-template>
+                    </div>
+
+                    <!-- Enable/Disable Condition -->
+                    <nz-divider nzText="Enable State"></nz-divider>
+
+                    <nz-form-item>
+                        <nz-form-control>
+                            <label nz-checkbox [(ngModel)]="hasEnableCondition"
+                                (ngModelChange)="toggleEnableCondition()">
+                                Conditional enable
+                            </label>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Enable this field based on
+                                another field's value</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <div *ngIf="hasEnableCondition() && selectedField()!.enableCondition">
+                        <nz-form-item>
+                            <nz-form-label>Condition Type</nz-form-label>
+                            <nz-form-control>
+                                <nz-radio-group [(ngModel)]="selectedField()!.enableCondition!.type">
+                                    <label nz-radio-button nzValue="simple">Simple</label>
+                                    <label nz-radio-button nzValue="code">JS Code</label>
+                                </nz-radio-group>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <ng-container *ngIf="selectedField()!.enableCondition!.type !== 'code'; else enableCodeTpl">
+                            <nz-form-item>
+                                <nz-form-label>Enable when field</nz-form-label>
+                                <nz-form-control>
+                                    <nz-select [(ngModel)]="selectedField()!.enableCondition!.fieldId"
+                                        nzPlaceHolder="Select field" style="width: 100%;">
+                                        <nz-option *ngFor="let field of getOtherFields()" [nzValue]="field.id"
+                                            [nzLabel]="field.label + ' (' + field.id + ')'">
+                                        </nz-option>
+                                    </nz-select>
+                                    <small style="color: var(--text-secondary); font-size: 11px;">Condition checks field
+                                        ID
+                                        value</small>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <nz-form-item>
+                                <nz-form-label>Condition</nz-form-label>
+                                <nz-form-control>
+                                    <nz-select [(ngModel)]="selectedField()!.enableCondition!.operator"
+                                        style="width: 100%;">
+                                        <nz-option nzValue="equals" nzLabel="Equals"></nz-option>
+                                        <nz-option nzValue="notEquals" nzLabel="Not Equals"></nz-option>
+                                        <nz-option nzValue="contains" nzLabel="Contains"></nz-option>
+                                        <nz-option nzValue="isEmpty" nzLabel="Is Empty"></nz-option>
+                                        <nz-option nzValue="isNotEmpty" nzLabel="Is Not Empty"></nz-option>
+                                    </nz-select>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <nz-form-item *ngIf="needsEnableValueInput()">
+                                <nz-form-label>Value</nz-form-label>
+                                <nz-form-control>
+                                    <input nz-input [(ngModel)]="selectedField()!.enableCondition!.value"
+                                        placeholder="Comparison value">
+                                </nz-form-control>
+                            </nz-form-item>
+                        </ng-container>
+                        <ng-template #enableCodeTpl>
+                            <nz-form-item>
+                                <nz-form-label>JavaScript Code</nz-form-label>
+                                <nz-form-control>
+                                    <textarea nz-input [(ngModel)]="selectedField()!.enableCondition!.code"
+                                        placeholder="return form.fieldId === 'value';" rows="4"
+                                        style="font-family: monospace;">
+                                    </textarea>
+                                    <small style="color: var(--text-secondary); font-size: 11px;">
+                                        Return true to enable the field. Available variables: <code>form</code> (all
+                                        field values)
+                                    </small>
+                                </nz-form-control>
+                            </nz-form-item>
+                        </ng-template>
+                    </div>
+
+                    <!-- API Binding for Select, Autocomplete, Radio, Checkbox -->
+                    <!-- Data Binding -->
+                    <nz-divider nzText="Data Binding"></nz-divider>
+
+                    <nz-tabset>
+                        <!-- Options Binding (for Select, Autocomplete, Radio, Checkbox) -->
+                        <nz-tab nzTitle="Options"
+                            *ngIf="selectedField()!.type === 'select' || selectedField()!.type === 'autocomplete' || selectedField()!.type === 'radio' || selectedField()!.type === 'checkbox'">
+                            <nz-form-item>
+                                <nz-form-control>
+                                    <nz-radio-group [(ngModel)]="selectedField()!.optionsSource"
+                                        (ngModelChange)="toggleOptionsSource($event)">
+                                        <label nz-radio-button nzValue="static">Static</label>
+                                        <label nz-radio-button nzValue="api">API</label>
+                                        <label nz-radio-button nzValue="code">JS Code</label>
+                                    </nz-radio-group>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- API Binding -->
+                            <div *ngIf="selectedField()!.optionsSource === 'api'">
+                                <nz-form-item>
+                                    <nz-form-control>
+                                        <label nz-checkbox [(ngModel)]="hasApiBinding"
+                                            (ngModelChange)="toggleApiBinding()">
+                                            Enable API Binding
+                                        </label>
+                                    </nz-form-control>
+                                </nz-form-item>
+
+                                <div *ngIf="hasApiBinding()">
+                                    <nz-form-item>
+                                        <nz-form-label>API URL</nz-form-label>
+                                        <nz-form-control>
+                                            <input nz-input [(ngModel)]="selectedField()!.apiBinding!.url"
+                                                placeholder="https://api.example.com/options">
+                                            <small style="color: var(--text-secondary); font-size: 11px;">
+                                                The endpoint URL to fetch options from. Use <code
+                                                    style="background: var(--bg-tertiary); padding: 2px 4px; border-radius: 3px;">{{'{{fieldId}}'}}</code>
+                                                to reference other field values
+                                            </small>
+                                        </nz-form-control>
+                                    </nz-form-item>
+
+                                    <nz-form-item>
+                                        <nz-form-label>HTTP Method</nz-form-label>
+                                        <nz-form-control>
+                                            <nz-select [(ngModel)]="selectedField()!.apiBinding!.method"
+                                                style="width: 100%;">
+                                                <nz-option nzValue="GET" nzLabel="GET"></nz-option>
+                                                <nz-option nzValue="POST" nzLabel="POST"></nz-option>
+                                            </nz-select>
+                                            <small style="color: var(--text-secondary); font-size: 11px;">
+                                                HTTP method to use for the request
+                                            </small>
+                                        </nz-form-control>
+                                    </nz-form-item>
+
+                                    <nz-form-item *ngIf="selectedField()!.apiBinding!.method === 'POST'">
+                                        <nz-form-label>Request Body (JSON)</nz-form-label>
+                                        <nz-form-control>
+                                            <textarea nz-input [(ngModel)]="selectedField()!.apiBinding!.bodyData"
+                                                [attr.placeholder]='"{\"filter\": \"active\", \"parentId\": \"{{country}}\"}"'
+                                                rows="3">
+                                            </textarea>
+                                            <small style="color: var(--text-secondary); font-size: 11px;">
+                                                JSON data to send with POST request. Use <code
+                                                    style="background: var(--bg-tertiary); padding: 2px 4px; border-radius: 3px;">{{'{{fieldId}}'}}</code>
+                                                to reference other field values
+                                            </small>
+                                        </nz-form-control>
+                                    </nz-form-item>
+
+                                    <nz-form-item>
+                                        <nz-form-label>Key Property Path</nz-form-label>
+                                        <nz-form-control>
+                                            <input nz-input [(ngModel)]="selectedField()!.apiBinding!.keyProperty"
+                                                placeholder="id">
+                                            <small style="color: var(--text-secondary); font-size: 11px;">
+                                                Property path for the option key (e.g., 'id', 'data.id')
+                                            </small>
+                                        </nz-form-control>
+                                    </nz-form-item>
+
+                                    <nz-form-item>
+                                        <nz-form-label>Value Property Path</nz-form-label>
+                                        <nz-form-control>
+                                            <input nz-input [(ngModel)]="selectedField()!.apiBinding!.valueProperty"
+                                                placeholder="name">
+                                            <small style="color: var(--text-secondary); font-size: 11px;">
+                                                Property path for the display value (e.g., 'name', 'data.title')
+                                            </small>
+                                        </nz-form-control>
+                                    </nz-form-item>
+
+                                    <nz-divider nzText="Headers" nzOrientation="left"
+                                        style="font-size: 12px;"></nz-divider>
+
+                                    <nz-form-item>
+                                        <nz-form-control>
+                                            <small
+                                                style="color: var(--text-secondary); font-size: 11px; display: block; margin-bottom: 8px;">
+                                                Add custom headers for authentication or other requirements
+                                            </small>
+
+                                            <div *ngIf="selectedField()!.apiBinding!.headers && selectedField()!.apiBinding!.headers!.length > 0"
+                                                style="margin-bottom: 8px;">
+                                                <div *ngFor="let header of selectedField()!.apiBinding!.headers; let i = index"
+                                                    style="display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start;">
+                                                    <input nz-input [(ngModel)]="header.key"
+                                                        placeholder="Header Name (e.g., Authorization)"
+                                                        style="flex: 1;">
+                                                    <input nz-input [(ngModel)]="header.value"
+                                                        placeholder="Header Value (e.g., Bearer token123)"
+                                                        style="flex: 1.5;">
+                                                    <button nz-button nzType="text" nzDanger nzSize="small"
+                                                        (click)="removeApiHeader(i)">
+                                                        <nz-icon nzType="close"></nz-icon>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <button nz-button nzType="dashed" nzBlock (click)="addApiHeader()">
+                                                <nz-icon nzType="plus"></nz-icon>
+                                                Add Header
+                                            </button>
+                                        </nz-form-control>
+                                    </nz-form-item>
+                                </div>
+                            </div>
+
+                            <!-- JS Code Options -->
+                            <div *ngIf="selectedField()!.optionsSource === 'code'">
+                                <nz-form-item>
+                                    <nz-form-label>Options Code</nz-form-label>
+                                    <nz-form-control>
+                                        <textarea nz-input [(ngModel)]="selectedField()!.optionsCode"
+                                            placeholder="return [{key: '1', value: 'One'}];" rows="6"
+                                            style="font-family: monospace;">
+                                        </textarea>
+                                        <small style="color: var(--text-secondary); font-size: 11px;">
+                                            Return an array of strings or objects with key/value properties. Available
+                                            variables: <code>form</code>
+                                        </small>
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </div>
+                        </nz-tab>
+
+                        <!-- Value Binding -->
+                        <nz-tab nzTitle="Value">
+                            <nz-form-item>
+                                <nz-form-control>
+                                    <label nz-checkbox [(ngModel)]="hasValueBinding"
+                                        (ngModelChange)="toggleValueBinding()">
+                                        Calculate Value with JS
+                                    </label>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <div *ngIf="hasValueBinding()">
+                                <nz-form-item>
+                                    <nz-form-label>Calculation Code</nz-form-label>
+                                    <nz-form-control>
+                                        <textarea nz-input [(ngModel)]="selectedField()!.valueBinding!.code"
+                                            placeholder="return form.a + form.b;" rows="6"
+                                            style="font-family: monospace;">
+                                        </textarea>
+                                        <small style="color: var(--text-secondary); font-size: 11px;">
+                                            Return the calculated value for this field. Available variables:
+                                            <code>form</code>
+                                        </small>
+                                    </nz-form-control>
+                                </nz-form-item>
+                            </div>
+                        </nz-tab>
+                    </nz-tabset>
+
+                    <!-- Options for select, autocomplete, radio, checkbox -->
+                    <div *ngIf="selectedField()!.optionsSource === 'static'">
+                        <nz-divider nzText="Options"></nz-divider>
+
+                        <!-- Dropdown (Select/Autocomplete) - Key/Value pairs -->
+                        <div *ngIf="selectedField()!.type === 'select' || selectedField()!.type === 'autocomplete'"
+                            class="options-list">
+                            <div *ngFor="let option of $any(selectedField()!.options); let i = index"
+                                class="option-item-keyvalue">
+                                <div class="keyvalue-inputs">
+                                    <input nz-input [(ngModel)]="$any(option).key" placeholder="Key" style="flex: 1;">
+                                    <input nz-input [(ngModel)]="$any(option).value" placeholder="Display Value"
+                                        style="flex: 1;">
+                                </div>
+                                <button nz-button nzType="text" nzDanger nzSize="small" (click)="removeOption(i)"
+                                    [disabled]="selectedField()!.options!.length <= 1">
+                                    <nz-icon nzType="close"></nz-icon>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div *ngIf="selectedField()!.type === 'radio' || selectedField()!.type === 'checkbox'"
+                            class="options-list">
+                            <div *ngFor="let option of $any(selectedField()!.options); let i = index; trackBy: trackByIndex"
+                                class="option-item">
+                                <input nz-input [(ngModel)]="$any(selectedField()!.options)![i]"
+                                    placeholder="Option text">
+                                <button nz-button nzType="text" nzDanger nzSize="small" (click)="removeOption(i)"
+                                    [disabled]="selectedField()!.options!.length <= 1">
+                                    <nz-icon nzType="close"></nz-icon>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button nz-button nzType="dashed" nzBlock (click)="addOption()" style="margin-top: 8px;">
+                            <nz-icon nzType="plus"></nz-icon>
+                            Add Option
+                        </button>
+                    </div>
+
+                    <!-- Key-Value Pairs Configuration (for keyvalue field type) -->
+                    <div *ngIf="selectedField()!.type === 'keyvalue'">
+                        <nz-divider nzText="Value Control Configuration"></nz-divider>
+
+                        <!-- Value Control Type Selector -->
+                        <nz-form-item>
+                            <nz-form-label>Value Control Type</nz-form-label>
+                            <nz-form-control>
+                                <nz-select [(ngModel)]="selectedField()!.valueControlType"
+                                    nzPlaceHolder="Select control type">
+                                    <nz-option nzValue="text" nzLabel="Text Input"></nz-option>
+                                    <nz-option nzValue="select" nzLabel="Dropdown"></nz-option>
+                                    <nz-option nzValue="codeeditor" nzLabel="Code Editor"></nz-option>
+                                    <nz-option nzValue="checkbox" nzLabel="Checkbox"></nz-option>
+                                </nz-select>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <!-- Language selector for code editor -->
+                        <nz-form-item *ngIf="selectedField()!.valueControlType === 'codeeditor'">
+                            <nz-form-label>Code Language</nz-form-label>
+                            <nz-form-control>
+                                <nz-select [(ngModel)]="selectedField()!.language">
+                                    <nz-option nzValue="javascript" nzLabel="JavaScript"></nz-option>
+                                    <nz-option nzValue="typescript" nzLabel="TypeScript"></nz-option>
+                                    <nz-option nzValue="python" nzLabel="Python"></nz-option>
+                                    <nz-option nzValue="java" nzLabel="Java"></nz-option>
+                                    <nz-option nzValue="json" nzLabel="JSON"></nz-option>
+                                    <nz-option nzValue="xml" nzLabel="XML"></nz-option>
+                                    <nz-option nzValue="html" nzLabel="HTML"></nz-option>
+                                    <nz-option nzValue="css" nzLabel="CSS"></nz-option>
+                                    <nz-option nzValue="sql" nzLabel="SQL"></nz-option>
+                                </nz-select>
+                            </nz-form-control>
+                        </nz-form-item>
+
+                        <nz-divider nzText="Default Key-Value Pairs"></nz-divider>
+                        <div class="info-text" style="margin-bottom: 12px;">
+                            <nz-icon nzType="info-circle" nzTheme="outline"></nz-icon>
+                            Configure default key-value pairs that will appear when the form loads. Users can add
+                            more
+                            pairs when filling the form.
+                        </div>
+                        <app-key-value-builder title="Default Pairs"
+                            [valueControlType]="selectedField()!.valueControlType || 'text'"
+                            [language]="selectedField()!.language || 'javascript'"
+                            [initialPairs]="selectedField()!.keyValuePairs || []"
+                            (pairsChange)="onDefaultKeyValuePairsChange($event)">
+                        </app-key-value-builder>
+                    </div>
+                </div>
+            </ng-container>
+        </nz-drawer>
+
+        <!-- Form Configuration Drawer -->
+        <nz-drawer [nzVisible]="isFormConfigDrawerVisible()" [nzWidth]="500" nzPlacement="right"
+            nzTitle="Form Configuration" (nzOnClose)="closeFormConfigDrawer()">
+            <ng-container *nzDrawerContent>
+                <div class="form-config-panel">
+                    <nz-form-item>
+                        <nz-form-label>Form Title</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [ngModel]="formConfig().title"
+                                (ngModelChange)="updateFormConfigField('title', $event)" placeholder="Enter form title">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Displayed at the top of
+                                the
+                                form</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Form Description</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input [ngModel]="formConfig().description"
+                                (ngModelChange)="updateFormConfigField('description', $event)"
+                                placeholder="Enter form description" rows="3">
+              </textarea>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Optional description shown
+                                below title</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-divider nzText="Dimensions"></nz-divider>
+
+                    <nz-form-item>
+                        <nz-form-label>Height</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [ngModel]="formConfig().height"
+                                (ngModelChange)="updateFormConfigField('height', $event)"
+                                placeholder="e.g., 100%, 500px, auto">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Form container height
+                                (default: 100%)</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Width</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [ngModel]="formConfig().width"
+                                (ngModelChange)="updateFormConfigField('width', $event)"
+                                placeholder="e.g., 100%, 800px, auto">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Form container width
+                                (default:
+                                100%)</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-divider nzText="Submission"></nz-divider>
+
+                    <nz-form-item>
+                        <nz-form-label>Submit URL</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [ngModel]="formConfig().submitUrl"
+                                (ngModelChange)="updateFormConfigField('submitUrl', $event)"
+                                placeholder="https://api.example.com/submit">
+                            <small style="color: var(--text-secondary); font-size: 11px;">API endpoint to submit
+                                form
+                                data (POST)</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Success Message</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input [ngModel]="formConfig().successMessage"
+                                (ngModelChange)="updateFormConfigField('successMessage', $event)"
+                                placeholder="Form submitted successfully!" rows="2">
+              </textarea>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Message shown on
+                                successful
+                                submission</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Error Message</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input [ngModel]="formConfig().errorMessage"
+                                (ngModelChange)="updateFormConfigField('errorMessage', $event)"
+                                placeholder="Failed to submit form. Please try again." rows="2">
+              </textarea>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Message shown on
+                                submission
+                                failure</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-divider nzText="Buttons"></nz-divider>
+
+                    <nz-form-item>
+                        <nz-form-label>Submit Button Label</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [ngModel]="formConfig().submitButtonLabel"
+                                (ngModelChange)="updateFormConfigField('submitButtonLabel', $event)"
+                                placeholder="Submit">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Text displayed on the
+                                submit
+                                button</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Reset Button Label</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [ngModel]="formConfig().resetButtonLabel"
+                                (ngModelChange)="updateFormConfigField('resetButtonLabel', $event)" placeholder="Reset">
+                            <small style="color: var(--text-secondary); font-size: 11px;">Text displayed on the
+                                reset
+                                button</small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-control>
+                            <label nz-checkbox [ngModel]="formConfig().showSubmitButton"
+                                (ngModelChange)="updateFormConfigField('showSubmitButton', $event)">
+                                Show Submit Button
+                            </label>
+                            <small
+                                style="color: var(--text-secondary); font-size: 11px; display: block; margin-top: 4px;">
+                                Display a submit button
+                            </small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-control>
+                            <label nz-checkbox [ngModel]="formConfig().showResetButton"
+                                (ngModelChange)="updateFormConfigField('showResetButton', $event)">
+                                Show Reset Button
+                            </label>
+                            <small
+                                style="color: var(--text-secondary); font-size: 11px; display: block; margin-top: 4px;">
+                                Display a reset button to clear all form fields
+                            </small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-divider nzText="Lifecycle Hooks"></nz-divider>
+
+                    <nz-form-item>
+                        <nz-form-label>On Init (JavaScript)</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input [ngModel]="formConfig().onInit"
+                                (ngModelChange)="updateFormConfigField('onInit', $event)"
+                                placeholder="console.log('Form loaded', form);" rows="6" style="font-family: monospace;">
+              </textarea>
+                            <small style="color: var(--text-secondary); font-size: 11px;">
+                                Code executed when form loads. Available: <code>form</code> (form values), <code>api</code> (fetch wrapper)
+                            </small>
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>On Destroy (JavaScript)</nz-form-label>
+                        <nz-form-control>
+                            <textarea nz-input [ngModel]="formConfig().onDestroy"
+                                (ngModelChange)="updateFormConfigField('onDestroy', $event)"
+                                placeholder="console.log('Form destroyed', form);" rows="6" style="font-family: monospace;">
+              </textarea>
+                            <small style="color: var(--text-secondary); font-size: 11px;">
+                                Code executed before form is destroyed. Available: <code>form</code> (form values), <code>api</code> (fetch wrapper)
+                            </small>
+                        </nz-form-control>
+                    </nz-form-item>
+                </div>
+            </ng-container>
+        </nz-drawer>
+    </div>
+
+    <!-- Form Metadata Modal -->
+    <nz-modal [nzVisible]="isFormMetadataModalVisible()" nzTitle="Save Form" (nzOnCancel)="closeSaveModal()"
+        (nzOnOk)="saveForm()" nzOkText="Save" nzCancelText="Cancel">
+        <ng-container *nzModalContent>
+            <nz-form-item>
+                <nz-form-label nzRequired>Form Code</nz-form-label>
+                <nz-form-control>
+                    <input nz-input [ngModel]="formCode()" [disabled]="currentFormId > 0"
+                        (ngModelChange)="formCode.set($event)" placeholder="Enter unique form code">
+                    <small style="color: var(--text-secondary); font-size: 11px;">Unique identifier for the form</small>
+                </nz-form-control>
+            </nz-form-item>
+            <nz-form-item>
+                <nz-form-label nzRequired>Form Name</nz-form-label>
+                <nz-form-control>
+                    <input nz-input [ngModel]="formName()" (ngModelChange)="formName.set($event)"
+                        placeholder="Enter form name">
+                </nz-form-control>
+            </nz-form-item>
+
+
+
+            <nz-form-item>
+                <nz-form-label>Description</nz-form-label>
+                <nz-form-control>
+                    <textarea nz-input [ngModel]="formDescription()" (ngModelChange)="formDescription.set($event)"
+                        placeholder="Enter form description" rows="3"></textarea>
+                </nz-form-control>
+            </nz-form-item>
+        </ng-container>
+    </nz-modal>
+</div>

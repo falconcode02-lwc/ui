@@ -1,0 +1,274 @@
+<nz-splitter style="height: 100%;">
+    <nz-splitter-panel [nzDefaultSize]="'60%'">
+        <nz-page-header class="page-action" nzSize="small">
+            <nz-page-header-title><nz-icon nzType="hourglass" nzTheme="outline"></nz-icon>
+                Scheduler</nz-page-header-title>
+            <nz-page-header-subtitle>
+            </nz-page-header-subtitle>
+            <nz-page-header-extra>
+                <nz-space>
+                    <nz-input-group *nzSpaceItem [nzPrefix]="prefixIconSearch" style="width: 200px;">
+                        <input type="text" nz-input placeholder="Search Schedulers" [(ngModel)]="searchQuery"
+                            (ngModelChange)="onSearchChange($event)" />
+                    </nz-input-group>
+                    <ng-template #prefixIconSearch>
+                        <span nz-icon nzType="search"></span>
+                    </ng-template>
+                    <button *nzSpaceItem type="button" nz-button nzType="primary" nzShape="round" (click)="createNew()">
+                        <i nz-icon nzType="plus"></i> New
+                    </button>
+                </nz-space>
+            </nz-page-header-extra>
+        </nz-page-header>
+
+        <!-- <nz-card nzTitle="Schedulers" class="scheduler-list-card" [nzExtra]="extraTpl">
+            <ng-template #extraTpl>
+                
+               
+                
+            </ng-template>
+
+         
+        </nz-card> -->
+
+        <div class="scheduler-list">
+            <!-- Empty State -->
+            <nz-empty *ngIf="!loading && schedulers.length === 0" nzNotFoundContent="No schedulers found">
+                <button nz-button nzType="primary" (click)="createNew()">
+                    <i nz-icon nzType="plus"></i> Create Scheduler
+                </button>
+            </nz-empty>
+
+            <!-- List View -->
+            <div *ngIf="schedulers.length > 0">
+                <nz-list [nzDataSource]="paginatedSchedulers" [nzLoading]="loading" nzBordered>
+                    <nz-list-item *ngFor="let item of paginatedSchedulers" class="scheduler-item"
+                        [class.active]="selectedScheduler?.id === item.id" (click)="selectScheduler(item)">
+                        <div class="scheduler-content">
+                            <div class="scheduler-main">
+                                <div class="scheduler-icon">
+                                    <span nz-icon nzType="hourglass" nzTheme="outline"></span>
+                                </div>
+                                <div class="scheduler-details">
+                                    <div class="scheduler-name">{{ item.name }}</div>
+                                    <div class="scheduler-meta">
+                                        <span class="meta-item">
+                                            <span class="meta-label">Frequency:</span> {{ item.frequency | titlecase }}
+                                        </span>
+                                        <span class="meta-item">
+                                            <span class="meta-label">|</span> Cron: {{ item.cron }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="scheduler-actions">
+                                <nz-switch [ngModel]="item.enabled" (ngModelChange)="toggleScheduler(item)"
+                                    [nzCheckedChildren]="'Active'" [nzUnCheckedChildren]="'Inactive'"
+                                    (click)="$event.stopPropagation()">
+                                </nz-switch>
+
+                                <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="menu"
+                                    nzPlacement="bottomRight" (click)="$event.stopPropagation()">
+                                    <nz-icon nzType="more" nzTheme="outline"></nz-icon>
+                                </button>
+                                <nz-dropdown-menu #menu="nzDropdownMenu">
+                                    <ul nz-menu>
+                                        <li nz-menu-item (click)="selectScheduler(item)">
+                                            <span nz-icon nzType="edit" nzTheme="outline"></span>
+                                            Edit
+                                        </li>
+                                        <li nz-menu-item nzDanger nz-popconfirm
+                                            nzPopconfirmTitle="Are you sure to delete?" (nzOnConfirm)="delete(item)">
+                                            <span nz-icon nzType="delete" nzTheme="outline"></span>
+                                            Delete
+                                        </li>
+                                    </ul>
+                                </nz-dropdown-menu>
+                            </div>
+                        </div>
+                    </nz-list-item>
+                </nz-list>
+
+                <!-- Pagination -->
+                <div class="pagination-container">
+                    <nz-pagination [nzPageIndex]="pageIndex" [nzTotal]="schedulers.length" [nzPageSize]="pageSize"
+                        (nzPageIndexChange)="onPageChange($event)" nzShowSizeChanger [nzPageSizeOptions]="[10, 20, 50]">
+                    </nz-pagination>
+                </div>
+            </div>
+        </div>
+    </nz-splitter-panel>
+    <nz-splitter-panel [nzDefaultSize]="'40%'">
+
+        <nz-card nzTitle="Create / Update Scheduler" class="scheduler-card">
+            <form nz-form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+                <!-- Scheduler Name -->
+                <nz-form-item>
+                    <nz-form-label [nzSpan]="6" nzRequired>Scheduler Name</nz-form-label>
+                    <nz-form-control [nzSpan]="24" nzErrorTip="Name required">
+                        <input nz-input formControlName="name" placeholder="Enter scheduler name" />
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- Workflow selection -->
+                <!-- <nz-form-item>
+                    <nz-form-label [nzSpan]="6">Workflow</nz-form-label>
+                    <nz-form-control [nzSpan]="12">
+                        <nz-select formControlName="workflowCode" nzShowSearch nzAllowClear nzPlaceHolder="Select active workflow">
+                            <nz-option *ngFor="let w of workflows" [nzValue]="w.code || w.id" [nzLabel]="w.name || w.code"></nz-option>
+                        </nz-select>
+                    </nz-form-control>
+                </nz-form-item> -->
+
+                <!-- Quick presets -->
+                <!-- <nz-form-item>
+                    
+                    <nz-form-control [nzSpan]="24" [nzOffset]="6">
+                        <nz-space>
+                           
+                            <button type="button" nz-button nzType="default" (click)="form.patchValue({frequency: 'minutely'}); onFrequencyChange('minutely')">Minute</button>
+                            <button type="button" nz-button nzType="default" (click)="form.patchValue({frequency: 'hourly'}); onFrequencyChange('hourly')">Hourly</button>
+                            <button type="button" nz-button nzType="default" (click)="form.patchValue({frequency: 'daily'}); onFrequencyChange('daily')">Daily</button>
+                            <button type="button" nz-button nzType="default" (click)="form.patchValue({frequency: 'weekly'}); onFrequencyChange('weekly')">Weekly</button>
+                            <button type="button" nz-button nzType="default" (click)="form.patchValue({frequency: 'monthly'}); onFrequencyChange('monthly')">Monthly</button>
+                        </nz-space>
+                    </nz-form-control>
+                </nz-form-item> -->
+
+                <!-- Frequency Type -->
+                <nz-form-item>
+                    <nz-form-label [nzSpan]="6" nzRequired>Frequency</nz-form-label>
+                    <nz-form-control [nzSpan]="24">
+                        <nz-select formControlName="frequency" (ngModelChange)="onFrequencyChange($event)">
+                            <!-- <nz-option nzValue="secondly" nzLabel="Every N Seconds"></nz-option> -->
+                            <nz-option nzValue="minutely" nzLabel="Every N Minutes"></nz-option>
+                            <nz-option nzValue="hourly" nzLabel="Hourly"></nz-option>
+                            <nz-option nzValue="daily" nzLabel="Daily"></nz-option>
+                            <nz-option nzValue="weekly" nzLabel="Weekly"></nz-option>
+                            <nz-option nzValue="monthly" nzLabel="Monthly"></nz-option>
+                            <nz-option nzValue="custom" nzLabel="Custom (Cron)"></nz-option>
+                        </nz-select>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- Secondly interval -->
+                <!-- <nz-form-item *ngIf="form.value.frequency === 'secondly'">
+                    <nz-form-label [nzSpan]="6" nzRequired>Every X Seconds</nz-form-label>
+                    <nz-form-control [nzSpan]="12" nzErrorTip="Please enter a number between 1 and 59">
+                        <input nz-input type="number" formControlName="secondInterval"
+                            placeholder="e.g. 1 = every second, 5 = every 5 seconds" />
+                    </nz-form-control>
+                </nz-form-item> -->
+
+                <!-- Minutely interval -->
+                <nz-form-item *ngIf="form.value.frequency === 'minutely'">
+                    <nz-form-label [nzSpan]="6" nzRequired>Every X Minutes</nz-form-label>
+                    <nz-form-control [nzSpan]="24" nzErrorTip="Please enter a number">
+                        <input nz-input type="number" formControlName="minuteInterval"
+                            placeholder="e.g. 1 = every minute, 5 = every 5 minutes" />
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- Hourly interval -->
+                <nz-form-item *ngIf="form.value.frequency === 'hourly'">
+                    <nz-form-label [nzSpan]="6" nzRequired>Every X Hours</nz-form-label>
+                    <nz-form-control [nzSpan]="24" nzErrorTip="Please enter a number">
+                        <input nz-input type="number" formControlName="hourInterval"
+                            placeholder="e.g. 1 = every hour, 3 = every 3 hours" />
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- Time selector (for all except hourly/custom) -->
+                <nz-form-item
+                    *ngIf="form.value.frequency !== 'custom' && form.value.frequency !== 'hourly' && form.value.frequency !== 'minutely' && form.value.frequency !== 'secondly'">
+                    <nz-form-label [nzSpan]="6" nzRequired>Time</nz-form-label>
+                    <nz-form-control [nzSpan]="24">
+                        <nz-time-picker formControlName="time" nzFormat="HH:mm"></nz-time-picker>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- Weekly multi-day select -->
+                <nz-form-item *ngIf="form.value.frequency === 'weekly'">
+                    <nz-form-label [nzSpan]="6" nzRequired>Days of Week</nz-form-label>
+                    <nz-form-control [nzSpan]="24">
+                        <nz-select formControlName="daysOfWeek" nzMode="multiple"
+                            nzPlaceHolder="Select one or more days">
+                            <nz-option *ngFor="let d of days" [nzValue]="d.value" [nzLabel]="d.label"></nz-option>
+                        </nz-select>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- Monthly: day of month -->
+                <nz-form-item *ngIf="form.value.frequency === 'monthly'">
+                    <nz-form-label [nzSpan]="6" nzRequired>Day of Month</nz-form-label>
+                    <nz-form-control [nzSpan]="24">
+                        <input nz-input type="number" formControlName="dayOfMonth" placeholder="1 - 31" />
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- Monthly: multiple months -->
+                <nz-form-item *ngIf="form.value.frequency === 'monthly'">
+                    <nz-form-label [nzSpan]="6" nzRequired>Months</nz-form-label>
+                    <nz-form-control [nzSpan]="24">
+                        <nz-select formControlName="months" nzMode="multiple" nzPlaceHolder="Select one or more months">
+                            <nz-option *ngFor="let m of months" [nzValue]="m.value" [nzLabel]="m.label"></nz-option>
+                        </nz-select>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- Custom cron -->
+                <nz-form-item *ngIf="form.value.frequency === 'custom'">
+                    <nz-form-label [nzSpan]="6" nzRequired>Cron Expression</nz-form-label>
+                    <nz-form-control [nzSpan]="24" nzErrorTip="Invalid cron expression">
+                        <input nz-input formControlName="cron" placeholder="e.g. 0 0 * * *" />
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- Cron Preview -->
+                <nz-form-item>
+                    <nz-form-label [nzSpan]="6">Generated Cron</nz-form-label>
+                    <nz-form-control [nzSpan]="24">
+                        <input nz-input [value]="generatedCron" readonly />
+                        <div class="cron-preview" *ngIf="nextRun">
+                            Next Run: <strong>{{ nextRun | date:'medium' }}</strong>
+                        </div>
+                        <div *ngIf="nextRuns?.length">
+                            <nz-divider nzText="Next runs" nzDashed></nz-divider>
+                            <ul class="next-runs-list">
+                                <li *ngFor="let r of nextRuns">{{ r | date:'short' }}</li>
+                            </ul>
+                        </div>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- Enabled -->
+                <nz-form-item style="display: flex;flex-direction: row;">
+                    <nz-form-label [nzSpan]="4">Enabled</nz-form-label>
+                    <nz-form-control [nzSpan]="8">
+                        <nz-switch formControlName="enabled"></nz-switch>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <nz-form-item>
+                    <nz-form-label [nzSpan]="6">Request</nz-form-label>
+                    <nz-form-control [nzSpan]="24">
+                        <code-editor [style.width]="'100%'" [theme]="'dark'" formControlName="request"
+                            [style.height]="'200px'" [theme]="'dark'" [lineWrapping]="true"
+                            [disabled]="selectedScheduler?.id > 0" [highlightWhitespace]="false" [language]="'json'"
+                            [languages]="languages" />
+                    </nz-form-control>
+                </nz-form-item>
+
+
+
+                <!-- Submit -->
+                <nz-form-item>
+                    <nz-form-control [nzSpan]="24" [nzOffset]="6">
+                        <button nz-button nzType="primary" [disabled]="form.invalid">Save Scheduler</button>
+                    </nz-form-control>
+                </nz-form-item>
+            </form>
+        </nz-card>
+    </nz-splitter-panel>
+</nz-splitter>

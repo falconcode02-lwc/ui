@@ -1,0 +1,88 @@
+<nz-page-header class="page-action">
+    <nz-page-header-title><nz-icon nzType="form" nzTheme="outline"></nz-icon> Forms</nz-page-header-title>
+    <nz-page-header-subtitle>
+
+
+        <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
+            <input type="text" (input)="search()" [(ngModel)]="searchText" nz-input placeholder="Search forms..." />
+        </nz-input-group>
+        <ng-template #suffixIconButton>
+            <button nz-button nzType="primary" (click)="search()" nzSearch> <nz-icon nzType="search"></nz-icon></button>
+        </ng-template>
+    </nz-page-header-subtitle>
+    <nz-page-header-extra>
+
+
+        <nz-space>
+            <button *nzSpaceItem nz-button nzType="default" nzShape="round" (click)="loadForms()">
+                <i nz-icon nzType="reload"></i> Refresh
+            </button>
+            <button *nzSpaceItem nz-button nzType="default" nzShape="round" (click)="newForm()">
+                <i nz-icon nzType="plus"></i> New
+            </button>
+        </nz-space>
+    </nz-page-header-extra>
+</nz-page-header>
+
+
+
+<div class="form-list">
+    <!-- Empty State -->
+    <nz-empty *ngIf="!loading && filteredForms.length === 0" nzNotFoundContent="No forms found">
+        <button nz-button nzType="primary" (click)="newForm()">
+            <i nz-icon nzType="plus"></i> Create Form
+        </button>
+    </nz-empty>
+
+    <!-- List View -->
+    <nz-list *ngIf="filteredForms.length > 0" [nzDataSource]="filteredForms" [nzLoading]="loading" nzBordered>
+        <nz-list-item *ngFor="let f of filteredForms" class="form-item">
+            <div class="form-content">
+                <div class="form-main" (click)="edit(f)">
+                    <nz-icon nzType="form" nzTheme="outline" class="form-icon"></nz-icon>
+                    <div class="form-details">
+                        <div class="form-name">{{ f.name }}</div>
+                        <div class="form-meta">
+                            <span class="meta-item">
+                                <span class="meta-label">Code:</span> {{ f.code }}
+                            </span>
+                            <span class="meta-item" *ngIf="f.description">
+                                <span class="meta-label">|</span> {{ f.description }}
+                            </span>
+                            <span class="meta-item">
+                                <span class="meta-label">|</span> Created <small><i>{{ f.createdTime |
+                                        date:constants.dateformat
+                                        }}</i></small>
+                                <span class="meta-label">|</span> Updated <small><i> {{ f.modifiedTime |
+                                        date:constants.dateformat
+                                        }}</i></small>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <nz-switch [(ngModel)]="f.active" (ngModelChange)="onActiveChange($event, f)"
+                        [nzCheckedChildren]="'Active'" [nzUnCheckedChildren]="'Inactive'">
+                    </nz-switch>
+
+                    <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomRight"
+                        (click)="$event.stopPropagation()">
+                        <nz-icon nzType="more" nzTheme="outline"></nz-icon>
+                    </button>
+                    <nz-dropdown-menu #menu="nzDropdownMenu">
+                        <ul nz-menu>
+                            <li nz-menu-item (click)="edit(f)">
+                                <nz-icon nzType="edit" nzTheme="outline"></nz-icon>
+                                Edit
+                            </li>
+                            <li nz-menu-item nzDanger (click)="delete(f)">
+                                <nz-icon nzType="delete" nzTheme="outline"></nz-icon>
+                                Delete
+                            </li>
+                        </ul>
+                    </nz-dropdown-menu>
+                </div>
+            </div>
+        </nz-list-item>
+    </nz-list>
+</div>

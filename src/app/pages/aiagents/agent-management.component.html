@@ -1,0 +1,124 @@
+<nz-splitter nzLayout="horizontal" style="height: 100%;">
+  <nz-splitter-panel [nzDefaultSize]="'60%'">
+    <nz-page-header class="page-action" nzSize="small">
+      <nz-page-header-title><nz-icon nzType="robot" nzTheme="outline"></nz-icon>
+        AI Agents</nz-page-header-title>
+      <nz-page-header-subtitle>
+      </nz-page-header-subtitle>
+      <nz-page-header-extra>
+        <nz-space>
+          <nz-input-group *nzSpaceItem [nzPrefix]="prefixIconSearch" style="width: 200px;">
+            <input type="text" nz-input placeholder="Search Agents" [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearchChange($event)" />
+          </nz-input-group>
+          <ng-template #prefixIconSearch>
+            <span nz-icon nzType="search"></span>
+          </ng-template>
+          <button *nzSpaceItem nz-button nzShape="round" nzType="primary" (click)="cancelEdit()">
+            <span nz-icon nzType="plus"></span> New
+          </button>
+        </nz-space>
+      </nz-page-header-extra>
+    </nz-page-header>
+    <div class="agent-list">
+      <!-- Empty State -->
+      <nz-empty *ngIf="agents.length === 0" nzNotFoundContent="No agents found">
+      </nz-empty>
+
+      <!-- List View -->
+      <div *ngIf="agents.length > 0">
+        <nz-list [nzDataSource]="paginatedAgents" nzBordered>
+          <nz-list-item *ngFor="let agent of paginatedAgents" class="agent-item">
+            <div class="agent-content">
+              <div class="agent-main" (click)="editAgent(agent)">
+                <div class="agent-icon">
+                  <span nz-icon nzType="robot" nzTheme="outline"></span>
+                </div>
+                <div class="agent-details">
+                  <div class="agent-name">{{ agent.agentId }}</div>
+                  <div class="agent-meta">
+                    <span class="meta-item">
+                      <span class="meta-label">Model:</span> {{ agent.model }}
+                    </span>
+                    <span class="meta-item">
+                      <span class="meta-label">|</span> Provider: {{ agent.config?.provider }}
+                    </span>
+                    <span class="meta-item">
+                      <span class="meta-label">|</span> Secret: {{ agent.config?.['openai.secretName'] }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="agent-actions">
+                <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomRight"
+                  (click)="$event.stopPropagation()">
+                  <nz-icon nzType="more" nzTheme="outline"></nz-icon>
+                </button>
+                <nz-dropdown-menu #menu="nzDropdownMenu">
+                  <ul nz-menu>
+                    <li nz-menu-item (click)="editAgent(agent)">
+                      <span nz-icon nzType="edit" nzTheme="outline"></span>
+                      Edit
+                    </li>
+                    <li nz-menu-item nzDanger nz-popconfirm nzPopconfirmTitle="Are you sure to delete?"
+                      (nzOnConfirm)="deleteAgent(agent)">
+                      <span nz-icon nzType="delete" nzTheme="outline"></span>
+                      Delete
+                    </li>
+                  </ul>
+                </nz-dropdown-menu>
+              </div>
+            </div>
+          </nz-list-item>
+        </nz-list>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+          <nz-pagination [nzPageIndex]="pageIndex" [nzTotal]="agents.length" [nzPageSize]="pageSize"
+            (nzPageIndexChange)="onPageChange($event)" nzShowSizeChanger [nzPageSizeOptions]="[10, 20, 50]">
+          </nz-pagination>
+        </div>
+      </div>
+    </div>
+  </nz-splitter-panel>
+  <nz-splitter-panel [nzDefaultSize]="'40%'">
+    <nz-card [nzTitle]="isEditMode ? 'Edit Agent' : 'Create Agent'" [nzBordered]="false" style="height: 100%;">
+      <form nz-form (ngSubmit)="isEditMode ? updateAgent() : createAgent()" [formGroup]="agentForm">
+        <nz-form-item>
+          <nz-form-label [nzSpan]="6" nzFor="agentId" [nzRequired]="true">Agent ID</nz-form-label>
+          <nz-form-control nzErrorTip="Please enter Agent ID">
+            <input nz-input id="agentId" formControlName="agentId" placeholder="e.g. agent_gemini"
+              [readonly]="isEditMode" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="6" nzFor="model" [nzRequired]="true">Model</nz-form-label>
+          <nz-form-control nzErrorTip="Please enter Model">
+            <input nz-input id="model" formControlName="model" placeholder="e.g. gemini-pro-1" />
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="6" nzFor="provider" [nzRequired]="true">Provider</nz-form-label>
+          <nz-form-control nzErrorTip="Please select Provider">
+            <nz-select id="provider" formControlName="provider" nzPlaceHolder="Select Provider">
+              <nz-option *ngFor="let p of providerConfigs" [nzValue]="p.name" [nzLabel]="p.name"></nz-option>
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+        <nz-form-item>
+          <nz-form-label [nzSpan]="6" nzFor="secretName" [nzRequired]="true">Secret Name</nz-form-label>
+          <nz-form-control nzErrorTip="Please select Secret">
+            <nz-select id="secretName" formControlName="secretName" nzPlaceHolder="Select Secret">
+              <nz-option *ngFor="let s of secretOptions" [nzValue]="s.name" [nzLabel]="s.name"></nz-option>
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+        <button nz-button nzType="primary" nzShape="round" [disabled]="agentForm.invalid">{{ isEditMode ? 'Update Agent'
+          : 'Create
+          Agent' }}</button>
+        <button *ngIf="isEditMode" nz-button nzType="default" style="margin-left: 8px;"
+          (click)="cancelEdit()">Cancel</button>
+      </form>
+    </nz-card>
+  </nz-splitter-panel>
+</nz-splitter>

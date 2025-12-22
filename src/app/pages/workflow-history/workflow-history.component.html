@@ -1,0 +1,34 @@
+
+<nz-card *ngIf="events?.length; else emptyBlock" nzBordered>
+  <nz-timeline>
+    <nz-timeline-item *ngFor="let ev of events; let i = index" [nzColor]="'blue'">
+      <div class="event-head">
+        <div class="title">
+          <strong>{{ eventTitle(ev) }}</strong>
+          <nz-tag style="margin-left:8px">{{ ev?.eventType ?? ev?.type ?? '' }}</nz-tag>
+        </div>
+        <div class="meta">{{ eventTime(ev) }}</div>
+      </div>
+
+      <div class="event-body">
+        <div class="summary">{{ summary(ev) }}</div>
+
+        <div class="actions">
+          <button nz-button nzType="default" nzSize="small" (click)="toggleExpand(ev?.eventId ?? i)">
+            {{ isExpanded(ev?.eventId ?? i) ? 'Hide' : 'Show' }} details
+          </button>
+        </div>
+
+        <nz-collapse *ngIf="isExpanded(ev?.eventId ?? i)">
+          <nz-collapse-panel nzHeader="Raw JSON / Attributes" [nzShowArrow]="false">
+            <pre class="raw-json">{{ pretty(ev) }}</pre>
+          </nz-collapse-panel>
+        </nz-collapse>
+      </div>
+    </nz-timeline-item>
+  </nz-timeline>
+</nz-card>
+
+<ng-template #emptyBlock>
+  <nz-empty nzNotFoundImage="simple" nzNotFoundContent="No history available"></nz-empty>
+</ng-template>

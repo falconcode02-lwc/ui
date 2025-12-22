@@ -1,0 +1,233 @@
+<style>
+    pre {
+        padding: 8px;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+
+    .log-container {
+        width: 100%;
+        height: 100%;
+        border-top: 0;
+        display: flex;
+    }
+
+    .log-actions {
+        padding: 8px;
+        display: flex;
+        justify-content: flex-end;
+    }
+</style>
+
+
+<nz-splitter nzLayout="vertical" style="height: 100%;">
+
+    <nz-splitter-panel [nzDefaultSize]="'90%'">
+
+        <nz-splitter nzLayout="horizontal">
+
+            <!-- <nz-splitter-panel [nzCollapsible]="true" [nzDefaultSize]="'5%'">
+                
+
+
+            </nz-splitter-panel> -->
+            <nz-splitter-panel [nzCollapsible]="true" [nzDefaultSize]="'20%'">
+                <div style="display: flex;width: 100%;">
+                    <div style="padding: 0px;width: 80px;height: 100%;border-right: 1px solid #606060;    border-bottom: 1px solid #606060;"> 
+                        <nz-list nzSize="small" style="cursor: pointer;">
+                            @for (item of folders; track item) { 
+                            <nz-list-item
+                                [ngClass]="{ 'selected-item': selectedFolder.classTypeKey === item.classTypeKey }"
+                                (click)="selectItem(item)" nzTooltipTitle="{{item.classType }}"
+                                nzTooltipPlacement="right" nz-button nz-tooltip>
+                                <nz-list-item-meta-title>
+                                    <nz-icon nzType="{{item.icon}}"
+                                        style="font-size: 16px;color: #e19a00;margin-right: 5px;" nzTheme="outline" />
+                                    <!-- <span style="text-transform: capitalize;">{{ item.classType }} </span> -->
+                                </nz-list-item-meta-title>
+                                <span nz-typography><code>{{item.counts || 0}}</code></span> 
+                            </nz-list-item>  
+                            }
+                        </nz-list>
+
+                    </div>
+
+                    <div style="padding: 8px;width: 100%;height: 100%;">
+                        <input placeholder='search for items...' nz-input [(ngModel)]="inputValue"
+                            (ngModelChange)="onChange($event)" [nzAutocomplete]="auto" />
+                        <nz-autocomplete #auto (selectionChange)="onSelect($event)">
+
+                            <nz-auto-option *ngFor="let opt of filteredOptions" [nzValue]="opt.className">
+                                <i nz-icon [nzType]="opt.icon" class="mr-2"></i>
+                                {{ opt.className }}
+                                <br>
+                                <span class="certain-search-item-count">{{ opt.type }}</span>
+                            </nz-auto-option>
+
+                        </nz-autocomplete>
+                        <div style="height: calc(100% - 33px); overflow: auto;">
+                            <nz-list nzSize="small" style="cursor: pointer;margin-top: 5px;">
+                                @for (item of listChildFiles; track item) {
+
+                                <nz-list-item [ngClass]="{ 'selected-item-file': selectedFile.id === item.id }"
+                                    (click)="selectSubItem(item)">
+                                    <nz-list-item-meta-title>
+                                        <nz-icon nzType="{{icons[item.classType]}}"
+                                            style="font-size: 16px;color: #e19a00;" nzTheme="outline" />
+                                        {{ item.className }}</nz-list-item-meta-title>
+
+                                </nz-list-item>
+
+
+                                }
+                            </nz-list>
+                        </div>
+                    </div>
+                </div>
+            </nz-splitter-panel>
+            <nz-splitter-panel>
+
+
+                <div style="display:flex;height: 100%;flex-direction: column;">
+                    <div class="editor-header">
+
+                        <nz-space [nzSize]="'small'"
+                            style="width: 100%; display: flex; justify-content: space-between;">
+                            <span *nzSpaceItem
+                                style="margin-left: auto; display: flex; justify-content: space-between; gap: 2px;">
+                                <!-- <button  nz-button nz-tooltip nzTooltipTitle="Save" nzType="default" (click)="handleSaveClick()"><nz-icon nzType="save" /></button>
+                            <button  nz-button nz-tooltip nzTooltipTitle="Save & Compile" nzType="default"><nz-icon nzType="copyright" /></button> -->
+
+                                <button *ngFor="let act of actions" nz-button [nzType]="act.style || 'default'"
+                                    [disabled]="!act.enabled" nz-tooltip [nzTooltipTitle]="act.tooltip"
+                                    (click)="execute(act)">
+                                    <i nz-icon [nzType]="act.icon"></i>
+                                </button>
+
+
+
+                                <!-- <button nz-button nz-tooltip nzTooltipTitle="Add New" (click)="handleNewClick()"
+                                    [disabled]="disableOnRootSelected || alldisabled" nzType="default"><nz-icon
+                                        nzType="plus" /></button>
+                                <div style="width: 15px;display: flex;justify-content: center;align-items: center;">|
+                                </div>
+                                <button nz-button nzTheme="dark" [disabled]="!disableOnRootSelected || alldisabled"
+                                    nz-tooltip nzTooltipTitle="Deploy" (click)="handleDeployClick('')"
+                                    nzType="default"><nz-icon nzType="cloud-upload" /></button>
+                                <button nz-button nzDanger="false" [disabled]="!disableOnRootSelected || alldisabled"
+                                    nz-tooltip nzTooltipTitle="Show Parsed" (click)="handleDeployClick('onlyCompile')"
+                                    nzType="default"><nz-icon nzType="check-circle" /></button>
+                                <div style="width: 15px;display: flex;justify-content: center;align-items: center;">|
+                                </div>
+
+                                <button nz-button nz-tooltip nzTooltipTitle="Text Wrap"
+                                    [disabled]="!disableOnRootSelected || alldisabled"
+                                    (click)="options.lineWrapping = !options.lineWrapping" nzType="default"><nz-icon
+                                        nzType="enter" /></button>
+
+                                <div style="width: 15px;display: flex;justify-content: center;align-items: center;">|
+                                </div>
+                                <button nz-button nz-tooltip nzTooltipTitle="Delete"
+                                    (click)="generateGettersSetters(code)" nzType="default"><nz-icon
+                                        nzType="delete" /></button>
+                                <div style="width: 15px;display: flex;justify-content: center;align-items: center;">|
+                                </div>
+                                <button nz-button nz-tooltip nzTooltipTitle="Information | Help"
+                                    (click)="generateGettersSetters(code)" nzType="default"><nz-icon
+                                        nzType="info-circle" /></button> -->
+
+                            </span>
+                            <span *nzSpaceItem
+                                style="margin-left: auto; display: flex; justify-content: space-between; gap: 2px;">
+                                <span *ngIf="fileVersion" style="font-weight: bold;">{{ selectedFile.className
+                                    }}</span>
+
+                            </span>
+
+                            <span *nzSpaceItem
+                                style="margin-left: auto; display: flex; justify-content: space-between; gap: 2px;">
+
+
+
+                                <div
+                                    style="display: flex; align-items: flex-end; justify-content: center; gap: 0px; flex-direction: column;">
+
+                                    <span *ngIf="fileVersion"><small>Version: {{ fileVersion }}</small></span>
+                                    <span *ngIf="selectedFile?.modifiedTime"><small>Modified: {{
+                                            selectedFile.modifiedTime | date:constants.dateformat }}</small></span>
+                                </div>
+                            </span>
+                        </nz-space>
+
+
+
+                    </div>
+                    <nz-tabset [nzSize]="'small'" nzType="card" [(nzSelectedIndex)]="selectedIndex"
+                        nzType="editable-card" (nzClose)="closeTab($event)" (nzAdd)="addNew($event)"
+                        (nzSelectedIndexChange)="onTabIndexChange($event)">
+                        @for (tab of tabs; track tab; let i = $index) {
+                        <nz-tab nzClosable [nzTitle]="titleTemplate" (nzClick)="onTabClick(i)">
+                            <ng-template #titleTemplate>
+                                <nz-icon [nzType]="tab.icon" style="color: #e19a00;" />
+                                {{ tab.name }}
+                            </ng-template>
+
+                        </nz-tab>
+
+                        }</nz-tabset>
+                    <div class="editor-container theme-background">
+
+
+
+                        <const-editor *ngIf="vis == VisibilityEnum.consteditor"></const-editor>
+                        <db-editor #dbcomp [classType]="NodeTypeEnum[NodeTypeEnum.object]" [id]="selectedNodeId"
+                            *ngIf="vis == VisibilityEnum.dbview"></db-editor>
+
+                        <api-editor [version]="fileVersion" [id]="selectedNodeId" #apicomp
+                            *ngIf="vis == VisibilityEnum.apieditor"></api-editor>
+                        <code-editor *ngIf="vis == VisibilityEnum.codeeditor" #editor [style.height]="'100%'"
+                            [(ngModel)]="code" (ngModelChange)="log($event)" [theme]="options.theme"
+                            [setup]="options.setup" [disabled]="options.disabled" [readonly]="options.readonly"
+                            [placeholder]="options.placeholder" [indentWithTab]="options.indentWithTab"
+                            [extensions]="extensions" [indentUnit]="options.indentUnit"
+                            [lineWrapping]="options.lineWrapping" [highlightWhitespace]="options.highlightWhitespace"
+                            [language]="options.language" [languages]="languages" />
+
+                        <!-- <app-editor *ngIf="vis == VisibilityEnum.codeeditor" [(ngModel)]="code" [language]="'java'" (ngModelChange)="log($event)"  [theme]="'vs-dark'" [fontSize]="14"
+                            [readOnly]="false" [minimap]="false"></app-editor> -->
+
+                    </div>
+
+                </div>
+
+            </nz-splitter-panel>
+
+        </nz-splitter>
+
+    </nz-splitter-panel>
+    <nz-splitter-panel [nzDefaultSize]="'10%'">
+        <div class="log-container">
+            <div class="log-actions">
+                <button nz-button nz-tooltip nzTooltipTitle="Clear" (click)="clearLogs()" nzType="default"><nz-icon
+                        nzType="clear" /></button>
+
+            </div>
+            <div style="flex: 1; overflow: auto; padding: 8px;" [appAutoScrollBottom]="logs">
+                <div *ngFor="let item of logs" style="white-space:pre-wrap; " [innerHtml]="item"></div>
+
+
+            </div>
+        </div>
+    </nz-splitter-panel>
+</nz-splitter>
+
+<nz-drawer [nzClosable]="true" [nzVisible]="parseCodeVisible" [nzPlacement]="'bottom'" [nzSize]="'large'"
+    (nzOnClose)="closeParseWindow()" nzTitle="Parsed Code">
+    <div *nzDrawerContent>
+        <code-editor #editorParsedCode [style.height]="'100%'" [(ngModel)]="parsedCode" [theme]="options.theme"
+            [setup]="options.setup" [disabled]="false" [readonly]="true" [placeholder]="options.placeholder"
+            [indentWithTab]="options.indentWithTab" [extensions]="extensions" [indentUnit]="options.indentUnit"
+            [lineWrapping]="options.lineWrapping" [highlightWhitespace]="options.highlightWhitespace"
+            [language]="options.language" [languages]="languages" />
+    </div>
+</nz-drawer>

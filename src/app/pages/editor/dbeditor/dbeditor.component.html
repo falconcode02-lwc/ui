@@ -1,0 +1,99 @@
+<div style="padding: 16px;">
+
+    <form nz-form>
+        <nz-form-item>
+
+            <nz-form-control [nzSpan]="8"> <nz-form-label>Object Name</nz-form-label>
+                <input nz-input [(ngModel)]="table.name" [disabled]="id > 0" name="tableName"
+                    placeholder="Enter object name" />
+            </nz-form-control>
+        </nz-form-item>
+    </form>
+    <br>
+    <br>
+    <nz-tabset nzSize="small">
+        <nz-tab [nzTitle]="piccenter">
+            <ng-template #piccenter>
+                <nz-icon [nzType]="'pic-center'" />
+                Column
+            </ng-template>
+            <nz-table nz-bordered="true" nzSize="small" #cols [nzNoResult]="''" [nzData]="tablCos"
+                [nzFrontPagination]="false" style="margin-top: 16px;">
+                <thead>
+                    <tr>
+                        <th>Field Name</th>
+                        <th>Type</th>
+                        <th>Length</th>
+                        <th>Primary Key</th>
+                        <th>Nullable</th>
+                        <th>Auto Increment</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr *ngFor="let col of tablCos; let i = index">
+                        <td><input [disabled]="id > 0 && !col.isnew || col.name=='id'" nz-input [(ngModel)]="col.name"
+                                name="colName{{i}}" /></td>
+                        <td [width]="'150px'">
+                            <nz-select [(ngModel)]="col.type" name="colType{{i}}" [style.width]="'150px'">
+                                <nz-option nzValue="INT" nzLabel="INT"></nz-option>
+
+                                <nz-option nzValue="BIGINT" nzLabel="BIGINT"></nz-option>
+                                <nz-option nzValue="VARCHAR" nzLabel="VARCHAR"></nz-option>
+                                <nz-option nzValue="TEXT" nzLabel="TEXT"></nz-option>
+                                <nz-option nzValue="DATE" nzLabel="DATE"></nz-option>
+                                <nz-option nzValue="BOOLEAN" nzLabel="BOOLEAN"></nz-option>
+                                <nz-option nzValue="TINYINT" nzLabel="TINY INT"></nz-option>
+                                <nz-option nzValue="FLOAT" nzLabel="FLOAT"></nz-option>
+                                <nz-option nzValue="DOUBLE" nzLabel="DOUBLE"></nz-option>
+                                <nz-option nzValue="DECIMAL" nzLabel="DECIMAL"></nz-option>
+                                <nz-option nzValue="TIMESTAMP" nzLabel="TIMESTAMP"></nz-option>
+                                <nz-option nzValue="BLOB" nzLabel="BLOB"></nz-option>
+                            </nz-select>
+                        </td>
+                        <td [width]="'120px'"><input nz-input type="number" [disabled]="col.name=='id'"
+                                style="text-align: center;" [(ngModel)]="col.length" name="colLen{{i}}" /></td>
+                        <td align="center" [width]="'120px'">
+                            <label nz-checkbox [(ngModel)]="col.isPrimary" [disabled]="col.name=='id'"
+                                name="colPk{{i}}"></label>
+                        </td>
+                        <td align="center" [width]="'120px'">
+                            <label nz-checkbox [(ngModel)]="col.isNullable" [disabled]="col.name=='id'"
+                                name="colNull{{i}}"></label>
+                        </td>
+
+                        <td align="center" [width]="'120px'">
+                            <label nz-checkbox [(ngModel)]="col.isAutoIncrement" [disabled]="col.name=='id'"
+                                name="colNull{{i}}"></label>
+                        </td>
+
+                        <td [width]="'70px'">
+
+                            <button nz-button nz-tooltip nzTooltipTitle="Remove"
+                                [disabled]="id > 0 && !col.isnew || col.name=='id'" (click)="removeColumn(i)"
+                                nzType="default"><nz-icon nzType="delete" /></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </nz-table>
+        </nz-tab>
+        <nz-tab [nzTitle]="insertRowRight">
+            <ng-template #insertRowRight>
+                <nz-icon [nzType]="'insert-row-right'" />
+                Index
+            </ng-template>
+
+
+        </nz-tab>
+    </nz-tabset>
+
+
+    <!-- <button nz-button nzType="primary" (click)="generateSql()">Generate SQL</button> -->
+</div>
+
+<!-- Generated SQL Output -->
+<div *ngIf="generatedSql">
+    <h3>Generated SQL</h3>
+    <pre>{{ generatedSql }}</pre>
+</div>

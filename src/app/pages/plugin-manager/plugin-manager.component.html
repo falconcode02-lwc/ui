@@ -1,0 +1,384 @@
+<nz-page-header class="page-action" nzSize="small">
+    <nz-page-header-title><nz-icon nzType="api" nzTheme="outline"></nz-icon> Plugin Manager</nz-page-header-title>
+    <nz-page-header-subtitle>
+        <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
+            <input type="text" (input)="search()" [(ngModel)]="searchText" nz-input placeholder="Search plugins..." />
+        </nz-input-group>
+        <ng-template #suffixIconButton>
+            <button nz-button nzType="primary" (click)="search()" nzSearch>
+                <nz-icon nzType="search"></nz-icon>
+            </button>
+        </ng-template>
+    </nz-page-header-subtitle>
+    <nz-page-header-extra>
+        <button nz-button nzType="primary" nzShape="round" (click)="openCreateDrawer()">
+            <span nz-icon nzType="plus" nzTheme="outline"></span>
+            Create Plugin
+        </button>
+
+    </nz-page-header-extra>
+</nz-page-header>
+
+
+
+<div class="plugin-manager">
+    <!-- Plugin List Table -->
+    <!-- Empty State -->
+    <nz-empty *ngIf="!loading && filteredPlugins.length === 0" nzNotFoundContent="No plugins found">
+        <button nz-button nzType="primary" (click)="openCreateDrawer()" nzShape="round">
+            <span nz-icon nzType="plus" nzTheme="outline"></span>
+            Create Plugin
+        </button>
+    </nz-empty>
+
+    <!-- Plugin List View -->
+    <div *ngIf="filteredPlugins.length > 0">
+        <nz-list [nzDataSource]="filteredPlugins" [nzLoading]="loading" nzBordered>
+            <nz-list-item *ngFor="let plugin of filteredPlugins" class="plugin-item">
+                <div class="plugin-content">
+                    <div class="plugin-main" (click)="openEditDrawer(plugin)">
+                        <div class="plugin-icon">
+                            <img *ngIf="isBase64Icon(plugin.icon)" [src]="plugin.icon" alt="Plugin Icon" />
+                            <div *ngIf="!isBase64Icon(plugin.icon)" class="icon-placeholder">
+                                <span nz-icon nzType="api" nzTheme="outline"></span>
+                            </div>
+                        </div>
+                        <div class="plugin-details">
+                            <div class="plugin-name">{{ plugin.pluginName }}</div>
+                            <div class="plugin-meta">
+                                <span class="meta-item">
+                                    <span class="meta-label">Version:</span> <nz-tag nzColor="blue">{{ plugin.version
+                                        }}</nz-tag>
+                                </span>
+                                <span class="meta-item">
+                                    <span class="meta-label">|</span> Author: {{ plugin.pluginAuthor }}
+                                </span>
+                                <span class="meta-item" *ngIf="plugin.pluginDesc">
+                                    <span class="meta-label">|</span> {{ plugin.pluginDesc }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="plugin-actions">
+                        <nz-switch [(ngModel)]="plugin.active" [nzCheckedChildren]="'Active'"
+                            [nzUnCheckedChildren]="'Inactive'" (click)="$event.stopPropagation()">
+                        </nz-switch>
+
+                        <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomRight"
+                            (click)="$event.stopPropagation()">
+                            <nz-icon nzType="more" nzTheme="outline"></nz-icon>
+                        </button>
+                        <nz-dropdown-menu #menu="nzDropdownMenu">
+                            <ul nz-menu>
+                                <li nz-menu-item (click)="openEditDrawer(plugin)">
+                                    <span nz-icon nzType="edit" nzTheme="outline"></span>
+                                    Edit
+                                </li>
+                                <li nz-menu-item nzDanger nz-popconfirm
+                                    nzPopconfirmTitle="Are you sure you want to delete this plugin?"
+                                    (nzOnConfirm)="deletePlugin(plugin.id!)">
+                                    <span nz-icon nzType="delete" nzTheme="outline"></span>
+                                    Delete
+                                </li>
+                            </ul>
+                        </nz-dropdown-menu>
+                    </div>
+                </div>
+            </nz-list-item>
+        </nz-list>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+            <nz-pagination [nzPageIndex]="pageIndex" [nzTotal]="total" [nzPageSize]="pageSize"
+                (nzPageIndexChange)="onPageChange($event)" nzShowSizeChanger [nzPageSizeOptions]="[10, 20, 50]">
+            </nz-pagination>
+        </div>
+    </div>
+
+    <!-- Plugin Form Drawer -->
+    <nz-drawer [nzVisible]="drawerVisible" [nzTitle]="drawerTitle" [nzWidth]="'100vw'" [nzHeight]="'100vh'"
+        [nzClosable]="true" [nzMaskClosable]="false" (nzOnClose)="closeDrawer()">
+        <div *nzDrawerContent class="drawer-content">
+
+            <nz-splitter style="height: 100%;">
+
+                <nz-splitter-panel [nzDefaultSize]="'20%'">
+                    <div style="padding-right: 24px;">
+                        <form nz-form [formGroup]="pluginForm" nzLayout="vertical">
+
+                            <!-- Plugin Name -->
+                            <nz-form-item>
+                                <nz-form-label nzRequired>Plugin Name</nz-form-label>
+                                <nz-form-control [nzErrorTip]="pluginNameError">
+                                    <input nz-input formControlName="pluginName" placeholder="Enter plugin name"
+                                        maxlength="100" />
+                                    <ng-template #pluginNameError let-control>
+                                        <ng-container *ngIf="control.hasError('required')">
+                                            Please enter plugin name
+                                        </ng-container>
+                                        <ng-container *ngIf="control.hasError('maxlength')">
+                                            Maximum 100 characters allowed
+                                        </ng-container>
+                                    </ng-template>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- Version -->
+                            <nz-form-item>
+                                <nz-form-label nzRequired>Version</nz-form-label>
+                                <nz-form-control [nzErrorTip]="versionError">
+                                    <input nz-input formControlName="version" placeholder="e.g. 1.0.0" />
+                                    <ng-template #versionError let-control>
+                                        <ng-container *ngIf="control.hasError('required')">
+                                            Please enter version
+                                        </ng-container>
+                                        <ng-container *ngIf="control.hasError('pattern')">
+                                            Version must follow format: X.Y.Z (e.g., 1.0.0)
+                                        </ng-container>
+                                    </ng-template>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- Author -->
+                            <nz-form-item>
+                                <nz-form-label nzRequired>Author</nz-form-label>
+                                <nz-form-control [nzErrorTip]="authorError">
+                                    <input nz-input formControlName="pluginAuthor" placeholder="Enter author name"
+                                        maxlength="100" />
+                                    <ng-template #authorError let-control>
+                                        <ng-container *ngIf="control.hasError('required')">
+                                            Please enter author name
+                                        </ng-container>
+                                        <ng-container *ngIf="control.hasError('maxlength')">
+                                            Maximum 100 characters allowed
+                                        </ng-container>
+                                    </ng-template>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- Description -->
+                            <nz-form-item>
+                                <nz-form-label nzRequired>Description</nz-form-label>
+                                <nz-form-control [nzErrorTip]="descError">
+                                    <textarea nz-input formControlName="pluginDesc"
+                                        placeholder="Enter plugin description" [nzAutosize]="{ minRows: 3, maxRows: 6 }"
+                                        maxlength="500"></textarea>
+                                    <ng-template #descError let-control>
+                                        <ng-container *ngIf="control.hasError('required')">
+                                            Please enter description
+                                        </ng-container>
+                                        <ng-container *ngIf="control.hasError('maxlength')">
+                                            Maximum 500 characters allowed
+                                        </ng-container>
+                                    </ng-template>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- Documentation -->
+                            <nz-form-item>
+                                <nz-form-label>Documentation</nz-form-label>
+                                <nz-form-control>
+                                    <textarea nz-input formControlName="pluginDocument"
+                                        placeholder="Enter plugin documentation (Markdown supported)"
+                                        [nzAutosize]="{ minRows: 5, maxRows: 10 }" maxlength="5000"></textarea>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- Icon Upload -->
+                            <nz-form-item>
+                                <nz-form-label>Plugin Icon</nz-form-label>
+                                <nz-form-control
+                                    nzExtra="Upload an image exactly 48x48 pixels (PNG, JPG, SVG) max 2MB. Will be converted to Base64.">
+                                    <div class="icon-upload-section">
+                                        <div class="icon-upload-actions">
+                                            <nz-upload [nzBeforeUpload]="beforeIconUpload" [nzShowUploadList]="false"
+                                                nzAccept="image/*">
+                                                <button nz-button nzType="default" [nzLoading]="uploadingIcon">
+                                                    <span nz-icon nzType="upload" nzTheme="outline"></span>
+                                                    Upload Icon
+                                                </button>
+                                            </nz-upload>
+                                            <button nz-button nzType="default" nzDanger *ngIf="iconPreview"
+                                                (click)="removeIcon()" style="margin-left: 8px;">
+                                                <span nz-icon nzType="delete" nzTheme="outline"></span>
+                                                Remove
+                                            </button>
+                                        </div>
+
+                                        <div class="icon-preview-container" *ngIf="iconPreview">
+                                            <div class="icon-preview-label">Preview:</div>
+                                            <div class="icon-preview-box">
+                                                <img [src]="iconPreview" alt="Plugin Icon Preview" />
+                                            </div>
+                                        </div>
+
+                                        <!-- Hidden input to store base64 -->
+                                        <input type="hidden" formControlName="icon" />
+                                    </div>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- Active Status -->
+                            <nz-form-item>
+                                <nz-form-label>Active</nz-form-label>
+                                <nz-form-control>
+                                    <nz-switch formControlName="active"></nz-switch>
+                                    <span class="switch-label">
+                                        {{ pluginForm.get('active')?.value ? 'Enabled' : 'Disabled' }}
+                                    </span>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <nz-divider></nz-divider>
+
+                            <!-- Props Configuration -->
+                            <nz-form-item>
+                                <nz-form-label>
+                                    Props Configuration
+                                    <span class="label-hint">(Form Builder JSON)</span>
+                                </nz-form-label>
+                                <nz-form-control>
+                                    <div class="props-section">
+                                        <button nz-button nzType="dashed" nzBlock type="button"
+                                            (click)="openFormBuilder()">
+                                            <span nz-icon nzType="form" nzTheme="outline"></span>
+                                            {{ pluginForm.get('props')?.value ? 'Edit Props Schema' : 'Create Props
+                                            Schema' }}
+                                        </button>
+
+                                        <div class="props-preview" *ngIf="pluginForm.get('props')?.value">
+                                            <div class="preview-label">Current Schema:</div>
+                                            <pre>{{ pluginForm.get('props')?.value | json }}</pre>
+                                        </div>
+                                    </div>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- Secrets Configuration -->
+                            <nz-form-item>
+                                <nz-form-label>
+                                    Secrets Configuration
+                                    <span class="label-hint">(Secured values schema)</span>
+                                </nz-form-label>
+                                <nz-form-control>
+                                    <div class="props-section">
+                                        <button nz-button nzType="dashed" nzBlock type="button"
+                                            (click)="openSecretsBuilder()">
+                                            <span nz-icon nzType="lock" nzTheme="outline"></span>
+                                            {{ pluginForm.get('secrets')?.value ? 'Edit Secret Schema' : 'Create Secret
+                                            Schema' }}
+                                        </button>
+
+                                        <div class="props-preview" *ngIf="pluginForm.get('secrets')?.value">
+                                            <div class="preview-label">Current Secret Schema:</div>
+                                            <pre>{{ pluginForm.get('secrets')?.value | json }}</pre>
+                                        </div>
+                                    </div>
+                                </nz-form-control>
+                            </nz-form-item>
+
+
+                            <nz-form-item class="form-actions">
+                                <nz-form-control>
+                                    <!-- <button nz-button nzType="primary" type="button" *ngIf="!isEditMode"
+                                        (click)="submitForm()" [nzLoading]="false">
+                                        <span nz-icon nzType="save" nzTheme="outline"></span>
+                                        Create Plugin
+                                    </button> -->
+                                    <!-- <button nz-button nzType="primary" type="button" *ngIf="isEditMode"
+                                        (click)="submitForm()" [nzLoading]="false">
+                                        <span nz-icon nzType="edit" nzTheme="outline"></span>
+                                        Update Plugin
+                                    </button>
+                                    <button nz-button nzType="primary" type="button" style="margin-left: 12px;"
+                                        (click)="deployPluginFromDrawer()" [nzLoading]="false">
+                                        <span nz-icon nzType="rocket" nzTheme="outline"></span>
+                                        Deploy Plugin
+                                    </button>
+                                    <button nz-button nzType="default" style="margin-left: 12px;" type="button"
+                                        (click)="exportPlugin()">
+                                        <span nz-icon nzType="download" nzTheme="outline"></span>
+                                        Export Plugin (.ffx)
+                                    </button> -->
+                                </nz-form-control>
+                            </nz-form-item>
+
+                        </form>
+                    </div>
+                </nz-splitter-panel>
+
+                <nz-splitter-panel [nzDefaultSize]="'80%'">
+                    <div class="code-header" style="margin-left: 24px;">
+
+                        <div class="header-actions">
+                            <button nz-button nzType="primary" nzSize="small" nzShape="round"
+                                (click)="compilePluginAndShow()">
+                                <span nz-icon nzType="build" nzTheme="outline"></span>
+                                Compile & Show
+                            </button>
+                            <button nz-button nzType="default" nzSize="small" nzShape="round" style="margin-left: 8px;"
+                                (click)="deployPluginFromDrawer()">
+                                <span nz-icon nzType="cloud-upload" nzTheme="outline"></span>
+                                Deploy
+                            </button>
+
+                            <button nz-button nzType="default" nzShape="round" *ngIf="(editingPluginId||0) > 0"
+                                nzSize="small" style="margin-left: 8px;" (click)="exportPlugin()">
+                                <span nz-icon nzType="download" nzTheme="outline"></span>
+                                Export Plugin (.ffx)
+                            </button>
+                            <label nz-button nzType="default" nzShape="round" *ngIf="(editingPluginId||0) == 0"
+                                style="margin-left: 12px; cursor:pointer;">
+                                <span nz-icon nzType="upload" nzTheme="outline"></span>
+                                Import Plugin (.ffx)
+                                <input type="file" accept=".ffx" style="display:none" (change)="importPlugin($event)" />
+                            </label>
+
+                        </div>
+                    </div>
+                    <div class="code-split-container" style="padding-left: 24px;">
+
+                        <nz-splitter nzLayout="vertical" style="height: 100%;">
+
+                            <nz-splitter-panel [nzDefaultSize]="'90%'">
+
+                                <div class="code-editor-flex">
+                                    <code-editor [(ngModel)]="generatedCode" [extensions]="javaExtensions"
+                                        [theme]="'dark'" [lineWrapping]="true" [highlightWhitespace]="false"
+                                        [indentUnit]="''" [indentWithTab]="true" [language]="'java'"
+                                        [languages]="languages"  
+                                        style="width:100%;height:100%;"></code-editor>
+                                </div>
+                            </nz-splitter-panel>
+                            <nz-splitter-panel [nzDefaultSize]="'10%'">
+                                <div class="log-cat-window">
+                                    <div class="log-cat-header">
+                                        <h4>Log Cat</h4>
+                                        <button nz-button nzType="text" nzSize="small" (click)="clearLogs()" 
+                                                *ngIf="compileLogs.length > 0"
+                                                nz-tooltip="Clear logs">
+                                            <span nz-icon nzType="delete" nzTheme="outline"></span>
+                                            Clear
+                                        </button>
+                                    </div>
+                                    <div class="log-cat-content">
+                                        <div *ngFor="let log of compileLogs" class="log-entry">
+                                            {{ log }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </nz-splitter-panel>
+                        </nz-splitter>
+                    </div>
+
+                </nz-splitter-panel>
+
+            </nz-splitter>
+
+
+
+        </div>
+    </nz-drawer>
+
+</div>

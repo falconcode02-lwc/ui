@@ -1,0 +1,139 @@
+<nz-splitter nzLayout="horizontal" style="height: 100%;">
+
+    <nz-splitter-panel [nzDefaultSize]="'60%'">
+
+
+        <nz-card [nzBordered]="false" style="max-width: 800px;" [nzSize]="'small'">
+
+            <form nz-form [formGroup]="apiForm" nzLayout="vertical" (ngSubmit)="onSubmit()" class="p-4">
+                <nz-form-item>
+                    <nz-form-label nzFor="mode">Mode</nz-form-label>
+                    <nz-form-control>
+                        <nz-radio-group formControlName="mode" id="mode">
+                            <label nz-radio nzValue="sync">Synchronous</label>
+                            <label nz-radio nzValue="async">Asynchronous</label>
+                        </nz-radio-group>
+                    </nz-form-control>
+                </nz-form-item>
+                <!-- 🏷 API Name -->
+                <nz-form-item>
+                    <nz-form-label [nzRequired]="true" nzFor="name">API Name</nz-form-label>
+                    <nz-form-control nzErrorTip="Please enter API name">
+
+                        <input nz-input id="name" formControlName="name" placeholder="e.g. GetUserDetails" />
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- 🌐 URL -->
+                <nz-form-item>
+                    <nz-form-label [nzRequired]="true" nzFor="url">URL</nz-form-label>
+                    <nz-form-control nzErrorTip="Please enter valid URL">
+                        <input nz-input id="url" formControlName="url" placeholder="https://api.example.com/v1/user" />
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- ⚙️ Method -->
+                <nz-form-item>
+                    <nz-form-label [nzRequired]="true" nzFor="method">Method</nz-form-label>
+                    <nz-form-control>
+                        <nz-select formControlName="method" id="method" nzPlaceHolder="Select HTTP Method">
+                            <nz-option nzValue="GET" nzLabel="GET"></nz-option>
+                            <nz-option nzValue="POST" nzLabel="POST"></nz-option>
+                            <nz-option nzValue="PUT" nzLabel="PUT"></nz-option>
+                            <nz-option nzValue="PATCH" nzLabel="PATCH"></nz-option>
+                            <nz-option nzValue="DELETE" nzLabel="DELETE"></nz-option>
+                        </nz-select>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- 🧾 Headers -->
+                <nz-form-item>
+                    <nz-form-label nzFor="headers">Headers (JSON)</nz-form-label>
+                    <nz-form-control nzErrorTip="Invalid JSON format">
+                        <textarea nz-input id="headers" formControlName="headers" rows="3"
+                            placeholder='e.g. {"Content-Type": "application/json"}'></textarea>
+                    </nz-form-control>
+                </nz-form-item>
+
+                <!-- 📦 Payload -->
+                <!-- <nz-form-item>
+            <nz-form-label nzFor="payload">Payload (JSON)</nz-form-label>
+            <nz-form-control nzErrorTip="Invalid JSON format">
+                <textarea nz-input id="payload" formControlName="payload" rows="4"
+                    placeholder='e.g. {"id": 101, "name": "John"}'></textarea>
+            </nz-form-control>
+        </nz-form-item> -->
+
+                <!-- 🧩 Result Model -->
+                <!-- <nz-form-item>
+            <nz-form-label nzFor="resultModel">Result Model</nz-form-label>
+            <nz-form-control>
+                <input nz-input id="resultModel" formControlName="resultModel" placeholder="e.g. UserResponse" />
+            </nz-form-control>
+        </nz-form-item> -->
+
+                <!-- ⏱ Timeouts -->
+                <div nz-row [nzGutter]="16">
+                    <div nz-col [nzSpan]="12">
+                        <nz-form-item>
+                            <nz-form-label nzFor="readTimeout">Read Timeout (ms)</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="number" id="readTimeout" formControlName="readTimeout"
+                                    placeholder="5000" />
+                            </nz-form-control>
+                        </nz-form-item>
+                    </div>
+                    <div nz-col [nzSpan]="12">
+                        <nz-form-item>
+                            <nz-form-label nzFor="socketTimeout">Socket Timeout (ms)</nz-form-label>
+                            <nz-form-control>
+                                <input nz-input type="number" id="socketTimeout" formControlName="socketTimeout"
+                                    placeholder="5000" />
+                            </nz-form-control>
+                        </nz-form-item>
+                    </div>
+                </div>
+
+                <!-- 🔄 Sync / Async -->
+
+
+                <!-- ✅ Submit -->
+                <!-- <nz-form-item>
+            <nz-form-control>
+                <button nz-button nzType="primary" [disabled]="apiForm.invalid">Save API</button>
+                <button nz-button nzType="default" class="ml-2" (click)="onReset()">Reset</button>
+            </nz-form-control>
+        </nz-form-item> -->
+            </form>
+        </nz-card>
+
+    </nz-splitter-panel>
+    <nz-splitter-panel [nzDefaultSize]="'40%'">
+        <nz-card [nzBordered]="false" style="max-width: 800px;" [nzSize]="'small'" nzTitle="Test">
+
+            <div class="api-test-editor" style="padding: 16px;">
+                <nz-form-item>
+                    Request Payload (JSON):
+                    <nz-form-control>
+                        <code-editor [(ngModel)]="testRequestPayload" [language]="'json'" [theme]="'dark'"
+                            [readonly]="false" [placeholder]="'{id: 123}'" [style.height]="'200px'"
+                            [style.width]="'100%'">
+                        </code-editor>
+                    </nz-form-control>
+                </nz-form-item>
+                <button nz-button nzType="primary" (click)="sendTestRequest()"
+                    style="margin-bottom: 16px;">Send</button>
+                <nz-form-item>
+                    Response:
+                    <nz-form-control>
+                        <code-editor [ngModel]="testResponsePayload" [language]="'json'" [theme]="'dark'"
+                            [readonly]="true" [placeholder]="'Response will appear here'" [style.height]="'300px'"
+                            [style.width]="'100%'">
+                        </code-editor>
+                    </nz-form-control>
+                </nz-form-item>
+            </div>
+        </nz-card>
+    </nz-splitter-panel>
+
+</nz-splitter>

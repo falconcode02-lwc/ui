@@ -1,0 +1,32 @@
+// Prism syntax highlighting styles (moved from global styles.scss for route-level code editor usage)
+@import 'prismjs/themes/prism-okaidia.css';
+@import 'prismjs/plugins/line-numbers/prism-line-numbers.css';
+@import 'prismjs/plugins/line-highlight/prism-line-highlight.css';
+
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 40px);
+    overflow: auto;
+}
+
+.editor-header {
+    height: 40px;
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.certain-search-item-count {
+    margin-left: 20px;
+    color: #5f5f5f;
+    font-size: 13px;
+}
+
+
+.ant-list-sm .ant-list-item {
+    padding: 0px 3px;
+}

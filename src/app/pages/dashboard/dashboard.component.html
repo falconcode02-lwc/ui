@@ -1,0 +1,83 @@
+<div class="dashboard-container">
+  <h1>Workflow Dashboard</h1>
+
+  <!-- Status Summary Cards -->
+  <div nz-row [nzGutter]="[16, 16]">
+    <div nz-col [nzXs]="24" [nzSm]="12" [nzMd]="6" *ngFor="let item of statusList">
+      <nz-card nzHoverable class="dashboard-card">
+        <div class="card-content" [style.color]="item.color">
+          <h3 class="counts">
+            <nz-icon nzType="{{item.icon}}" nzTheme="outline" />
+            &nbsp;&nbsp;
+            <span *ngIf="item.count >= 0">{{item.count}}</span>
+            <nz-skeleton-element *ngIf="item.count == -1" nzType="button" nzShape="circle" [nzActive]="true"></nz-skeleton-element>
+          </h3>
+          <p>{{item.label}}</p>
+        </div>
+      </nz-card>
+    </div>
+  </div>
+<br>
+  <!-- Filters -->
+  <nz-card class="filter-card" style="margin-bottom: 12px;">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <nz-select nzMode="multiple" nzPlaceHolder="Status" style="min-width:220px" [(ngModel)]="selectedStatuses" name="statuses">
+        <nz-option *ngFor="let s of statusList.slice(1)" [nzValue]="s.id" [nzLabel]="s.label"></nz-option>
+      </nz-select>
+      <input nz-input placeholder="Workflow Type (comma-separated)" style="width:220px" [(ngModel)]="selectedWorkflowType" />
+      <nz-space>
+        <button type="button" nz-button nzType="primary" (click)="applyFilters()">Apply</button>
+        <button type="button" nz-button (click)="clearFilters()">Clear</button>
+        <button type="button" nz-button (click)="showAdvancedFilters = !showAdvancedFilters">{{ showAdvancedFilters ? 'Hide' : 'Show' }} advanced</button>
+      </nz-space>
+    </div>
+    <div *ngIf="showAdvancedFilters" style="margin-top:12px; display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <input nz-input placeholder="TaskQueue" style="width:180px" [(ngModel)]="taskQueue" />
+      <input nz-input placeholder="RunId" style="width:180px" [(ngModel)]="runId" />
+      <input nz-input placeholder="WorkflowId" style="width:180px" [(ngModel)]="workflowIdFilter" />
+      <input nz-input placeholder="ParentWorkflowId" style="width:180px" [(ngModel)]="parentWorkflowId" />
+      <input nz-input placeholder="ParentRunId" style="width:180px" [(ngModel)]="parentRunId" />
+      <nz-date-picker nzShowTime [(ngModel)]="closeTimeFrom" nzFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"></nz-date-picker>
+    </div>
+  </nz-card>
+
+  <!-- Workflow Table -->
+  <nz-table #rowSelectionTable nzShowPagination nzShowSizeChanger [nzData]="listOfData" [nzScroll]="{ y: '320px' }"
+    nzSize="small" [nzTotal]="statusList[0].count" [nzPageSize]="pageSize" [(nzPageIndex)]="pageIndex"
+    [nzFrontPagination]="false" [nzShowPagination]="true"
+    (nzPageIndexChange)="onPageIndexChange($event)" (nzPageSizeChange)="onPageSizeChange($event)">
+    <thead>
+      <tr>
+        <th>Workflow ID</th>
+        <th>Status</th>
+        <th>Type</th>
+        <th>Start</th>
+        <th>End</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (data of rowSelectionTable.data; track data) {
+      <tr>
+        <td>
+          <a [routerLink]="['/workflow-history-compact/' + data.workflowId]" nz-tooltip="View details">{{ data.workflowId }}</a>
+        </td>
+        <td>
+          <nz-tag [nzColor]="colorForEvent(data.status)">
+            <nz-icon nzType="{{statusIcon(data.status)}}" nzTheme="outline" />
+            {{ statusName(data.status) }}
+          </nz-tag>
+        </td>
+        <td>
+          <span title="{{data.type}}">{{ data.type }}</span>
+        </td>
+        <td>
+          <span title="{{data?.startTime | date:constants.dateformat}}">{{ data?.startTime | date:constants.dateformat }}</span>
+        </td>
+        <td>
+          <span title="{{data?.closeTime | date:constants.dateformat}}">{{ data?.closeTime | date:constants.dateformat }}</span>
+        </td>
+      </tr>
+      }
+    </tbody>
+  </nz-table>
+</div>
