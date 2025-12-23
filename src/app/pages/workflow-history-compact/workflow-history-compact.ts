@@ -102,7 +102,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
   searchTerm: string = '';
   hoveredEventId: string = '';
   sortOrder: 'asc' | 'desc' = 'desc'; // Default: newest first
-
+  workflowdefId: string = '';
   // Statistics
   stats = {
     total: 0,
@@ -120,7 +120,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
     private route: ActivatedRoute,
     private workflowservice: WorkflowService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.events = [];
@@ -134,6 +134,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
     this.httpsService
       .getDashboardHistory(this.workflowId)
       .subscribe((d: any) => {
+        debugger
         this.events = d.events;
         this.makeCompact();
         if (this.compactEvents.length > 0) {
@@ -145,7 +146,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
   }
 
   viewInEditor() {
-    this.router.navigate(['/workflow/designer/', this.workflowId]);
+    this.router.navigate(['/workflow/designer/' + this.workflowdefId, this.workflowId]);
   }
   makeCompact() {
     let compactInnerEvent = [];
@@ -161,7 +162,10 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
             .data;
         console.log(d);
         let k: any = this.tryDecodeIfBase64(d);
-        this.inputdata = this.pretty(JSON.parse(k));
+        let ds = JSON.parse(k);
+        this.inputdata = this.pretty(ds);
+        this.workflowdefId = ds.workflowDefId;
+
       } else if (evts.eventType === 'EVENT_TYPE_TIMER_STARTED') {
         let eventId = evts.eventId;
         let EVENT_TYPE_TIMER_STARTED: any = evts;
@@ -282,7 +286,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
     this.calculateStats();
   }
 
-  ngAfterViewInit() {}
+  ngAfterViewInit() { }
 
   trackByIndex(_: number, item: any) {
     return item?.eventId ?? item?.id ?? _;
@@ -308,7 +312,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
     try {
       const d = new Date(t);
       if (!isNaN(d.getTime())) return d.toLocaleTimeString();
-    } catch {}
+    } catch { }
     return String(t);
   }
 
@@ -428,9 +432,9 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  getInput(data: any) {}
+  getInput(data: any) { }
 
-  getOutPut(data: any) {}
+  getOutPut(data: any) { }
 
   eventTime1(event: any): string {
     return new Date(event?.eventTime).toLocaleString();
