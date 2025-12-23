@@ -620,15 +620,18 @@ f-flow .f-minimap .f-minimap-node {
     position: absolute;
     z-index: 1;
     background: rgb(255 165 3 / 47%);
-    width: 61px;
+    width: 60px;
     height: 60px;
-    border-radius: 11px;
+    border-radius: 8px;
     display: flex;
     align-content: center;
     align-items: center;
     justify-content: center;
     font-size: 21px;
+    overflow: hidden;
 }
+
+
 
 .execute-success {
     position: absolute;
@@ -657,12 +660,53 @@ f-flow .f-minimap .f-minimap-node {
 .f-node.Success {
     border-color: #40c300 !important;
 }
+.f-node{
+   
+}
 
 .f-node.Running {
+     
     border-color: orange !important;
     transition: background .3s ease, color .3s ease;
     animation: softOrangeGlow 2.4s ease-in-out infinite;
 }
+
+
+ 
+
+    // /* Animated border */
+    // .execute::before {
+    //   content: "";
+    //   position: absolute;
+     
+    //   inset: -2px;
+    //   background: linear-gradient(
+    //     90deg,
+    //     transparent,
+    //     #ffc376,
+    //     transparent
+    //   );
+    //   animation: borderRun 2s linear infinite;
+    // }
+
+    // // /* Inner mask */
+    // .execute::after {
+    //   content: "";
+    //   position: absolute;
+    //   inset: 2px;
+    //   background-color: rgb(132, 86, 0);
+    //   border-radius: 10px;
+    //   z-index: 1;
+    // }
+
+     
+
+    // @keyframes borderRun {
+    //   0%   { transform: translateX(-100%); }
+    //   100% { transform: translateX(100%); }
+    // }
+
+
 
 app-editor {
     height: 100%;

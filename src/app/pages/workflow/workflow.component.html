@@ -324,6 +324,8 @@
 
                         <div class="execute" *ngIf="n?.runstatus == 'Running'">
                             <nz-icon nzType="sync" [nzSpin]="true" />
+
+                            
                         </div>
                         <div class="execute {{n?.runstatus}}" *ngIf="n?.runstatus == 'FAILED'">
                             <nz-icon nzType="warning" style="color:red" />
@@ -742,8 +744,8 @@
 
         <nz-divider nzDashed [nzText]="text">
             <ng-template #text>
-                <nz-segmented [nzOptions]="options" (nzValueChange)="handleValueChange($event)" nzSize="small"
-                    [ngModel]="runOptionSelected" />
+                <nz-segmented [nzOptions]="runOptions" (nzValueChange)="handleValueChange($event)" nzSize="small"
+                    [(ngModel)]="runOptionSelected" />
             </ng-template>
         </nz-divider>
         <code-editor [style.width]="'100%'" [theme]="'dark'" [(ngModel)]="apiRequest" [style.height]="'200px'"
