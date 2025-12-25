@@ -11,11 +11,13 @@
         </nz-page-header-subtitle>
         <nz-page-header-extra>
             <nz-space>
+                  @if(hideListButton == false) {
                 <button nzShape="round" *nzSpaceItem nz-button nzType="default" (click)="navigateToFormList()"
                     nz-tooltip nzTooltipTitle="Back to Forms List">
                     <nz-icon nzType="unordered-list"></nz-icon>
                     List
                 </button>
+            }
                 <button nzShape="round" *nzSpaceItem nz-button nzType="default" (click)="openFormConfig()" nz-tooltip
                     nzTooltipTitle="Form Configuration">
                     <nz-icon nzType="setting"></nz-icon>
@@ -43,11 +45,13 @@
                     <nz-icon nzType="download"></nz-icon>
                     Export
                 </button>
-                <button nzShape="round" *nzSpaceItem nz-button nzType="primary" (click)="openSaveModal()" nz-tooltip
-                    nzTooltipTitle="Save Form">
-                    <nz-icon nzType="save"></nz-icon>
-                    Save
-                </button>
+                @if(hideSaveButton == false) {
+                    <button nzShape="round" *nzSpaceItem nz-button nzType="primary" (click)="openSaveModal()" nz-tooltip
+                        nzTooltipTitle="Save Form">
+                        <nz-icon nzType="save"></nz-icon>
+                        Save
+                    </button>
+                }
             </nz-space>
         </nz-page-header-extra>
     </nz-page-header>
@@ -79,7 +83,25 @@
         <div class="form-canvas-panel" [class.full-width]="isPreviewMode()">
             <div class="canvas-header">
                 <h3>{{ isPreviewMode() ? 'Form Preview' : 'Form Canvas' }}</h3>
-                <span class="field-count">{{ formFields().length }} fields</span>
+                <nz-space *ngIf="!isPreviewMode()" style="    align-items: center;">
+                    <span>Group: &nbsp;</span>
+                    <nz-select *nzSpaceItem style="width: 200px;" [ngModel]="selectedFilterGroup()"
+                        (ngModelChange)="selectedFilterGroup.set($event)" nzPlaceHolder="Filter by Group">
+                        <nz-option *ngFor="let group of existingGroups()" [nzValue]="group"
+                            [nzLabel]="group"></nz-option>
+                    </nz-select>
+
+                    <ng-container
+                        *ngIf="selectedFilterGroup() && selectedFilterGroup() !== 'All' && selectedFilterGroup() !== 'No-Group'">
+                        <button *nzSpaceItem nz-button nzType="default" (click)="openRenameModal()"
+                            [disabled]="!selectedFilterGroup() || selectedFilterGroup() === 'All' || selectedFilterGroup() === 'No-Group'"
+                            nz-tooltip nzTooltipTitle="Rename Group">
+                            <nz-icon nzType="edit"></nz-icon>
+                        </button>
+                    </ng-container>
+
+                    <span *nzSpaceItem class="field-count">{{ filteredFormFields().length }} fields</span>
+                </nz-space>
             </div>
 
             <!-- Preview Mode - Show Form Viewer Component -->
@@ -89,17 +111,17 @@
 
             <!-- Edit Mode - Form Builder Canvas -->
             <div *ngIf="!isPreviewMode()" class="form-canvas" cdkDropList id="formCanvas"
-                [cdkDropListData]="formFields()" [cdkDropListConnectedTo]="['fieldTemplates']"
+                [cdkDropListData]="filteredFormFields()" [cdkDropListConnectedTo]="['fieldTemplates']"
                 (cdkDropListDropped)="onFieldDrop($event)">
 
-                <div class="drop-zone-indicator" *ngIf="formFields().length === 0">
+                <div class="drop-zone-indicator" *ngIf="filteredFormFields().length === 0">
                     <div class="drop-zone-content">
                         <nz-icon nzType="plus-circle" nzTheme="outline"></nz-icon>
                         <span>Drop here</span>
                     </div>
                 </div>
 
-                <div *ngFor="let field of formFields(); trackBy: trackByFieldId" class="form-field-item"
+                <div *ngFor="let field of filteredFormFields(); trackBy: trackByFieldId" class="form-field-item"
                     [class.selected]="selectedField()?.id === field.id" cdkDrag>
 
                     <!-- Field Card -->
@@ -166,6 +188,22 @@
                         <nz-form-label>Label</nz-form-label>
                         <nz-form-control>
                             <input nz-input [(ngModel)]="selectedField()!.label" placeholder="Field label">
+                        </nz-form-control>
+                    </nz-form-item>
+
+                    <nz-form-item>
+                        <nz-form-label>Group</nz-form-label>
+                        <nz-form-control>
+                            <input nz-input [(ngModel)]="selectedField()!.group"
+                                placeholder="Section name (e.g. Personal Info)" [nzAutocomplete]="auto"
+                                (blur)="onGroupBlur()">
+                            <nz-autocomplete #auto>
+                                <nz-auto-option *ngFor="let group of existingGroups()" [nzValue]="group">
+                                    {{ group }}
+                                </nz-auto-option>
+                            </nz-autocomplete>
+                            <small style="color: var(--text-secondary); font-size: 11px;">Fields with the same group
+                                name will be displayed in the same tab</small>
                         </nz-form-control>
                     </nz-form-item>
 
@@ -420,17 +458,19 @@
                                     placeholder="console.log(form);" rows="6" style="font-family: monospace;">
                                 </textarea>
                                 <small style="color: var(--text-secondary); font-size: 11px;">
-                                    Available variables: <code>form</code> (current form values), <code>api</code> (fetch wrapper)
+                                    Available variables: <code>form</code> (current form values), <code>api</code>
+                                    (fetch wrapper)
                                 </small>
                             </nz-form-control>
                         </nz-form-item>
-                        
+
                         <nz-form-item>
                             <nz-form-control>
                                 <label nz-checkbox [(ngModel)]="selectedField()!.hideLabel">
                                     Hide Label
                                 </label>
-                                <small style="color: var(--text-secondary); font-size: 11px;">Hide the button label text</small>
+                                <small style="color: var(--text-secondary); font-size: 11px;">Hide the button label
+                                    text</small>
                             </nz-form-control>
                         </nz-form-item>
                     </div>
@@ -441,7 +481,8 @@
                             <nz-form-label>Checked Text</nz-form-label>
                             <nz-form-control>
                                 <input nz-input [(ngModel)]="selectedField()!.checkedText" placeholder="On">
-                                <small style="color: var(--text-secondary); font-size: 11px;">Text shown when switch is on</small>
+                                <small style="color: var(--text-secondary); font-size: 11px;">Text shown when switch is
+                                    on</small>
                             </nz-form-control>
                         </nz-form-item>
 
@@ -449,7 +490,8 @@
                             <nz-form-label>Unchecked Text</nz-form-label>
                             <nz-form-control>
                                 <input nz-input [(ngModel)]="selectedField()!.uncheckedText" placeholder="Off">
-                                <small style="color: var(--text-secondary); font-size: 11px;">Text shown when switch is off</small>
+                                <small style="color: var(--text-secondary); font-size: 11px;">Text shown when switch is
+                                    off</small>
                             </nz-form-control>
                         </nz-form-item>
 
@@ -457,7 +499,8 @@
                             <nz-form-label>Checked Value</nz-form-label>
                             <nz-form-control>
                                 <input nz-input [(ngModel)]="selectedField()!.checkedValue" placeholder="true">
-                                <small style="color: var(--text-secondary); font-size: 11px;">Value submitted when switch is on (default: true)</small>
+                                <small style="color: var(--text-secondary); font-size: 11px;">Value submitted when
+                                    switch is on (default: true)</small>
                             </nz-form-control>
                         </nz-form-item>
 
@@ -465,7 +508,8 @@
                             <nz-form-label>Unchecked Value</nz-form-label>
                             <nz-form-control>
                                 <input nz-input [(ngModel)]="selectedField()!.uncheckedValue" placeholder="false">
-                                <small style="color: var(--text-secondary); font-size: 11px;">Value submitted when switch is off (default: false)</small>
+                                <small style="color: var(--text-secondary); font-size: 11px;">Value submitted when
+                                    switch is off (default: false)</small>
                             </nz-form-control>
                         </nz-form-item>
                     </div>
@@ -480,7 +524,8 @@
                                     <label nz-radio nzValue="horizontal">Center</label>
                                     <label nz-radio nzValue="right">Right</label>
                                 </nz-radio-group>
-                                <small style="color: var(--text-secondary); font-size: 11px;">Position of the divider text</small>
+                                <small style="color: var(--text-secondary); font-size: 11px;">Position of the divider
+                                    text</small>
                             </nz-form-control>
                         </nz-form-item>
                     </div>
@@ -538,7 +583,7 @@
                                     [nzValue]="$any(option).key || option" [nzLabel]="$any(option).value || option">
                                 </nz-option>
                             </nz-select>
-                            
+
                             <!-- Switch -->
                             <nz-switch *ngIf="selectedField()!.type === 'switch'"
                                 [(ngModel)]="selectedField()!.defaultValue">
@@ -1158,10 +1203,12 @@
                         <nz-form-control>
                             <textarea nz-input [ngModel]="formConfig().onInit"
                                 (ngModelChange)="updateFormConfigField('onInit', $event)"
-                                placeholder="console.log('Form loaded', form);" rows="6" style="font-family: monospace;">
+                                placeholder="console.log('Form loaded', form);" rows="6"
+                                style="font-family: monospace;">
               </textarea>
                             <small style="color: var(--text-secondary); font-size: 11px;">
-                                Code executed when form loads. Available: <code>form</code> (form values), <code>api</code> (fetch wrapper)
+                                Code executed when form loads. Available: <code>form</code> (form values),
+                                <code>api</code> (fetch wrapper)
                             </small>
                         </nz-form-control>
                     </nz-form-item>
@@ -1171,10 +1218,12 @@
                         <nz-form-control>
                             <textarea nz-input [ngModel]="formConfig().onDestroy"
                                 (ngModelChange)="updateFormConfigField('onDestroy', $event)"
-                                placeholder="console.log('Form destroyed', form);" rows="6" style="font-family: monospace;">
+                                placeholder="console.log('Form destroyed', form);" rows="6"
+                                style="font-family: monospace;">
               </textarea>
                             <small style="color: var(--text-secondary); font-size: 11px;">
-                                Code executed before form is destroyed. Available: <code>form</code> (form values), <code>api</code> (fetch wrapper)
+                                Code executed before form is destroyed. Available: <code>form</code> (form values),
+                                <code>api</code> (fetch wrapper)
                             </small>
                         </nz-form-control>
                     </nz-form-item>
@@ -1212,6 +1261,22 @@
                         placeholder="Enter form description" rows="3"></textarea>
                 </nz-form-control>
             </nz-form-item>
+        </ng-container>
+    </nz-modal>
+
+    <!-- Rename Group Modal -->
+    <nz-modal [(nzVisible)]="isRenameModalVisible" nzTitle="Rename Group" (nzOnCancel)="handleRenameCancel()"
+        (nzOnOk)="handleRenameOk()" [nzOkDisabled]="!newGroupName()">
+        <ng-container *nzModalContent>
+            <form nz-form (ngSubmit)="handleRenameOk()">
+                <nz-form-item>
+                    <nz-form-label nzRequired>Group Name</nz-form-label>
+                    <nz-form-control>
+                        <input nz-input [ngModel]="newGroupName()" (ngModelChange)="newGroupName.set($event)"
+                            name="groupName" placeholder="Enter new group name" />
+                    </nz-form-control>
+                </nz-form-item>
+            </form>
         </ng-container>
     </nz-modal>
 </div>

@@ -777,6 +777,10 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
         this.formBuilderModalRef = this.modal.create({
             nzTitle: 'Configure Plugin Properties Schema',
             nzContent: FormBuilderComponent,
+            nzData: {
+                hideSaveButton: true,
+                hideListButton: true
+            },
             nzWidth: '100vw',
             nzStyle: { top: '0px', padding: '0px' },
             nzBodyStyle: {
