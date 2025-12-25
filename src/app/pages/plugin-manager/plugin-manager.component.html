@@ -242,11 +242,10 @@
                                         <button nz-button nzType="dashed" nzBlock type="button"
                                             (click)="openFormBuilder()">
                                             <span nz-icon nzType="form" nzTheme="outline"></span>
-                                            {{ pluginForm.get('props')?.value ? 'Edit Props Schema' : 'Create Props
-                                            Schema' }}
+                                            {{ pluginForm.get('props')?.value ? 'Edit Props' : 'Create Props' }}
                                         </button>
 
-                                        <div class="props-preview" *ngIf="pluginForm.get('props')?.value">
+                                        <div class="props-preview" style="display: none;" *ngIf="pluginForm.get('props')?.value">
                                             <div class="preview-label">Current Schema:</div>
                                             <pre>{{ pluginForm.get('props')?.value | json }}</pre>
                                         </div>
@@ -265,11 +264,10 @@
                                         <button nz-button nzType="dashed" nzBlock type="button"
                                             (click)="openSecretsBuilder()">
                                             <span nz-icon nzType="lock" nzTheme="outline"></span>
-                                            {{ pluginForm.get('secrets')?.value ? 'Edit Secret Schema' : 'Create Secret
-                                            Schema' }}
+                                            {{ pluginForm.get('secrets')?.value ? 'Edit Secret' : 'Create Secret' }}
                                         </button>
 
-                                        <div class="props-preview" *ngIf="pluginForm.get('secrets')?.value">
+                                        <div class="props-preview" style="display: none;" *ngIf="pluginForm.get('secrets')?.value">
                                             <div class="preview-label">Current Secret Schema:</div>
                                             <pre>{{ pluginForm.get('secrets')?.value | json }}</pre>
                                         </div>
@@ -311,11 +309,7 @@
                     <div class="code-header" style="margin-left: 24px;">
 
                         <div class="header-actions">
-                            <button nz-button nzType="primary" nzSize="small" nzShape="round"
-                                (click)="compilePluginAndShow()">
-                                <span nz-icon nzType="build" nzTheme="outline"></span>
-                                Compile & Show
-                            </button>
+                            
                             <button nz-button nzType="default" nzSize="small" nzShape="round" style="margin-left: 8px;"
                                 (click)="deployPluginFromDrawer()">
                                 <span nz-icon nzType="cloud-upload" nzTheme="outline"></span>
@@ -326,6 +320,11 @@
                                 nzSize="small" style="margin-left: 8px;" (click)="exportPlugin()">
                                 <span nz-icon nzType="download" nzTheme="outline"></span>
                                 Export Plugin (.ffx)
+                            </button>
+                            <button nz-button nzType="primary" style="display:none" nzSize="small" nzShape="round"
+                                (click)="compilePluginAndShow()">
+                                <span nz-icon nzType="build" nzTheme="outline"></span>
+                                Compile & Show
                             </button>
                             <label nz-button nzType="default" nzShape="round" *ngIf="(editingPluginId||0) == 0"
                                 style="margin-left: 12px; cursor:pointer;">

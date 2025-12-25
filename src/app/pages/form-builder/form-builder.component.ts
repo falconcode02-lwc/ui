@@ -1,31 +1,40 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { FormsModule } from '@angular/forms';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
-import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
-import { NzRadioModule } from 'ng-zorro-antd/radio';
-import { NzDrawerModule } from 'ng-zorro-antd/drawer';
-import { NzFormModule } from 'ng-zorro-antd/form';
-import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
-import { NzUploadModule } from 'ng-zorro-antd/upload';
-import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
-import { v4 as uuidv4 } from 'uuid';
-import { FormViewerComponent } from '../form-viewer/form-viewer.component';
-import { KeyValueBuilderComponent, KeyValuePair } from './key-value-builder.component';
-import { NzSpaceModule } from 'ng-zorro-antd/space';
-import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
-import { NzTabsModule } from 'ng-zorro-antd/tabs';
-import { FormService } from '../../service/form.service';
-import { Form } from '../../model/form-model';
-import { ActivatedRoute, Router } from '@angular/router';
-import { NzMessageService } from 'ng-zorro-antd/message';
-import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
+import { Component, signal, computed, OnInit, Input, Inject } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import {
+  CdkDragDrop,
+  DragDropModule,
+  moveItemInArray,
+  transferArrayItem,
+} from "@angular/cdk/drag-drop";
+import { FormsModule } from "@angular/forms";
+import { NzIconModule } from "ng-zorro-antd/icon";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzInputModule } from "ng-zorro-antd/input";
+import { NzSelectModule } from "ng-zorro-antd/select";
+import { NzCardModule } from "ng-zorro-antd/card";
+import { NzDividerModule } from "ng-zorro-antd/divider";
+import { NzCheckboxModule } from "ng-zorro-antd/checkbox";
+import { NzRadioModule } from "ng-zorro-antd/radio";
+import { NzDrawerModule } from "ng-zorro-antd/drawer";
+import { NzFormModule } from "ng-zorro-antd/form";
+import { NzToolTipModule } from "ng-zorro-antd/tooltip";
+import { NzUploadModule } from "ng-zorro-antd/upload";
+import { NzDatePickerModule } from "ng-zorro-antd/date-picker";
+import { NzAutocompleteModule } from "ng-zorro-antd/auto-complete";
+import { v4 as uuidv4 } from "uuid";
+import { FormViewerComponent } from "../form-viewer/form-viewer.component";
+import {
+  KeyValueBuilderComponent,
+  KeyValuePair,
+} from "./key-value-builder.component";
+import { NzSpaceModule } from "ng-zorro-antd/space";
+import { NzPageHeaderModule } from "ng-zorro-antd/page-header";
+import { NzTabsModule } from "ng-zorro-antd/tabs";
+import { FormService } from "../../service/form.service";
+import { Form } from "../../model/form-model";
+import { ActivatedRoute, Router } from "@angular/router";
+import { NzMessageService } from "ng-zorro-antd/message";
+import { NZ_MODAL_DATA, NzModalModule, NzModalService } from "ng-zorro-antd/modal";
 
 interface DropdownOption {
   key: string;
@@ -34,23 +43,23 @@ interface DropdownOption {
 
 interface VisibilityCondition {
   fieldId: string;
-  operator: 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
+  operator: "equals" | "notEquals" | "contains" | "isEmpty" | "isNotEmpty";
   value?: string;
-  type?: 'simple' | 'code';
+  type?: "simple" | "code";
   code?: string;
 }
 
 interface EnableCondition {
   fieldId: string;
-  operator: 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
+  operator: "equals" | "notEquals" | "contains" | "isEmpty" | "isNotEmpty";
   value?: string;
-  type?: 'simple' | 'code';
+  type?: "simple" | "code";
   code?: string;
 }
 
 interface ApiBinding {
   url: string;
-  method: 'GET' | 'POST';
+  method: "GET" | "POST";
   keyProperty: string; // Path to key in response (e.g., 'data.id' or 'id')
   valueProperty: string; // Path to value in response (e.g., 'data.name' or 'name')
   bodyData?: any; // For POST requests
@@ -61,6 +70,7 @@ interface FormField {
   id: string;
   type: string;
   label: string;
+  group?: string; // For grouping fields in sections
   placeholder?: string;
   required: boolean;
   requiredEither?: string[]; // Array of field IDs - at least one field in this group must be filled
@@ -76,14 +86,14 @@ interface FormField {
   apiBinding?: ApiBinding; // For dynamic dropdown options from server
   visibilityCondition?: VisibilityCondition;
   enableCondition?: EnableCondition;
-  layout?: 'vertical' | 'horizontal'; // Layout for radio and checkbox groups
+  layout?: "vertical" | "horizontal"; // Layout for radio and checkbox groups
   min?: number; // Minimum value for number input
   max?: number; // Maximum value for number input
   step?: number; // Step increment for number input (e.g., 0.01 for decimals)
   keyValuePairs?: KeyValuePair[]; // For keyvalue field type
-  valueControlType?: 'text' | 'select' | 'codeeditor' | 'checkbox'; // For keyvalue field - type of value control
-  valueBinding?: { type: 'code', code: string };
-  optionsSource?: 'static' | 'api' | 'code';
+  valueControlType?: "text" | "select" | "codeeditor" | "checkbox"; // For keyvalue field - type of value control
+  valueBinding?: { type: "code"; code: string };
+  optionsSource?: "static" | "api" | "code";
   optionsCode?: string; // For JS-based options
   checkedText?: string; // For switch - text when checked
   uncheckedText?: string; // For switch - text when unchecked
@@ -124,7 +134,7 @@ interface FieldTemplate {
 }
 
 @Component({
-  selector: 'app-form-builder',
+  selector: "app-form-builder",
   standalone: true,
   imports: [
     CommonModule,
@@ -148,57 +158,182 @@ interface FieldTemplate {
     NzSpaceModule,
     NzPageHeaderModule,
     NzTabsModule,
-    NzModalModule
+    NzModalModule,
+    NzAutocompleteModule,
   ],
-  templateUrl: './form-builder.component.html',
-  styleUrl: './form-builder.component.scss'
+  templateUrl: "./form-builder.component.html",
+  styleUrl: "./form-builder.component.scss",
 })
 export class FormBuilderComponent implements OnInit {
   // Form metadata
+  @Input() hideSaveButton: boolean = false;
+  @Input() hideListButton: boolean = false;
   currentFormId: number = 0;
-  formName = signal<string>('');
-  formCode = signal<string>('');
-  formDescription = signal<string>('');
+  formName = signal<string>("");
+  formCode = signal<string>("");
+  formDescription = signal<string>("");
   isFormMetadataModalVisible = signal(false);
   // Available field templates
   fieldTemplates: FieldTemplate[] = [
-    { type: 'text', label: 'Text Input', icon: 'font-size', description: 'Single line text input' },
-    { type: 'textarea', label: 'Text Area', icon: 'align-left', description: 'Multi-line text input' },
-    { type: 'number', label: 'Number', icon: 'number', description: 'Numeric input field' },
-    { type: 'email', label: 'Email', icon: 'mail', description: 'Email address input' },
-    { type: 'password', label: 'Password', icon: 'lock', description: 'Password input field' },
-    { type: 'date', label: 'Date', icon: 'calendar', description: 'Date picker' },
-    { type: 'daterange', label: 'Date Range', icon: 'calendar', description: 'Date range picker (from-to)' },
-    { type: 'codeeditor', label: 'Code Editor', icon: 'code', description: 'Code editor with syntax highlighting' },
-    { type: 'select', label: 'Dropdown', icon: 'down-square', description: 'Select from options' },
-    { type: 'autocomplete', label: 'Auto Complete', icon: 'search', description: 'Search with add-new option' },
-    { type: 'radio', label: 'Radio Button', icon: 'check-circle', description: 'Single choice selection' },
-    { type: 'checkbox', label: 'Checkbox', icon: 'check-square', description: 'Multiple choice selection' },
-    { type: 'switch', label: 'Switch', icon: 'swap', description: 'Toggle switch control' },
-    { type: 'file', label: 'File Upload', icon: 'upload', description: 'File upload field' },
-    { type: 'keyvalue', label: 'Key-Value Pairs', icon: 'unordered-list', description: 'Array of key-value pairs with dynamic controls' },
-    { type: 'button', label: 'Button', icon: 'thunderbolt', description: 'Button with custom action' },
-    { type: 'divider', label: 'Divider', icon: 'minus', description: 'Visual separator for form sections' }
+    {
+      type: "text",
+      label: "Text Input",
+      icon: "font-size",
+      description: "Single line text input",
+    },
+    {
+      type: "textarea",
+      label: "Text Area",
+      icon: "align-left",
+      description: "Multi-line text input",
+    },
+    {
+      type: "number",
+      label: "Number",
+      icon: "number",
+      description: "Numeric input field",
+    },
+    {
+      type: "email",
+      label: "Email",
+      icon: "mail",
+      description: "Email address input",
+    },
+    {
+      type: "password",
+      label: "Password",
+      icon: "lock",
+      description: "Password input field",
+    },
+    {
+      type: "date",
+      label: "Date",
+      icon: "calendar",
+      description: "Date picker",
+    },
+    {
+      type: "daterange",
+      label: "Date Range",
+      icon: "calendar",
+      description: "Date range picker (from-to)",
+    },
+    {
+      type: "codeeditor",
+      label: "Code Editor",
+      icon: "code",
+      description: "Code editor with syntax highlighting",
+    },
+    {
+      type: "select",
+      label: "Dropdown",
+      icon: "down-square",
+      description: "Select from options",
+    },
+    {
+      type: "autocomplete",
+      label: "Auto Complete",
+      icon: "search",
+      description: "Search with add-new option",
+    },
+    {
+      type: "radio",
+      label: "Radio Button",
+      icon: "check-circle",
+      description: "Single choice selection",
+    },
+    {
+      type: "checkbox",
+      label: "Checkbox",
+      icon: "check-square",
+      description: "Multiple choice selection",
+    },
+    {
+      type: "switch",
+      label: "Switch",
+      icon: "swap",
+      description: "Toggle switch control",
+    },
+    {
+      type: "file",
+      label: "File Upload",
+      icon: "upload",
+      description: "File upload field",
+    },
+    {
+      type: "keyvalue",
+      label: "Key-Value Pairs",
+      icon: "unordered-list",
+      description: "Array of key-value pairs with dynamic controls",
+    },
+    {
+      type: "button",
+      label: "Button",
+      icon: "thunderbolt",
+      description: "Button with custom action",
+    },
+    {
+      type: "divider",
+      label: "Divider",
+      icon: "minus",
+      description: "Visual separator for form sections",
+    },
   ];
 
   // Form fields in the canvas
   formFields = signal<FormField[]>([]);
 
+  // Selected group filter
+  selectedFilterGroup = signal<string>("No-Group");
+
+  // Filtered fields based on selected group
+  filteredFormFields = computed(() => {
+    const selected = this.selectedFilterGroup();
+    if (selected === "All") {
+      return this.formFields();
+    }
+    if (!selected || selected === "No-Group") {
+      return this.formFields().filter(
+        (f) => !f.group || f.group === "No-Group"
+      );
+    }
+    return this.formFields().filter((f) => f.group === selected);
+  });
+
+  // Computed existing groups for autocomplete
+  existingGroups = computed(() => {
+    const groups = new Set<string>();
+    groups.add("No-Group"); // Always include No-Group option
+    this.formFields().forEach((field) => {
+      if (field.group) {
+        groups.add(field.group);
+      }
+    });
+    const sortedGroups = Array.from(groups).sort();
+    // Ensure All is first, then No-Group, then others
+    return ["All", "No-Group", ...sortedGroups.filter((g) => g !== "No-Group")];
+  });
+
+  // Refresh groups on blur
+  onGroupBlur() {
+    // Trigger signal update to refresh computed values
+    this.formFields.update((fields) => [...fields]);
+  }
+
   // Form configuration
   formConfig = signal<FormConfig>({
-    title: 'Untitled Form',
-    description: '',
-    height: '100%',
-    width: '100%',
-    submitUrl: '',
-    onInit:'',
-    onDestroy:'',
-    successMessage: 'Form submitted successfully!',
-    errorMessage: 'Failed to submit form. Please try again.',
-    submitButtonLabel: 'Submit',
-    resetButtonLabel: 'Reset',
+    title: "Untitled Form",
+    description: "",
+    height: "100%",
+    width: "100%",
+    submitUrl: "",
+    onInit: "",
+    onDestroy: "",
+    successMessage: "Form submitted successfully!",
+    errorMessage: "Failed to submit form. Please try again.",
+    submitButtonLabel: "Submit",
+    resetButtonLabel: "Reset",
     showResetButton: true,
-    showSubmitButton: true
+    showSubmitButton: true,
   });
 
   // Selected field for editing
@@ -210,19 +345,60 @@ export class FormBuilderComponent implements OnInit {
   hasValueBinding = signal(false);
   isFormConfigDrawerVisible = signal(false);
 
+  // Rename Group Modal State
+  isRenameModalVisible = signal(false);
+  newGroupName = signal("");
+
+  openRenameModal() {
+    this.newGroupName.set(this.selectedFilterGroup());
+    this.isRenameModalVisible.set(true);
+  }
+
+  handleRenameCancel() {
+    this.isRenameModalVisible.set(false);
+  }
+
+  handleRenameOk() {
+    const oldName = this.selectedFilterGroup();
+    const newName = this.newGroupName().trim();
+
+    if (newName && newName !== oldName) {
+      this.formFields.update((fields) => {
+        return fields.map((field) => {
+          if (field.group === oldName) {
+            return { ...field, group: newName };
+          }
+          return field;
+        });
+      });
+      // Update selected filter to new name so we stay on the same view
+      this.selectedFilterGroup.set(newName);
+    }
+
+    this.isRenameModalVisible.set(false);
+  }
+
   constructor(
     private formService: FormService,
     private route: ActivatedRoute,
     private router: Router,
     private message: NzMessageService,
-    private modal: NzModalService
-  ) { }
+    private modal: NzModalService,
+    @Inject(NZ_MODAL_DATA) public data: any
+
+  ) {
+    if (this.data?.hideSaveButton !== undefined)
+      this.hideSaveButton = this.data?.hideSaveButton ?? false;
+
+    if (this.data?.hideListButton !== undefined)
+      this.hideListButton = this.data?.hideListButton ?? false;
+  }
 
   ngOnInit(): void {
-    debugger
+    debugger;
     // Check if we're editing an existing form
-    this.route.params.subscribe(params => {
-      const id = params['id'];
+    this.route.params.subscribe((params) => {
+      const id = params["id"];
       if (id) {
         this.loadForm(Number(id));
       }
@@ -230,7 +406,7 @@ export class FormBuilderComponent implements OnInit {
   }
 
   loadForm(id: number): void {
-    debugger
+
     this.formService.getById(id).subscribe({
       next: (form) => {
         this.currentFormId = form.id;
@@ -239,7 +415,10 @@ export class FormBuilderComponent implements OnInit {
         this.formDescription.set(form.description);
 
         if (form.formJson) {
-          const schema = typeof form.formJson === 'string' ? JSON.parse(form.formJson) : form.formJson;
+          const schema =
+            typeof form.formJson === "string"
+              ? JSON.parse(form.formJson)
+              : form.formJson;
           if (schema.fields && Array.isArray(schema.fields)) {
             this.formFields.set(schema.fields);
 
@@ -247,26 +426,35 @@ export class FormBuilderComponent implements OnInit {
             const config: FormConfig = {
               title: schema.title || form.name,
               description: schema.description || form.description,
-              height: schema.height || '100%',
-              width: schema.width || '100%',
-              submitUrl: schema.submitUrl || '',
-              successMessage: schema.successMessage || 'Form submitted successfully!',
-              errorMessage: schema.errorMessage || 'Failed to submit form. Please try again.',
-              submitButtonLabel: schema.submitButtonLabel || 'Submit',
-              resetButtonLabel: schema.resetButtonLabel || 'Reset',
-              showResetButton: schema.showResetButton !== undefined ? schema.showResetButton : true,
-              showSubmitButton: schema.showSubmitButton !== undefined ? schema.showSubmitButton : true,
-              onInit: schema.onInit || '',
-              onDestroy: schema.onDestroy || ''
+              height: schema.height || "100%",
+              width: schema.width || "100%",
+              submitUrl: schema.submitUrl || "",
+              successMessage:
+                schema.successMessage || "Form submitted successfully!",
+              errorMessage:
+                schema.errorMessage ||
+                "Failed to submit form. Please try again.",
+              submitButtonLabel: schema.submitButtonLabel || "Submit",
+              resetButtonLabel: schema.resetButtonLabel || "Reset",
+              showResetButton:
+                schema.showResetButton !== undefined
+                  ? schema.showResetButton
+                  : true,
+              showSubmitButton:
+                schema.showSubmitButton !== undefined
+                  ? schema.showSubmitButton
+                  : true,
+              onInit: schema.onInit || "",
+              onDestroy: schema.onDestroy || "",
             };
             this.formConfig.set(config);
           }
         }
-        this.message.success('Form loaded successfully');
+        this.message.success("Form loaded successfully");
       },
       error: () => {
-        this.message.error('Failed to load form');
-      }
+        this.message.error("Failed to load form");
+      },
     });
   }
 
@@ -280,13 +468,13 @@ export class FormBuilderComponent implements OnInit {
 
   saveForm(): void {
     if (!this.formName() || !this.formCode()) {
-      this.message.error('Please provide form name and code');
+      this.message.error("Please provide form name and code");
       return;
     }
 
     const schema = {
       ...this.formConfig(),
-      fields: this.formFields()
+      fields: this.formFields(),
     };
 
     const formData: Partial<Form> = {
@@ -296,70 +484,118 @@ export class FormBuilderComponent implements OnInit {
       description: this.formDescription(),
       formJson: JSON.stringify(schema),
       version: 1,
-      active: true
+      active: true,
     };
 
     if (this.currentFormId) {
       // Update existing form
       this.formService.update(this.currentFormId, formData as Form).subscribe({
         next: () => {
-          this.message.success('Form updated successfully');
+          this.message.success("Form updated successfully");
           this.closeSaveModal();
         },
         error: () => {
-          this.message.error('Failed to update form');
-        }
+          this.message.error("Failed to update form");
+        },
       });
     } else {
       // Create new form
       this.formService.create(formData as Form).subscribe({
         next: (form) => {
           this.currentFormId = form.id;
-          this.message.success('Form created successfully');
+          this.message.success("Form created successfully");
           this.closeSaveModal();
           // Navigate to edit mode with the new ID
-          this.router.navigate(['/form-builder', form.id]);
+          this.router.navigate(["/form-builder", form.id]);
         },
         error: () => {
-          this.message.error('Failed to create form');
-        }
+          this.message.error("Failed to create form");
+        },
       });
     }
   }
 
   navigateToFormList(): void {
-    this.router.navigate(['/forms']);
+    this.router.navigate(["/forms"]);
   }
 
   // Add field to canvas
   onFieldDrop(event: CdkDragDrop<FormField[]>) {
     if (event.previousContainer === event.container) {
       // Reorder within canvas
-      moveItemInArray(this.formFields(), event.previousIndex, event.currentIndex);
+      const currentFields = this.formFields();
+      const selectedFilter = this.selectedFilterGroup();
+
+      // If 'All' is selected, we are effectively not filtering
+      const isFiltered = selectedFilter && selectedFilter !== "All";
+
+      if (isFiltered) {
+        // We are working with a subset (even 'No-Group' is a subset)
+        const filteredFields = this.filteredFormFields();
+        const movedItem = filteredFields[event.previousIndex];
+        const targetItem = filteredFields[event.currentIndex];
+
+        const originalPrevIndex = currentFields.indexOf(movedItem);
+
+        const newFields = [...currentFields];
+        // Remove from old position in the main array
+        newFields.splice(originalPrevIndex, 1);
+
+        // Find the new target index in the modified main array
+        let originalTargetIndex = newFields.indexOf(targetItem);
+
+        if (originalTargetIndex === -1) {
+          if (filteredFields.length === 0) {
+            originalTargetIndex = 0;
+          } else if (event.currentIndex === filteredFields.length) {
+            const lastFilteredItem = filteredFields[filteredFields.length - 1];
+            const lastFilteredItemIndexInMain =
+              newFields.indexOf(lastFilteredItem);
+            originalTargetIndex = lastFilteredItemIndexInMain + 1;
+          } else {
+            originalTargetIndex = newFields.length;
+          }
+        }
+
+        if (event.currentIndex > event.previousIndex) {
+          newFields.splice(originalTargetIndex, 0, movedItem);
+        } else {
+          newFields.splice(originalTargetIndex, 0, movedItem);
+        }
+
+        this.formFields.set(newFields);
+      } else {
+        // 'All' selected or no filter - simple reorder
+        moveItemInArray(
+          this.formFields(),
+          event.previousIndex,
+          event.currentIndex
+        );
+      }
     } else {
       // Add new field from templates
       const template = this.fieldTemplates[event.previousIndex];
       let options: string[] | DropdownOption[] | undefined = undefined;
       let keyValuePairs: KeyValuePair[] | undefined = undefined;
 
-      if (template.type === 'select') {
+      if (template.type === "select") {
         // Dropdown uses key-value pairs
         options = [
-          { key: 'option1', value: 'Option 1' },
-          { key: 'option2', value: 'Option 2' },
-          { key: 'option3', value: 'Option 3' }
+          { key: "option1", value: "Option 1" },
+          { key: "option2", value: "Option 2" },
+          { key: "option3", value: "Option 3" },
         ];
-      } else if (template.type === 'autocomplete') {
+      } else if (template.type === "autocomplete") {
         // Autocomplete uses key-value pairs similar to select
         options = [
-          { key: 'item1', value: 'Item 1' },
-          { key: 'item2', value: 'Item 2' },
-          { key: 'item3', value: 'Item 3' }
+          { key: "item1", value: "Item 1" },
+          { key: "item2", value: "Item 2" },
+          { key: "item3", value: "Item 3" },
         ];
-      } else if (template.type === 'radio' || template.type === 'checkbox') {
+      } else if (template.type === "radio" || template.type === "checkbox") {
         // Radio and checkbox use simple strings
-        options = ['Option 1', 'Option 2', 'Option 3'];
-      } else if (template.type === 'keyvalue') {
+        options = ["Option 1", "Option 2", "Option 3"];
+      } else if (template.type === "keyvalue") {
         // Key-value field type
         keyValuePairs = [];
       }
@@ -374,19 +610,49 @@ export class FormBuilderComponent implements OnInit {
         icon: template.icon,
         defaultVisible: true,
         defaultEnabled: true,
-        language: template.type === 'codeeditor' ? 'javascript' : undefined,
+        language: template.type === "codeeditor" ? "javascript" : undefined,
         keyValuePairs: keyValuePairs,
-        valueControlType: template.type === 'keyvalue' ? 'text' : undefined,
+        valueControlType: template.type === "keyvalue" ? "text" : undefined,
         // Initialize file upload defaults
-        maxFileSize: template.type === 'file' ? 5 : undefined, // Default 5MB
-        maxFileCount: template.type === 'file' ? 1 : undefined, // Default 1 file
-        allowedExtensions: template.type === 'file' ? [] : undefined, // Default all extensions
-        showPreview: template.type === 'file' ? true : undefined,
-        customJs: template.type === 'button' ? 'console.log(form);' : undefined
+        maxFileSize: template.type === "file" ? 5 : undefined, // Default 5MB
+        maxFileCount: template.type === "file" ? 1 : undefined, // Default 1 file
+        allowedExtensions: template.type === "file" ? [] : undefined, // Default all extensions
+        showPreview: template.type === "file" ? true : undefined,
+        customJs: template.type === "button" ? "console.log(form);" : undefined,
+        // Assign current group filter if selected and not 'All' or 'No-Group'
+        group:
+          this.selectedFilterGroup() &&
+            this.selectedFilterGroup() !== "No-Group" &&
+            this.selectedFilterGroup() !== "All"
+            ? this.selectedFilterGroup()
+            : undefined,
       };
 
       const fields = [...this.formFields()];
-      fields.splice(event.currentIndex, 0, newField);
+      // If 'All' is selected, simply insert at index
+      if (!this.selectedFilterGroup() || this.selectedFilterGroup() === "All") {
+        fields.splice(event.currentIndex, 0, newField);
+      } else {
+        // Filtered insertion logic
+        const filteredFields = this.filteredFormFields();
+        let insertIndexInMain = fields.length; // Default to append to end of main list
+
+        if (filteredFields.length === 0) {
+          insertIndexInMain = fields.length;
+        } else if (event.currentIndex === 0) {
+          const firstFilteredItem = filteredFields[0];
+          insertIndexInMain = fields.indexOf(firstFilteredItem);
+        } else if (event.currentIndex >= filteredFields.length) {
+          const lastFilteredItem = filteredFields[filteredFields.length - 1];
+          insertIndexInMain = fields.indexOf(lastFilteredItem) + 1;
+        } else {
+          const prevFilteredItem = filteredFields[event.currentIndex - 1];
+          insertIndexInMain = fields.indexOf(prevFilteredItem) + 1;
+        }
+
+        fields.splice(insertIndexInMain, 0, newField);
+      }
+
       this.formFields.set(fields);
     }
   }
@@ -400,13 +666,19 @@ export class FormBuilderComponent implements OnInit {
     this.hasValueBinding.set(!!field.valueBinding);
 
     // Initialize optionsSource if not set
-    if ((field.type === 'select' || field.type === 'autocomplete' || field.type === 'radio' || field.type === 'checkbox') && !field.optionsSource) {
+    if (
+      (field.type === "select" ||
+        field.type === "autocomplete" ||
+        field.type === "radio" ||
+        field.type === "checkbox") &&
+      !field.optionsSource
+    ) {
       if (field.apiBinding) {
-        field.optionsSource = 'api';
+        field.optionsSource = "api";
       } else if (field.optionsCode) {
-        field.optionsSource = 'code';
+        field.optionsSource = "code";
       } else {
-        field.optionsSource = 'static';
+        field.optionsSource = "static";
       }
     }
 
@@ -415,7 +687,7 @@ export class FormBuilderComponent implements OnInit {
 
   // Delete field
   deleteField(fieldId: string) {
-    this.formFields.set(this.formFields().filter(f => f.id !== fieldId));
+    this.formFields.set(this.formFields().filter((f) => f.id !== fieldId));
     if (this.selectedField()?.id === fieldId) {
       this.selectedField.set(null);
       this.isPropertiesDrawerVisible.set(false);
@@ -427,10 +699,10 @@ export class FormBuilderComponent implements OnInit {
     const newField: FormField = {
       ...JSON.parse(JSON.stringify(field)),
       id: uuidv4(),
-      label: field.label + ' (Copy)'
+      label: field.label + " (Copy)",
     };
     const fields = [...this.formFields()];
-    const index = fields.findIndex(f => f.id === field.id);
+    const index = fields.findIndex((f) => f.id === field.id);
     fields.splice(index + 1, 0, newField);
     this.formFields.set(fields);
   }
@@ -445,11 +717,11 @@ export class FormBuilderComponent implements OnInit {
   addOption() {
     const field = this.selectedField();
     if (field && field.options) {
-      if (field.type === 'select' || field.type === 'autocomplete') {
+      if (field.type === "select" || field.type === "autocomplete") {
         // For dropdowns, add key-value pairs
         (field.options as DropdownOption[]).push({
           key: `option${field.options.length + 1}`,
-          value: `Option ${field.options.length + 1}`
+          value: `Option ${field.options.length + 1}`,
         });
       } else {
         // For radio/checkbox, keep simple string arrays
@@ -469,19 +741,24 @@ export class FormBuilderComponent implements OnInit {
   // Handle default key-value pairs change for keyvalue field type
   onDefaultKeyValuePairsChange(pairs: KeyValuePair[]) {
     const field = this.selectedField();
-    if (field && field.type === 'keyvalue') {
+    if (field && field.type === "keyvalue") {
       field.keyValuePairs = pairs;
     }
   }
 
   // Check if options are key-value pairs
   isDropdownOptions(options: any): options is DropdownOption[] {
-    return options && options.length > 0 && typeof options[0] === 'object' && 'key' in options[0];
+    return (
+      options &&
+      options.length > 0 &&
+      typeof options[0] === "object" &&
+      "key" in options[0]
+    );
   }
 
   // Track by function for ngFor
   trackByFieldId(index: number, item: FormField | FieldTemplate): string {
-    return 'id' in item ? item.id : item.type;
+    return "id" in item ? item.id : item.type;
   }
 
   // Track by index for primitive arrays
@@ -493,15 +770,15 @@ export class FormBuilderComponent implements OnInit {
   exportForm() {
     const schema = {
       ...this.formConfig(),
-      fields: this.formFields()
+      fields: this.formFields(),
     };
     const formJson = JSON.stringify(schema, null, 2);
-    console.log('Form JSON:', formJson);
+    console.log("Form JSON:", formJson);
 
     // Download as file
-    const blob = new Blob([formJson], { type: 'application/json' });
+    const blob = new Blob([formJson], { type: "application/json" });
     const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = `form-schema-${Date.now()}.json`;
     link.click();
@@ -523,43 +800,49 @@ export class FormBuilderComponent implements OnInit {
 
             // Import form config if present
             const config: FormConfig = {
-              title: schema.title || 'Untitled Form',
-              description: schema.description || '',
-              height: schema.height || '100%',
-              width: schema.width || '100%',
-              submitUrl: schema.submitUrl || '',
-              successMessage: schema.successMessage || 'Form submitted successfully!',
-              errorMessage: schema.errorMessage || 'Failed to submit form. Please try again.',
-              submitButtonLabel: schema.submitButtonLabel || 'Submit',
-              resetButtonLabel: schema.resetButtonLabel || 'Reset',
-              showResetButton: schema.showResetButton !== undefined ? schema.showResetButton : true,
-              onInit: schema.onInit || '',
-              onDestroy: schema.onDestroy || ''
+              title: schema.title || "Untitled Form",
+              description: schema.description || "",
+              height: schema.height || "100%",
+              width: schema.width || "100%",
+              submitUrl: schema.submitUrl || "",
+              successMessage:
+                schema.successMessage || "Form submitted successfully!",
+              errorMessage:
+                schema.errorMessage ||
+                "Failed to submit form. Please try again.",
+              submitButtonLabel: schema.submitButtonLabel || "Submit",
+              resetButtonLabel: schema.resetButtonLabel || "Reset",
+              showResetButton:
+                schema.showResetButton !== undefined
+                  ? schema.showResetButton
+                  : true,
+              onInit: schema.onInit || "",
+              onDestroy: schema.onDestroy || "",
             };
             this.formConfig.set(config);
 
-            console.log('Form imported successfully:', schema);
+            console.log("Form imported successfully:", schema);
           } else if (Array.isArray(schema)) {
             // If it's just an array of fields (old format)
             this.formFields.set(schema);
-            console.log('Form imported successfully (legacy format)');
+            console.log("Form imported successfully (legacy format)");
           } else {
-            console.error('Invalid form schema format');
+            console.error("Invalid form schema format");
           }
         } catch (error) {
-          console.error('Error parsing form JSON:', error);
+          console.error("Error parsing form JSON:", error);
         }
       };
       reader.readAsText(file);
 
       // Reset file input
-      event.target.value = '';
+      event.target.value = "";
     }
   }
 
   // Clear all fields
   clearForm() {
-    if (confirm('Are you sure you want to clear all fields?')) {
+    if (confirm("Are you sure you want to clear all fields?")) {
       this.formFields.set([]);
       this.selectedField.set(null);
       this.isPropertiesDrawerVisible.set(false);
@@ -572,9 +855,9 @@ export class FormBuilderComponent implements OnInit {
     if (field) {
       if (this.hasVisibilityCondition()) {
         field.visibilityCondition = {
-          fieldId: '',
-          operator: 'equals',
-          value: ''
+          fieldId: "",
+          operator: "equals",
+          value: "",
         };
       } else {
         delete field.visibilityCondition;
@@ -587,9 +870,9 @@ export class FormBuilderComponent implements OnInit {
     if (field) {
       if (this.hasEnableCondition()) {
         field.enableCondition = {
-          fieldId: '',
-          operator: 'equals',
-          value: ''
+          fieldId: "",
+          operator: "equals",
+          value: "",
         };
       } else {
         delete field.enableCondition;
@@ -602,11 +885,11 @@ export class FormBuilderComponent implements OnInit {
     if (field) {
       if (this.hasApiBinding()) {
         field.apiBinding = {
-          url: '',
-          method: 'GET',
-          keyProperty: 'id',
-          valueProperty: 'name',
-          headers: []
+          url: "",
+          method: "GET",
+          keyProperty: "id",
+          valueProperty: "name",
+          headers: [],
         };
       } else {
         delete field.apiBinding;
@@ -619,8 +902,8 @@ export class FormBuilderComponent implements OnInit {
     if (field) {
       if (this.hasValueBinding()) {
         field.valueBinding = {
-          type: 'code',
-          code: ''
+          type: "code",
+          code: "",
         };
       } else {
         delete field.valueBinding;
@@ -632,25 +915,25 @@ export class FormBuilderComponent implements OnInit {
     const field = this.selectedField();
     if (field) {
       // Reset bindings when switching source
-      if (source === 'static') {
+      if (source === "static") {
         this.hasApiBinding.set(false);
         delete field.apiBinding;
         delete field.optionsCode;
         if (!field.options) field.options = [];
-      } else if (source === 'api') {
+      } else if (source === "api") {
         this.hasApiBinding.set(true);
         field.apiBinding = {
-          url: '',
-          method: 'GET',
-          keyProperty: 'id',
-          valueProperty: 'name',
-          headers: []
+          url: "",
+          method: "GET",
+          keyProperty: "id",
+          valueProperty: "name",
+          headers: [],
         };
         delete field.optionsCode;
-      } else if (source === 'code') {
+      } else if (source === "code") {
         this.hasApiBinding.set(false);
         delete field.apiBinding;
-        field.optionsCode = '';
+        field.optionsCode = "";
       }
     }
   }
@@ -662,7 +945,7 @@ export class FormBuilderComponent implements OnInit {
       if (!field.apiBinding.headers) {
         field.apiBinding.headers = [];
       }
-      field.apiBinding.headers.push({ key: '', value: '' });
+      field.apiBinding.headers.push({ key: "", value: "" });
     }
   }
 
@@ -677,11 +960,11 @@ export class FormBuilderComponent implements OnInit {
   // Add header to file upload
   addUploadHeader() {
     const field = this.selectedField();
-    if (field && field.type === 'file') {
+    if (field && field.type === "file") {
       if (!field.uploadHeaders) {
         field.uploadHeaders = [];
       }
-      field.uploadHeaders.push({ key: '', value: '' });
+      field.uploadHeaders.push({ key: "", value: "" });
     }
   }
 
@@ -695,17 +978,17 @@ export class FormBuilderComponent implements OnInit {
 
   getOtherFields(): FormField[] {
     const currentFieldId = this.selectedField()?.id;
-    return this.formFields().filter(f => f.id !== currentFieldId);
+    return this.formFields().filter((f) => f.id !== currentFieldId);
   }
 
   needsValueInput(): boolean {
     const operator = this.selectedField()?.visibilityCondition?.operator;
-    return operator !== 'isEmpty' && operator !== 'isNotEmpty';
+    return operator !== "isEmpty" && operator !== "isNotEmpty";
   }
 
   needsEnableValueInput(): boolean {
     const operator = this.selectedField()?.enableCondition?.operator;
-    return operator !== 'isEmpty' && operator !== 'isNotEmpty';
+    return operator !== "isEmpty" && operator !== "isNotEmpty";
   }
 
   // Form Configuration
@@ -719,8 +1002,8 @@ export class FormBuilderComponent implements OnInit {
 
   // Helper methods to update form config
   updateFormConfigField(field: keyof FormConfig, value: any) {
-    debugger
-    this.formConfig.update(c => ({ ...c, [field]: value }));
+    debugger;
+    this.formConfig.update((c) => ({ ...c, [field]: value }));
   }
 
   // Preview mode
@@ -729,10 +1012,10 @@ export class FormBuilderComponent implements OnInit {
   // Computed schema for preview
   previewSchema = computed(() => ({
     ...this.formConfig(),
-    fields: this.formFields()
+    fields: this.formFields(),
   }));
 
   togglePreview() {
-    this.isPreviewMode.update(v => !v);
+    this.isPreviewMode.update((v) => !v);
   }
 }
