@@ -338,25 +338,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     this.submittedData.set(null);
 
     // Group fields by sections
-    const groupedFields: { [key: string]: FormField[] } = {};
-    const groupOrder: string[] = [];
-
-    schema.fields.forEach((field) => {
-      const groupName = field.group || "Parameters";
-      if (!groupedFields[groupName]) {
-        groupedFields[groupName] = [];
-        groupOrder.push(groupName);
-      }
-      groupedFields[groupName].push(field);
-    });
-
-    const sections: FormSection[] = groupOrder.map((groupName) => ({
-      title: groupName,
-      icon: "form", // Default icon
-      fields: groupedFields[groupName],
-    }));
-
-    this.formSection.set(sections);
+    this.updateFormSections(schema.fields);
 
     // Build reactive form controls
     const group: any = {};
@@ -532,6 +514,29 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         this.executeLifecycleHook(schema.onInit!, "onInit");
       }, 500); // 500ms delay to ensure form is rendered and async operations complete
     }
+  }
+
+  // Helper method to group fields into sections
+  private updateFormSections(fields: FormField[]) {
+    const groupedFields: { [key: string]: FormField[] } = {};
+    const groupOrder: string[] = [];
+
+    fields.forEach((field) => {
+      const groupName = field.group || "Parameters";
+      if (!groupedFields[groupName]) {
+        groupedFields[groupName] = [];
+        groupOrder.push(groupName);
+      }
+      groupedFields[groupName].push(field);
+    });
+
+    const sections: FormSection[] = groupOrder.map((groupName) => ({
+      title: groupName,
+      icon: "form", // Default icon
+      fields: groupedFields[groupName],
+    }));
+
+    this.formSection.set(sections);
   }
 
   // Check if a string contains template expressions
@@ -982,6 +987,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       const api = {
         fetch: (url: string, options?: any) =>
           fetch(url, options).then((res) => res.json()),
+        setFieldVisibility: this.setFieldVisibility.bind(this),
+        setFieldOptionsValue: this.setFieldOptionsValue.bind(this),
       };
 
       // Create a function with form and api as arguments
@@ -1028,6 +1035,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       const api = {
         fetch: (url: string, options?: any) =>
           fetch(url, options).then((res) => res.json()),
+        setFieldVisibility: this.setFieldVisibility.bind(this),
+        setFieldOptionsValue: this.setFieldOptionsValue.bind(this),
       };
 
       // Create a function with form (as Proxy), api, alert, console, and window as arguments
@@ -1552,6 +1561,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       f.id === fieldId ? { ...f, defaultVisible: visible } : f
     );
     this.formSchema.set({ ...schema, fields: updatedFields });
+    this.updateFormSections(updatedFields);
   }
 
   public setFieldOptionsValue(fieldId: string, value: any): void {
@@ -1561,12 +1571,28 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       f.id === fieldId ? { ...f, options: value } : f
     );
     this.formSchema.set({ ...schema, fields: updatedFields });
+    this.updateFormSections(updatedFields);
+
+    const field = updatedFields.find((f) => f.id === fieldId);
+    if (field && field.type === "checkbox") {
+      const checkboxGroup: any = {};
+      const options = value && Array.isArray(value) ? value : [];
+      options.forEach((option: any) => {
+        const optionText = typeof option === "string" ? option : option.value;
+        checkboxGroup[this.sanitizeKey(optionText)] = [false];
+      });
+
+      const existingGroup = this.dynamicForm.get(field.id);
+      if (existingGroup) {
+        this.dynamicForm.removeControl(field.id);
+      }
+      this.dynamicForm.addControl(field.id, this.fb.group(checkboxGroup));
+    }
   }
 
   // Evaluate JS code safely
   private evaluateCode(code: string): any {
     try {
-      debugger;
       // Create a function with 'form' as argument
       // form contains all current field values
       const formValues = this.dynamicForm.getRawValue();
