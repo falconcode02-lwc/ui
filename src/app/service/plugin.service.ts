@@ -327,17 +327,18 @@ export class PluginService {
    */
   private getRetryProperties(): any[] {
     return [
-      {
-        id: 'retryDivider',
-        type: 'divider',
-        label: 'Retry Policy',
-        placeholder: '',
-        required: false,
-        icon: 'minus',
-        defaultVisible: true,
-        defaultEnabled: true,
-        layout: 'horizontal',
-      },
+      // {
+      //   id: 'retryDivider',
+      //   type: 'divider',
+      //   label: 'Retry Policy',
+      //   placeholder: '',
+      //   required: false,
+      //   icon: 'minus',
+      //   defaultVisible: true,
+      //   defaultEnabled: true,
+      //   layout: 'horizontal',
+      //   group: 'Retry Policy',
+      // },
       {
         id: 'timeoutSeconds',
         type: 'number',
@@ -346,6 +347,7 @@ export class PluginService {
         defaultValue: 120,
         required: false,
         info: 'Maximum execution time before timeout',
+        group: 'Retry Policy',
       },
       {
         id: 'maximumAttempts',
@@ -355,6 +357,7 @@ export class PluginService {
         defaultValue: 3,
         required: false,
         info: 'Maximum number of retry attempts',
+        group: 'Retry Policy',
       },
       {
         id: 'initialIntervalSeconds',
@@ -364,6 +367,7 @@ export class PluginService {
         defaultValue: 2,
         required: false,
         info: 'Initial delay before first retry',
+        group: 'Retry Policy',
       },
       {
         id: 'maximumIntervalSeconds',
@@ -373,6 +377,7 @@ export class PluginService {
         defaultValue: 60,
         required: false,
         info: 'Maximum delay between retries',
+        group: 'Retry Policy',
       },
       {
         id: 'backoffCoefficient',
@@ -382,6 +387,7 @@ export class PluginService {
         defaultValue: 2,
         required: false,
         info: 'Multiplier for exponential backoff',
+        group: 'Retry Policy',
       },
     ];
   }

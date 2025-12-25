@@ -7,9 +7,9 @@ import {
   OnInit,
   OnDestroy,
   effect,
-} from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { CommonModule } from '@angular/common';
+} from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
+import { CommonModule } from "@angular/common";
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -17,33 +17,34 @@ import {
   FormGroup,
   FormControl,
   Validators,
-} from '@angular/forms';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
-import { NzRadioModule } from 'ng-zorro-antd/radio';
-import { NzUploadModule } from 'ng-zorro-antd/upload';
-import { NzAffixModule } from 'ng-zorro-antd/affix';
+} from "@angular/forms";
+import { NzIconModule } from "ng-zorro-antd/icon";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzInputModule } from "ng-zorro-antd/input";
+import { NzSelectModule } from "ng-zorro-antd/select";
+import { NzCardModule } from "ng-zorro-antd/card";
+import { NzCheckboxModule } from "ng-zorro-antd/checkbox";
+import { NzRadioModule } from "ng-zorro-antd/radio";
+import { NzUploadModule } from "ng-zorro-antd/upload";
+import { NzAffixModule } from "ng-zorro-antd/affix";
 
-import { NzMessageService } from 'ng-zorro-antd/message';
-import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
-import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
-import { NzSwitchModule } from 'ng-zorro-antd/switch';
-import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzMessageService } from "ng-zorro-antd/message";
+import { NzDatePickerModule } from "ng-zorro-antd/date-picker";
+import { NzToolTipModule } from "ng-zorro-antd/tooltip";
+import { NzSwitchModule } from "ng-zorro-antd/switch";
+import { NzSpinModule } from "ng-zorro-antd/spin";
+import { NzDividerModule } from "ng-zorro-antd/divider";
 import {
   KeyValueBuilderComponent,
   KeyValuePair,
-} from '../form-builder/key-value-builder.component';
-import { FormService } from '../../service/form.service';
-import type { LanguageDescription } from '@codemirror/language';
-import { minimalLanguages } from '../../helpers/minimal-languages';
-import { CodeEditorModule } from '@acrodata/code-editor';
-import { javascript } from '@codemirror/lang-javascript';
-import { NzSpaceModule } from 'ng-zorro-antd/space';
+} from "../form-builder/key-value-builder.component";
+import { FormService } from "../../service/form.service";
+import type { LanguageDescription } from "@codemirror/language";
+import { minimalLanguages } from "../../helpers/minimal-languages";
+import { CodeEditorModule } from "@acrodata/code-editor";
+import { javascript } from "@codemirror/lang-javascript";
+import { NzSpaceModule } from "ng-zorro-antd/space";
+import { NzTabsModule } from "ng-zorro-antd/tabs";
 
 interface DropdownOption {
   key: string;
@@ -52,23 +53,23 @@ interface DropdownOption {
 
 interface VisibilityCondition {
   fieldId: string;
-  operator: 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
+  operator: "equals" | "notEquals" | "contains" | "isEmpty" | "isNotEmpty";
   value?: string;
-  type?: 'simple' | 'code';
+  type?: "simple" | "code";
   code?: string;
 }
 
 interface EnableCondition {
   fieldId: string;
-  operator: 'equals' | 'notEquals' | 'contains' | 'isEmpty' | 'isNotEmpty';
+  operator: "equals" | "notEquals" | "contains" | "isEmpty" | "isNotEmpty";
   value?: string;
-  type?: 'simple' | 'code';
+  type?: "simple" | "code";
   code?: string;
 }
 
 interface ApiBinding {
   url: string;
-  method: 'GET' | 'POST';
+  method: "GET" | "POST";
   keyProperty: string; // Path to key in response (e.g., 'data.id' or 'id')
   valueProperty: string; // Path to value in response (e.g., 'data.name' or 'name')
   bodyData?: any; // For POST requests
@@ -79,6 +80,7 @@ interface FormField {
   id: string;
   type: string;
   label: string;
+  group?: string; // For grouping fields in sections
   placeholder?: string;
   required: boolean;
   requiredEither?: string[]; // Array of field IDs - at least one field in this group must be filled
@@ -94,14 +96,14 @@ interface FormField {
   apiBinding?: ApiBinding; // For dynamic dropdown options from server
   visibilityCondition?: VisibilityCondition;
   enableCondition?: EnableCondition;
-  layout?: 'vertical' | 'horizontal'; // Layout for radio and checkbox groups
+  layout?: "vertical" | "horizontal"; // Layout for radio and checkbox groups
   min?: number; // Minimum value for number input
   max?: number; // Maximum value for number input
   step?: number; // Step increment for number input (e.g., 0.01 for decimals)
   keyValuePairs?: KeyValuePair[]; // For keyvalue field type
-  valueControlType?: 'text' | 'select' | 'codeeditor' | 'checkbox'; // For keyvalue field - type of value control
-  valueBinding?: { type: 'code'; code: string };
-  optionsSource?: 'static' | 'api' | 'code';
+  valueControlType?: "text" | "select" | "codeeditor" | "checkbox"; // For keyvalue field - type of value control
+  valueBinding?: { type: "code"; code: string };
+  optionsSource?: "static" | "api" | "code";
   optionsCode?: string; // For JS-based options
   checkedText?: string; // For switch - text when checked
   uncheckedText?: string; // For switch - text when unchecked
@@ -139,8 +141,14 @@ interface FormSchema {
   onDestroy?: string; // JavaScript code to execute before form is destroyed
 }
 
+interface FormSection {
+  title: string;
+  icon?: string;
+  fields: FormField[];
+}
+
 @Component({
-  selector: 'app-form-viewer',
+  selector: "app-form-viewer",
   standalone: true,
   imports: [
     CommonModule,
@@ -163,9 +171,10 @@ interface FormSchema {
     KeyValueBuilderComponent,
     NzAffixModule,
     NzSpaceModule,
+    NzTabsModule,
   ],
-  templateUrl: './form-viewer.component.html',
-  styleUrl: './form-viewer.component.scss',
+  templateUrl: "./form-viewer.component.html",
+  styleUrl: "./form-viewer.component.scss",
 })
 export class FormViewerComponent implements OnInit, OnDestroy {
   @Input() preloadedSchema?: FormSchema;
@@ -178,7 +187,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     if (value) {
       this.onAutoCompleteEditClick.emit({ field, value });
     } else {
-      this.message.warning('Please select an option to edit');
+      this.message.warning("Please select an option to edit");
     }
   }
 
@@ -195,14 +204,15 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   @Output() onAutoCompleteAddNewClick = new EventEmitter<any>();
   @Output() onAutoCompleteEditClick = new EventEmitter<any>();
 
+  formSection = signal<any | null>(null);
   formSchema = signal<FormSchema | null>(null);
   dynamicForm: FormGroup;
   submittedData = signal<any>(null);
   isJsonInputVisible = signal(false);
   isSetValuesVisible = signal(false);
   isLoading = signal(false);
-  jsonInput = '';
-  setValuesInput = '';
+  jsonInput = "";
+  setValuesInput = "";
   fileListMap: { [key: string]: any[] } = {};
   dynamicOptions: { [fieldId: string]: DropdownOption[] } = {}; // Store API-loaded options
   // Track current search terms for selects/autocomplete
@@ -210,20 +220,20 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
   // Code editor options
   options: any = {
-    theme: 'dark',
-    language: 'javascript',
+    theme: "dark",
+    language: "javascript",
     minimap: { enabled: false },
     fontSize: 14,
     scrollBeyondLastLine: false,
     automaticLayout: true,
     setup: {
-      lineNumbers: 'on',
+      lineNumbers: "on",
     },
     disabled: false,
     readonly: false,
-    placeholder: 'Enter code here...',
+    placeholder: "Enter code here...",
     indentWithTab: true,
-    indentUnit: '2',
+    indentUnit: "2",
     lineWrapping: true,
     highlightWhitespace: true,
   };
@@ -251,7 +261,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     // Execute onDestroy lifecycle hook if defined
     const schema = this.formSchema();
     if (schema?.onDestroy) {
-      this.executeLifecycleHook(schema.onDestroy, 'onDestroy');
+      this.executeLifecycleHook(schema.onDestroy, "onDestroy");
     }
   }
 
@@ -263,7 +273,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     }
 
     // Load form by code from route parameter
-    const code = this.route.snapshot.paramMap.get('code');
+    const code = this.route.snapshot.paramMap.get("code");
     if (code) {
       this.isLoading.set(true);
       this.formService.getByCode(code).subscribe({
@@ -273,14 +283,14 @@ export class FormViewerComponent implements OnInit, OnDestroy {
             this.loadForm(schema);
             // Success message removed as requested
           } catch (error) {
-            console.error('Error parsing form JSON:', error);
-            this.message.error('Failed to parse form data.');
+            console.error("Error parsing form JSON:", error);
+            this.message.error("Failed to parse form data.");
           } finally {
             this.isLoading.set(false);
           }
         },
         error: (error) => {
-          console.error('Error loading form:', error);
+          console.error("Error loading form:", error);
           this.message.error(`Failed to load form with code: ${code}`);
           this.isLoading.set(false);
         },
@@ -294,9 +304,9 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       const schema = JSON.parse(this.jsonInput);
       this.loadForm(schema);
       this.isJsonInputVisible.set(false);
-      this.message.success('Form loaded successfully!');
+      this.message.success("Form loaded successfully!");
     } catch (error) {
-      this.message.error('Invalid JSON format. Please check your input.');
+      this.message.error("Invalid JSON format. Please check your input.");
     }
   }
 
@@ -309,9 +319,9 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         try {
           const schema = JSON.parse(e.target.result);
           this.loadForm(schema);
-          this.message.success('Form loaded from file successfully!');
+          this.message.success("Form loaded from file successfully!");
         } catch (error) {
-          this.message.error('Invalid JSON file format.');
+          this.message.error("Invalid JSON file format.");
         }
       };
       reader.readAsText(file);
@@ -320,34 +330,56 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
   // Load form schema and build reactive form
   loadForm(schema: FormSchema) {
-    console.log('Loading form with schema:', schema);
-    console.log('Schema onInit:', schema.onInit);
-    console.log('Schema onDestroy:', schema.onDestroy);
+    console.log("Loading form with schema:", schema);
+    console.log("Schema onInit:", schema.onInit);
+    console.log("Schema onDestroy:", schema.onDestroy);
     this.formSchema.set(schema);
+
     this.submittedData.set(null);
+
+    // Group fields by sections
+    const groupedFields: { [key: string]: FormField[] } = {};
+    const groupOrder: string[] = [];
+
+    schema.fields.forEach((field) => {
+      const groupName = field.group || "Parameters";
+      if (!groupedFields[groupName]) {
+        groupedFields[groupName] = [];
+        groupOrder.push(groupName);
+      }
+      groupedFields[groupName].push(field);
+    });
+
+    const sections: FormSection[] = groupOrder.map((groupName) => ({
+      title: groupName,
+      icon: "form", // Default icon
+      fields: groupedFields[groupName],
+    }));
+
+    this.formSection.set(sections);
 
     // Build reactive form controls
     const group: any = {};
     schema.fields.forEach((field) => {
       const validators = field.required ? [Validators.required] : [];
 
-      if (field.type === 'email') {
+      if (field.type === "email") {
         validators.push(Validators.email);
       }
 
       // Get default value or empty
       let defaultValue =
-        field.defaultValue !== undefined ? field.defaultValue : '';
+        field.defaultValue !== undefined ? field.defaultValue : "";
 
       // For switch, default to uncheckedValue or false if no default value provided
-      if (field.type === 'switch' && field.defaultValue === undefined) {
+      if (field.type === "switch" && field.defaultValue === undefined) {
         defaultValue =
           field.uncheckedValue !== undefined ? field.uncheckedValue : false;
       }
 
       // For multi-select, use empty array as default if no default value
       if (
-        (field.type === 'select' || field.type === 'autocomplete') &&
+        (field.type === "select" || field.type === "autocomplete") &&
         field.multiple &&
         !field.defaultValue
       ) {
@@ -355,19 +387,19 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       }
 
       // For keyvalue field, use keyValuePairs or empty array
-      if (field.type === 'keyvalue') {
+      if (field.type === "keyvalue") {
         defaultValue = field.keyValuePairs || [];
       }
 
-      if (field.type === 'checkbox' && field.options) {
+      if (field.type === "checkbox" && field.options) {
         // For checkbox groups, create array of boolean controls
         const checkboxGroup: any = {};
         field.options.forEach((option) => {
-          const optionText = typeof option === 'string' ? option : option.value;
+          const optionText = typeof option === "string" ? option : option.value;
           checkboxGroup[this.sanitizeKey(optionText)] = [false];
         });
         group[field.id] = this.fb.group(checkboxGroup);
-      } else if (field.type === 'divider' || field.type === 'button') {
+      } else if (field.type === "divider" || field.type === "button") {
         // Skip form controls for divider and button - they're not form inputs
       } else {
         group[field.id] = [defaultValue, validators];
@@ -376,10 +408,10 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       // Fetch options from API if binding is configured
       if (
         field.apiBinding &&
-        (field.type === 'select' ||
-          field.type === 'autocomplete' ||
-          field.type === 'radio' ||
-          field.type === 'checkbox')
+        (field.type === "select" ||
+          field.type === "autocomplete" ||
+          field.type === "radio" ||
+          field.type === "checkbox")
       ) {
         this.fetchOptionsFromApi(field);
       }
@@ -419,10 +451,10 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         // Reload API options if field has template expressions in API binding
         if (
           field.apiBinding &&
-          (field.type === 'select' ||
-            field.type === 'autocomplete' ||
-            field.type === 'radio' ||
-            field.type === 'checkbox')
+          (field.type === "select" ||
+            field.type === "autocomplete" ||
+            field.type === "radio" ||
+            field.type === "checkbox")
         ) {
           const hasTemplates =
             this.hasTemplateExpressions(field.apiBinding.url) ||
@@ -444,17 +476,17 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         // Evaluate options code
         if (
           field.optionsCode &&
-          (field.type === 'select' ||
-            field.type === 'autocomplete' ||
-            field.type === 'radio' ||
-            field.type === 'checkbox')
+          (field.type === "select" ||
+            field.type === "autocomplete" ||
+            field.type === "radio" ||
+            field.type === "checkbox")
         ) {
           const calculatedOptions = this.evaluateCode(field.optionsCode);
           if (Array.isArray(calculatedOptions)) {
             // Normalize options to DropdownOption format
             const normalizedOptions: DropdownOption[] = calculatedOptions.map(
               (opt: any) => {
-                if (typeof opt === 'string') {
+                if (typeof opt === "string") {
                   return { key: opt, value: opt };
                 }
                 return opt;
@@ -471,7 +503,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
               this.dynamicOptions[field.id] = normalizedOptions;
 
               // For checkbox fields, rebuild the FormGroup if options changed
-              if (field.type === 'checkbox') {
+              if (field.type === "checkbox") {
                 const checkboxGroup: any = {};
                 normalizedOptions.forEach((option) => {
                   checkboxGroup[this.sanitizeKey(option.value)] = [false];
@@ -494,10 +526,10 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
     // Execute onInit lifecycle hook if defined
     // Delay execution to ensure form is fully rendered and visible
-    console.log('Checking onInit hook, value:', schema.onInit);
+    console.log("Checking onInit hook, value:", schema.onInit);
     if (schema.onInit) {
       setTimeout(() => {
-        this.executeLifecycleHook(schema.onInit!, 'onInit');
+        this.executeLifecycleHook(schema.onInit!, "onInit");
       }, 500); // 500ms delay to ensure form is rendered and async operations complete
     }
   }
@@ -505,7 +537,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   // Check if a string contains template expressions
   hasTemplateExpressions(value: any): boolean {
     if (!value) return false;
-    const str = typeof value === 'string' ? value : JSON.stringify(value);
+    const str = typeof value === "string" ? value : JSON.stringify(value);
     return /\{\{[^}]+\}\}/.test(str);
   }
 
@@ -521,9 +553,9 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       // If submit URL is provided, send data to API
       if (schema?.submitUrl) {
         fetch(schema.submitUrl, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(formData),
         })
@@ -531,26 +563,26 @@ export class FormViewerComponent implements OnInit, OnDestroy {
             if (response.ok) {
               this.submittedData.set(formData);
               this.message.success(
-                schema.successMessage || 'Form submitted successfully!'
+                schema.successMessage || "Form submitted successfully!"
               );
-              console.log('Form Data:', formData);
+              console.log("Form Data:", formData);
             } else {
-              throw new Error('Submission failed');
+              throw new Error("Submission failed");
             }
           })
           .catch((error) => {
-            console.error('Form submission error:', error);
+            console.error("Form submission error:", error);
             this.message.error(
-              schema.errorMessage || 'Failed to submit form. Please try again.'
+              schema.errorMessage || "Failed to submit form. Please try again."
             );
           });
       } else {
         // No submit URL, just show success locally
         this.submittedData.set(formData);
         this.message.success(
-          schema?.successMessage || 'Form submitted successfully!'
+          schema?.successMessage || "Form submitted successfully!"
         );
-        console.log('Form Data:', formData);
+        console.log("Form Data:", formData);
       }
     } else {
       // Show requiredEither errors first
@@ -568,7 +600,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
           control.updateValueAndValidity({ onlySelf: true });
         }
       });
-      this.message.error('Please fill in all required fields correctly.');
+      this.message.error("Please fill in all required fields correctly.");
     }
   }
 
@@ -591,7 +623,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
       // Create a unique group key by combining all related field IDs
       const allFieldIds = [field.id, ...field.requiredEither].sort();
-      const groupKey = allFieldIds.join('|');
+      const groupKey = allFieldIds.join("|");
 
       if (!eitherGroups.has(groupKey)) {
         eitherGroups.set(groupKey, []);
@@ -620,26 +652,26 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         const value = control?.value;
 
         // Check if field has value based on its type
-        if (field.type === 'select' && field.multiple) {
+        if (field.type === "select" && field.multiple) {
           return Array.isArray(value) && value.length > 0;
-        } else if (field.type === 'checkbox' || field.type === 'radio') {
-          if (typeof value === 'object' && value !== null) {
+        } else if (field.type === "checkbox" || field.type === "radio") {
+          if (typeof value === "object" && value !== null) {
             return Object.values(value).some((v) => v === true);
           }
           return value === true;
-        } else if (field.type === 'number') {
-          return value !== null && value !== undefined && value !== '';
+        } else if (field.type === "number") {
+          return value !== null && value !== undefined && value !== "";
         } else if (Array.isArray(value)) {
           return value.length > 0;
-        } else if (typeof value === 'string') {
-          return value.trim() !== '';
+        } else if (typeof value === "string") {
+          return value.trim() !== "";
         } else {
-          return value !== null && value !== undefined && value !== '';
+          return value !== null && value !== undefined && value !== "";
         }
       });
 
       if (!hasAtLeastOne) {
-        const fieldLabels = group.map((f) => f.label).join(' or ');
+        const fieldLabels = group.map((f) => f.label).join(" or ");
         errors.push(`Please provide at least one of: ${fieldLabels}`);
       }
     });
@@ -660,7 +692,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
       // Build headers object
       const headersObj: Record<string, string> = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
 
       // Add custom headers with template replacement
@@ -679,10 +711,10 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         headers: headersObj,
       };
 
-      if (method === 'POST' && bodyData) {
+      if (method === "POST" && bodyData) {
         // Replace template expressions in body data
         const processedBody = this.replaceTemplateExpressions(
-          typeof bodyData === 'string' ? bodyData : JSON.stringify(bodyData)
+          typeof bodyData === "string" ? bodyData : JSON.stringify(bodyData)
         );
         requestOptions.body = processedBody;
       }
@@ -698,17 +730,17 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       // Extract options from response using property paths
       const items = Array.isArray(data)
         ? data
-        : this.getNestedProperty(data, 'data') || [];
+        : this.getNestedProperty(data, "data") || [];
 
       const dropdownOptions: DropdownOption[] = items.map((item: any) => ({
-        key: this.getNestedProperty(item, keyProperty)?.toString() || '',
-        value: this.getNestedProperty(item, valueProperty)?.toString() || '',
+        key: this.getNestedProperty(item, keyProperty)?.toString() || "",
+        value: this.getNestedProperty(item, valueProperty)?.toString() || "",
       }));
 
       this.dynamicOptions[field.id] = dropdownOptions;
 
       // For checkbox fields, we need to rebuild the FormGroup with the new options
-      if (field.type === 'checkbox') {
+      if (field.type === "checkbox") {
         const checkboxGroup: any = {};
         dropdownOptions.forEach((option) => {
           checkboxGroup[this.sanitizeKey(option.value)] = [false];
@@ -729,7 +761,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
   // Get nested property from object using dot notation (e.g., 'data.id')
   getNestedProperty(obj: any, path: string): any {
-    return path.split('.').reduce((current, key) => current?.[key], obj);
+    return path.split(".").reduce((current, key) => current?.[key], obj);
   }
 
   // Replace template expressions like {{fieldId}} with actual form values
@@ -744,7 +776,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       const value = formValues[trimmedFieldId];
 
       // Return the value or empty string if not found
-      return value !== undefined && value !== null ? String(value) : '';
+      return value !== undefined && value !== null ? String(value) : "";
     });
   }
 
@@ -756,17 +788,17 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
     if (schema) {
       schema.fields.forEach((field) => {
-        if (field.type === 'checkbox' && field.options) {
+        if (field.type === "checkbox" && field.options) {
           // Convert checkbox group to array of selected values
           const checkboxData = rawData[field.id];
           formData[field.id] = field.options
             .filter((option) => {
               const optionText =
-                typeof option === 'string' ? option : option.value;
+                typeof option === "string" ? option : option.value;
               return checkboxData[this.sanitizeKey(optionText)];
             })
             .map((option) =>
-              typeof option === 'string' ? option : option.value
+              typeof option === "string" ? option : option.value
             );
         } else {
           formData[field.id] = rawData[field.id];
@@ -781,7 +813,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   resetForm() {
     this.dynamicForm.reset();
     this.submittedData.set(null);
-    this.message.info('Form has been reset.');
+    this.message.info("Form has been reset.");
   }
 
   // Clear form schema
@@ -789,7 +821,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     this.formSchema.set(null);
     this.dynamicForm = this.fb.group({});
     this.submittedData.set(null);
-    this.jsonInput = '';
+    this.jsonInput = "";
   }
 
   // Public method to get current form values
@@ -807,10 +839,10 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     const data = this.submittedData();
     if (data) {
       const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: 'application/json',
+        type: "application/json",
       });
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = `form-submission-${Date.now()}.json`;
       link.click();
@@ -822,14 +854,14 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   getErrorMessage(fieldId: string): string {
     const control = this.dynamicForm.get(fieldId);
     if (control && control.invalid && (control.dirty || control.touched)) {
-      if (control.hasError('required')) {
-        return 'This field is required';
+      if (control.hasError("required")) {
+        return "This field is required";
       }
-      if (control.hasError('email')) {
-        return 'Please enter a valid email address';
+      if (control.hasError("email")) {
+        return "Please enter a valid email address";
       }
     }
-    return '';
+    return "";
   }
 
   // Check if field has error
@@ -840,14 +872,14 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
   // Sanitize option text to use as form control key
   sanitizeKey(text: string): string {
-    return text.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+    return text.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
   }
 
   // Get options for a field (static or from API)
   getFieldOptions(field: FormField): (string | DropdownOption)[] {
     // If field has API binding and options are loaded, use dynamic options
     if (
-      field.optionsSource === 'api' &&
+      field.optionsSource === "api" &&
       field.apiBinding &&
       this.dynamicOptions[field.id]
     ) {
@@ -855,14 +887,14 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     }
 
     // If options source is code
-    if (field.optionsSource === 'code' && field.optionsCode) {
+    if (field.optionsSource === "code" && field.optionsCode) {
       try {
         const form = this.prepareFormData();
-        const fn = new Function('form', field.optionsCode);
+        const fn = new Function("form", field.optionsCode);
         const result = fn(form);
         return Array.isArray(result) ? result : [];
       } catch (e) {
-        console.error('Error evaluating options code:', e);
+        console.error("Error evaluating options code:", e);
         return [];
       }
     }
@@ -886,8 +918,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     try {
       const values = JSON.parse(this.setValuesInput);
 
-      if (typeof values !== 'object' || values === null) {
-        this.message.error('Invalid JSON: Expected an object');
+      if (typeof values !== "object" || values === null) {
+        this.message.error("Invalid JSON: Expected an object");
         return;
       }
 
@@ -902,12 +934,12 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         }
       });
 
-      this.message.success('Form values updated successfully!');
+      this.message.success("Form values updated successfully!");
       this.isSetValuesVisible.set(false);
-      this.setValuesInput = '';
+      this.setValuesInput = "";
     } catch (error) {
-      this.message.error('Invalid JSON format. Please check your input.');
-      console.error('Error parsing values JSON:', error);
+      this.message.error("Invalid JSON format. Please check your input.");
+      console.error("Error parsing values JSON:", error);
     }
   }
 
@@ -953,11 +985,11 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       };
 
       // Create a function with form and api as arguments
-      const fn = new Function('form', 'api', field.customJs);
+      const fn = new Function("form", "api", field.customJs);
       fn(form, api);
     } catch (error) {
-      console.error('Error executing button action:', error);
-      this.message.error('Failed to execute button action');
+      console.error("Error executing button action:", error);
+      this.message.error("Failed to execute button action");
     }
   }
 
@@ -1001,11 +1033,11 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       // Create a function with form (as Proxy), api, alert, console, and window as arguments
       // This allows the user's code to access common browser APIs and set form values
       const fn = new Function(
-        'form',
-        'api',
-        'alert',
-        'console',
-        'window',
+        "form",
+        "api",
+        "alert",
+        "console",
+        "window",
         code
       );
       fn(formProxy, api, window.alert.bind(window), console, window);
@@ -1030,8 +1062,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       // Ensure key/value structure
       const isKV =
         field.options.length === 0 ||
-        (typeof field.options[0] === 'object' &&
-          'key' in (field.options[0] as any));
+        (typeof field.options[0] === "object" &&
+          "key" in (field.options[0] as any));
       if (isKV) {
         (field.options as DropdownOption[]).push(option);
       } else {
@@ -1057,8 +1089,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   private slugify(text: string): string {
     return text
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '_')
-      .replace(/^_+|_+$/g, '');
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
   }
 
   // Reset checkbox group
@@ -1071,7 +1103,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       // Set all checkboxes to false
       options.forEach((option) => {
         const optionText =
-          typeof option === 'string'
+          typeof option === "string"
             ? option
             : (option as DropdownOption).value;
         const control = checkboxGroup.get(this.sanitizeKey(optionText));
@@ -1095,7 +1127,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
     return options.some((option) => {
       const optionText =
-        typeof option === 'string' ? option : (option as DropdownOption).value;
+        typeof option === "string" ? option : (option as DropdownOption).value;
       const control = checkboxGroup.get(this.sanitizeKey(optionText));
       return control?.value === true;
     });
@@ -1104,54 +1136,54 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   // Sample form for demo
   loadSampleForm() {
     const sampleSchema: FormSchema = {
-      title: 'Contact Form',
-      description: 'Please fill out this contact form',
+      title: "Contact Form",
+      description: "Please fill out this contact form",
       fields: [
         {
-          id: 'name',
-          type: 'text',
-          label: 'Full Name',
-          placeholder: 'Enter your full name',
+          id: "name",
+          type: "text",
+          label: "Full Name",
+          placeholder: "Enter your full name",
           required: true,
-          icon: 'user',
+          icon: "user",
         },
         {
-          id: 'email',
-          type: 'email',
-          label: 'Email Address',
-          placeholder: 'Enter your email',
+          id: "email",
+          type: "email",
+          label: "Email Address",
+          placeholder: "Enter your email",
           required: true,
-          icon: 'mail',
+          icon: "mail",
         },
         {
-          id: 'phone',
-          type: 'number',
-          label: 'Phone Number',
-          placeholder: 'Enter your phone number',
+          id: "phone",
+          type: "number",
+          label: "Phone Number",
+          placeholder: "Enter your phone number",
           required: false,
-          icon: 'phone',
+          icon: "phone",
         },
         {
-          id: 'message',
-          type: 'textarea',
-          label: 'Message',
-          placeholder: 'Enter your message',
+          id: "message",
+          type: "textarea",
+          label: "Message",
+          placeholder: "Enter your message",
           required: true,
-          icon: 'message',
+          icon: "message",
         },
         {
-          id: 'category',
-          type: 'select',
-          label: 'Category',
+          id: "category",
+          type: "select",
+          label: "Category",
           required: true,
-          options: ['General Inquiry', 'Support', 'Feedback', 'Other'],
-          icon: 'tags',
+          options: ["General Inquiry", "Support", "Feedback", "Other"],
+          icon: "tags",
         },
       ],
     };
 
     this.loadForm(sampleSchema);
-    this.message.success('Sample form loaded!');
+    this.message.success("Sample form loaded!");
   }
 
   // Handle file upload with validation
@@ -1172,7 +1204,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     // Validate file extension
     if (field.allowedExtensions && field.allowedExtensions.length > 0) {
       const fileName = file.name.toLowerCase();
-      const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+      const fileExtension = fileName.substring(fileName.lastIndexOf("."));
       const isAllowed = field.allowedExtensions.some(
         (ext) => fileExtension === ext.toLowerCase()
       );
@@ -1180,7 +1212,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       if (!isAllowed) {
         this.message.error(
           `File type not allowed. Allowed types: ${field.allowedExtensions.join(
-            ', '
+            ", "
           )}`
         );
         return false;
@@ -1218,7 +1250,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   handleFileChange(event: any, field: FormField): void {
     const fieldId = field.id;
 
-    if (event.type === 'removed') {
+    if (event.type === "removed") {
       // Remove file from the list
       const removedFile = event.file;
       if (this.fileListMap[fieldId]) {
@@ -1250,9 +1282,9 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   // Get accepted file extensions for nz-upload
   getAcceptedExtensions(field: FormField): string {
     if (!field.allowedExtensions || field.allowedExtensions.length === 0) {
-      return '*';
+      return "*";
     }
-    return field.allowedExtensions.join(',');
+    return field.allowedExtensions.join(",");
   }
 
   // Get file list for a field
@@ -1267,7 +1299,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     }
 
     const formData = new FormData();
-    formData.append('file', item.file as any);
+    formData.append("file", item.file as any);
 
     // Replace template expressions in URL
     let uploadUrl = field.uploadUrl;
@@ -1275,7 +1307,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     uploadUrl = uploadUrl.replace(/\{\{([^}]+)\}\}/g, (match, fieldId) => {
       const trimmedFieldId = fieldId.trim();
       const value = formValues[trimmedFieldId];
-      return value !== undefined && value !== null ? String(value) : '';
+      return value !== undefined && value !== null ? String(value) : "";
     });
 
     // Build headers
@@ -1289,7 +1321,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
             (match, fieldId) => {
               const trimmedFieldId = fieldId.trim();
               const value = formValues[trimmedFieldId];
-              return value !== undefined && value !== null ? String(value) : '';
+              return value !== undefined && value !== null ? String(value) : "";
             }
           );
           headers[header.key] = headerValue;
@@ -1327,11 +1359,11 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     };
 
     xhr.onerror = () => {
-      item.onError(new Error('Upload failed'), item.file);
-      this.message.error('Upload failed. Please try again.');
+      item.onError(new Error("Upload failed"), item.file);
+      this.message.error("Upload failed. Please try again.");
     };
 
-    xhr.open('POST', uploadUrl, true);
+    xhr.open("POST", uploadUrl, true);
 
     // Set headers
     Object.keys(headers).forEach((key) => {
@@ -1365,29 +1397,29 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     const condition = field.visibilityCondition;
 
     // Handle JS Code condition
-    if (condition.type === 'code' && condition.code) {
-      console.log('Evaluating visibility code for field', condition.code);
+    if (condition.type === "code" && condition.code) {
+      console.log("Evaluating visibility code for field", condition.code);
       let result = this.evaluateCode(condition.code);
       field.defaultVisible = result;
-      console.log('Result:', result);
+      console.log("Result:", result);
       return !!result;
     }
     const dependentFieldValue = this.dynamicForm.get(condition.fieldId)?.value;
 
     switch (condition.operator) {
-      case 'equals':
+      case "equals":
         return dependentFieldValue === condition.value;
-      case 'notEquals':
+      case "notEquals":
         return dependentFieldValue !== condition.value;
-      case 'contains':
+      case "contains":
         return (
           dependentFieldValue &&
-          String(dependentFieldValue).includes(condition.value || '')
+          String(dependentFieldValue).includes(condition.value || "")
         );
-      case 'isEmpty':
-        return !dependentFieldValue || dependentFieldValue === '';
-      case 'isNotEmpty':
-        return !!dependentFieldValue && dependentFieldValue !== '';
+      case "isEmpty":
+        return !dependentFieldValue || dependentFieldValue === "";
+      case "isNotEmpty":
+        return !!dependentFieldValue && dependentFieldValue !== "";
       default:
         return field.defaultVisible !== false;
     }
@@ -1411,26 +1443,26 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     const condition = field.enableCondition;
 
     // Handle JS Code condition
-    if (condition.type === 'code' && condition.code) {
+    if (condition.type === "code" && condition.code) {
       return !!this.evaluateCode(condition.code);
     }
 
     const dependentFieldValue = this.dynamicForm.get(condition.fieldId)?.value;
 
     switch (condition.operator) {
-      case 'equals':
+      case "equals":
         return dependentFieldValue === condition.value;
-      case 'notEquals':
+      case "notEquals":
         return dependentFieldValue !== condition.value;
-      case 'contains':
+      case "contains":
         return (
           dependentFieldValue &&
-          String(dependentFieldValue).includes(condition.value || '')
+          String(dependentFieldValue).includes(condition.value || "")
         );
-      case 'isEmpty':
-        return !dependentFieldValue || dependentFieldValue === '';
-      case 'isNotEmpty':
-        return !!dependentFieldValue && dependentFieldValue !== '';
+      case "isEmpty":
+        return !dependentFieldValue || dependentFieldValue === "";
+      case "isNotEmpty":
+        return !!dependentFieldValue && dependentFieldValue !== "";
       default:
         return field.defaultEnabled !== false;
     }
@@ -1475,11 +1507,11 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   // Get formatted text for requiredEither fields
   getRequiredEitherText(field: FormField): string {
     if (!field.requiredEither || field.requiredEither.length === 0) {
-      return '';
+      return "";
     }
 
     const schema = this.formSchema();
-    if (!schema) return '';
+    if (!schema) return "";
 
     // Get labels for related fields
     const labels = field.requiredEither.map((fieldId) => {
@@ -1491,11 +1523,11 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     if (labels.length === 1) {
       return labels[0];
     } else if (labels.length === 2) {
-      return labels.join(' or ');
+      return labels.join(" or ");
     } else {
       // For 3+ fields: "Field1, Field2, or Field3"
       return (
-        labels.slice(0, -1).join(', ') + ', or ' + labels[labels.length - 1]
+        labels.slice(0, -1).join(", ") + ", or " + labels[labels.length - 1]
       );
     }
   }
@@ -1538,10 +1570,10 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       // Create a function with 'form' as argument
       // form contains all current field values
       const formValues = this.dynamicForm.getRawValue();
-      const func = new Function('form', code);
+      const func = new Function("form", code);
       return func(formValues);
     } catch (error) {
-      console.warn('Error evaluating JS code:', error);
+      console.warn("Error evaluating JS code:", error);
       return null;
     }
   }
