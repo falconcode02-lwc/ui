@@ -121,7 +121,7 @@ export class FilterPipe implements PipeTransform {
 }
 
 @Injectable()
-class FlowState extends Mutator<any> {}
+class FlowState extends Mutator<any> { }
 
 const DEFAULT_STATE = {
   nodes: [],
@@ -265,7 +265,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   apiRequest = '';
   isRunWorkflowOpen: boolean = false;
   isShortcutsHelpVisible: boolean = false;
-  options = ['New', 'Update'];
+  runOptions = ['New', 'Update'];
   runOptionSelected: any = 'New';
   languages: LanguageDescription[] = minimalLanguages.slice();
 
@@ -631,6 +631,15 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     }
     if (this.workflowId) {
       setTimeout(() => {
+        if (runid) {
+          this.runOptionSelected = 'Update';
+          this.runUpdateOptionCode = this.runUpdateOptionCode.replace(
+            'generatedID',
+            runid || ''
+          );
+          // this.handleValueChange('Update');
+          
+        }
         this.getWorkflowByID(this.workflowId);
       }, 100);
     } else {
@@ -951,7 +960,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     private nzContextMenuService: NzContextMenuService,
     private breadcrumbService: BreadcrumbService,
     private pluginService: PluginService
-  ) {}
+  ) { }
 
   /**
    * Handle keyboard shortcuts
@@ -2244,7 +2253,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       const nid = node?.id || node?.data?.id;
       const currentScale =
         this.fCanvasComponent &&
-        typeof this.fCanvasComponent.getScale === 'function'
+          typeof this.fCanvasComponent.getScale === 'function'
           ? this.fCanvasComponent.getScale()
           : 1.0;
       if (nid) {
@@ -2693,9 +2702,16 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   runWorkflow(runworkflow: any) {
+
     if (runworkflow == 'open') {
-      this.handleValueChange('New');
       this.isRunWorkflowOpen = true;
+      if (this.isWorkflowRunning) {
+        this.runOptionSelected = 'Update';
+        this.handleValueChange('Update');
+      } else {
+        this.handleValueChange('New');
+
+      }
     } else {
       if (this.runOptionSelected == 'New') {
         if (this.isWorkflowRunning) {
@@ -2768,7 +2784,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     alert('');
   }
 
-  cancel(): void {}
+  cancel(): void { }
 
   refDeleteId: any;
   refDeleteType: any;
@@ -3556,7 +3572,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         "state":{}
     }`;
   handleValueChange(e: string | number): void {
-    this.runOptionSelected = e;
+    // this.runOptionSelected = e;
     if (e == 'Update') {
       this.apiRequest =
         this.runUpdateOptionCode.replaceAll(
@@ -3882,8 +3898,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
    */
   onNodeIconError(node: any) {
     console.warn(
-      `Icon failed to load for node: ${
-        node.meta?.html || node.id
+      `Icon failed to load for node: ${node.meta?.html || node.id
       }, using fallback icon`
     );
     // Mark the node to use fallback icon
