@@ -1,4 +1,11 @@
-import { Component, signal, computed, OnInit, Input, Inject } from "@angular/core";
+import {
+  Component,
+  signal,
+  computed,
+  OnInit,
+  Input,
+  Inject,
+} from "@angular/core";
 import { CommonModule } from "@angular/common";
 import {
   CdkDragDrop,
@@ -34,7 +41,11 @@ import { FormService } from "../../service/form.service";
 import { Form } from "../../model/form-model";
 import { ActivatedRoute, Router } from "@angular/router";
 import { NzMessageService } from "ng-zorro-antd/message";
-import { NZ_MODAL_DATA, NzModalModule, NzModalService } from "ng-zorro-antd/modal";
+import {
+  NZ_MODAL_DATA,
+  NzModalModule,
+  NzModalService,
+} from "ng-zorro-antd/modal";
 
 interface DropdownOption {
   key: string;
@@ -91,7 +102,7 @@ interface FormField {
   max?: number; // Maximum value for number input
   step?: number; // Step increment for number input (e.g., 0.01 for decimals)
   keyValuePairs?: KeyValuePair[]; // For keyvalue field type
-  valueControlType?: "text" | "select" | "codeeditor" | "checkbox"; // For keyvalue field - type of value control
+  valueControlType?: "text" | "select" | "codeeditor" | "checkbox" | "password"; // For keyvalue field - type of value control
   valueBinding?: { type: "code"; code: string };
   optionsSource?: "static" | "api" | "code";
   optionsCode?: string; // For JS-based options
@@ -385,7 +396,6 @@ export class FormBuilderComponent implements OnInit {
     private message: NzMessageService,
     private modal: NzModalService,
     @Inject(NZ_MODAL_DATA) public data: any
-
   ) {
     if (this.data?.hideSaveButton !== undefined)
       this.hideSaveButton = this.data?.hideSaveButton ?? false;
@@ -406,7 +416,6 @@ export class FormBuilderComponent implements OnInit {
   }
 
   loadForm(id: number): void {
-
     this.formService.getById(id).subscribe({
       next: (form) => {
         this.currentFormId = form.id;
@@ -622,8 +631,8 @@ export class FormBuilderComponent implements OnInit {
         // Assign current group filter if selected and not 'All' or 'No-Group'
         group:
           this.selectedFilterGroup() &&
-            this.selectedFilterGroup() !== "No-Group" &&
-            this.selectedFilterGroup() !== "All"
+          this.selectedFilterGroup() !== "No-Group" &&
+          this.selectedFilterGroup() !== "All"
             ? this.selectedFilterGroup()
             : undefined,
       };
