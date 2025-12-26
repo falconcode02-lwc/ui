@@ -103,7 +103,7 @@ interface FormField {
   max?: number; // Maximum value for number input
   step?: number; // Step increment for number input (e.g., 0.01 for decimals)
   keyValuePairs?: KeyValuePair[]; // For keyvalue field type
-  valueControlType?: "text" | "select" | "codeeditor" | "checkbox"; // For keyvalue field - type of value control
+  valueControlType?: "text" | "select" | "codeeditor" | "checkbox" | "password"; // For keyvalue field - type of value control
   valueBinding?: { type: "code"; code: string };
   optionsSource?: "static" | "api" | "code";
   optionsCode?: string; // For JS-based options
@@ -402,7 +402,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         (field.type === "select" ||
           field.type === "autocomplete" ||
           field.type === "radio" ||
-          field.type === "checkbox")
+          field.type === "checkbox"||  field.type === "password")
       ) {
         this.fetchOptionsFromApi(field);
       }
@@ -482,7 +482,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         (field.type === "select" ||
           field.type === "autocomplete" ||
           field.type === "radio" ||
-          field.type === "checkbox")
+          field.type === "checkbox"||  field.type === "password")
       ) {
         const hasTemplates =
           this.hasTemplateExpressions(field.apiBinding.url) ||
