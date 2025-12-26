@@ -32,6 +32,7 @@ import { NzSplitterModule } from 'ng-zorro-antd/splitter';
 import { minimalLanguages } from '../../helpers/minimal-languages';
 import type { LanguageDescription } from '@codemirror/language';
 
+
 export interface PluginFormData {
     pluginName: string;
     pluginDesc: string;
@@ -73,6 +74,7 @@ export interface PluginFormData {
         NzListModule,
         NzDropDownModule,
         NzPaginationModule
+        
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     templateUrl: './plugin-manager.component.html',
@@ -83,6 +85,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
     // Store polling interval reference
     private codeEditorSyncInterval: any;
     languages: LanguageDescription[] = minimalLanguages.slice();
+    editorOptions = {theme: 'vs-dark', language: 'javascript'};
     /**
      * Sync form fields from code editor content
      */

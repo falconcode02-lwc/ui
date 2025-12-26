@@ -18,9 +18,9 @@ import 'prismjs/plugins/line-numbers/prism-line-numbers.js';
 import 'prismjs/plugins/line-highlight/prism-line-highlight.js';
 
 
-
 registerLocaleData(en);
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideZoneChangeDetection({ eventCoalescing: true }), provideRouter(APP_SHELL_ROUTES,withHashLocation()), provideNzIcons(icons), provideNzI18n(en_US), importProvidersFrom(FormsModule, MarkdownModule.forRoot()), provideAnimationsAsync(), provideHttpClient() ]
+  providers: [provideZoneChangeDetection({ eventCoalescing: true }), provideRouter(APP_SHELL_ROUTES,withHashLocation()), provideNzIcons(icons), provideNzI18n(en_US), importProvidersFrom(FormsModule,
+ MarkdownModule.forRoot()), provideAnimationsAsync(), provideHttpClient() ]
 };

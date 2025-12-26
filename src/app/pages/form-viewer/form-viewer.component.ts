@@ -7,6 +7,7 @@ import {
   OnInit,
   OnDestroy,
   effect,
+  ChangeDetectorRef,
 } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { CommonModule } from "@angular/common";
@@ -45,6 +46,7 @@ import { CodeEditorModule } from "@acrodata/code-editor";
 import { javascript } from "@codemirror/lang-javascript";
 import { NzSpaceModule } from "ng-zorro-antd/space";
 import { NzTabsModule } from "ng-zorro-antd/tabs";
+import { environment } from "../../environments/environment";
 
 interface DropdownOption {
   key: string;
@@ -191,6 +193,10 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     }
   }
 
+  envCode = {
+    backendHost: environment.apiUrl,
+    webhookUrl: environment.apiUrl + '/api/v1/workflowManager/webhook'
+  }
   // Optional callback: parent can handle "Add New" for autocomplete/select and return created option
   @Input() onAutocompleteAddNew?: (payload: {
     field: FormField;
@@ -245,7 +251,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private message: NzMessageService,
     private route: ActivatedRoute,
-    private formService: FormService
+    private formService: FormService,
+    private chref: ChangeDetectorRef
   ) {
     this.dynamicForm = this.fb.group({});
 
@@ -328,8 +335,10 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     }
   }
 
+  schema: FormSchema | null = null;
   // Load form schema and build reactive form
   loadForm(schema: FormSchema) {
+    this.schema = schema;
     console.log("Loading form with schema:", schema);
     console.log("Schema onInit:", schema.onInit);
     console.log("Schema onDestroy:", schema.onDestroy);
@@ -413,97 +422,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
     // Subscribe to form value changes to handle dynamic enable/disable and API dependencies
     this.dynamicForm.valueChanges.subscribe(() => {
-      // Emit form values for external listeners
-      const formValues = this.prepareFormData();
-      this.formValuesChange.emit(formValues);
-
-      schema.fields.forEach((field) => {
-        if (field.enableCondition) {
-          const control = this.dynamicForm.get(field.id);
-          if (control) {
-            const shouldBeEnabled = this.evaluateEnableCondition(field);
-            if (shouldBeEnabled && control.disabled) {
-              control.enable({ emitEvent: false });
-            } else if (!shouldBeEnabled && control.enabled) {
-              control.disable({ emitEvent: false });
-            }
-          }
-        }
-
-        // Reload API options if field has template expressions in API binding
-        if (
-          field.apiBinding &&
-          (field.type === "select" ||
-            field.type === "autocomplete" ||
-            field.type === "radio" ||
-            field.type === "checkbox")
-        ) {
-          const hasTemplates =
-            this.hasTemplateExpressions(field.apiBinding.url) ||
-            this.hasTemplateExpressions(field.apiBinding.bodyData);
-          if (hasTemplates) {
-            this.fetchOptionsFromApi(field);
-          }
-        }
-
-        // Evaluate value binding
-        if (field.valueBinding && field.valueBinding.code) {
-          const calculatedValue = this.evaluateCode(field.valueBinding.code);
-          const control = this.dynamicForm.get(field.id);
-          if (control && control.value !== calculatedValue) {
-            control.setValue(calculatedValue, { emitEvent: false });
-          }
-        }
-
-        // Evaluate options code
-        if (
-          field.optionsCode &&
-          (field.type === "select" ||
-            field.type === "autocomplete" ||
-            field.type === "radio" ||
-            field.type === "checkbox")
-        ) {
-          const calculatedOptions = this.evaluateCode(field.optionsCode);
-          if (Array.isArray(calculatedOptions)) {
-            // Normalize options to DropdownOption format
-            const normalizedOptions: DropdownOption[] = calculatedOptions.map(
-              (opt: any) => {
-                if (typeof opt === "string") {
-                  return { key: opt, value: opt };
-                }
-                return opt;
-              }
-            );
-
-            // Only update if options have changed to avoid infinite loops/flickering
-            // Simple check based on length and first item, can be improved
-            const currentOptions = this.dynamicOptions[field.id] || [];
-            if (
-              JSON.stringify(currentOptions) !==
-              JSON.stringify(normalizedOptions)
-            ) {
-              this.dynamicOptions[field.id] = normalizedOptions;
-
-              // For checkbox fields, rebuild the FormGroup if options changed
-              if (field.type === "checkbox") {
-                const checkboxGroup: any = {};
-                normalizedOptions.forEach((option) => {
-                  checkboxGroup[this.sanitizeKey(option.value)] = [false];
-                });
-
-                const existingGroup = this.dynamicForm.get(field.id);
-                if (existingGroup) {
-                  this.dynamicForm.removeControl(field.id);
-                }
-                this.dynamicForm.addControl(
-                  field.id,
-                  this.fb.group(checkboxGroup)
-                );
-              }
-            }
-          }
-        }
-      });
+      this.formValueChanged();
     });
 
     // Execute onInit lifecycle hook if defined
@@ -537,6 +456,99 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     }));
 
     this.formSection.set(sections);
+  }
+
+  formValueChanged() {
+    // Emit form values for external listeners
+    const formValues = this.prepareFormData();
+    this.formValuesChange.emit(formValues);
+
+    this.schema?.fields.forEach((field) => {
+      if (field.enableCondition) {
+        const control = this.dynamicForm.get(field.id);
+        if (control) {
+          const shouldBeEnabled = this.evaluateEnableCondition(field);
+          if (shouldBeEnabled && control.disabled) {
+            control.enable({ emitEvent: false });
+          } else if (!shouldBeEnabled && control.enabled) {
+            control.disable({ emitEvent: false });
+          }
+        }
+      }
+
+      // Reload API options if field has template expressions in API binding
+      if (
+        field.apiBinding &&
+        (field.type === "select" ||
+          field.type === "autocomplete" ||
+          field.type === "radio" ||
+          field.type === "checkbox")
+      ) {
+        const hasTemplates =
+          this.hasTemplateExpressions(field.apiBinding.url) ||
+          this.hasTemplateExpressions(field.apiBinding.bodyData);
+        if (hasTemplates) {
+          this.fetchOptionsFromApi(field);
+        }
+      }
+
+      // Evaluate value binding
+      if (field.valueBinding && field.valueBinding.code) {
+        const calculatedValue = this.evaluateCode(field.valueBinding.code);
+        const control = this.dynamicForm.get(field.id);
+        if (control && control.value !== calculatedValue) {
+          control.setValue(calculatedValue, { emitEvent: false });
+        }
+      }
+
+      // Evaluate options code
+      if (
+        field.optionsCode &&
+        (field.type === "select" ||
+          field.type === "autocomplete" ||
+          field.type === "radio" ||
+          field.type === "checkbox")
+      ) {
+        const calculatedOptions = this.evaluateCode(field.optionsCode);
+        if (Array.isArray(calculatedOptions)) {
+          // Normalize options to DropdownOption format
+          const normalizedOptions: DropdownOption[] = calculatedOptions.map(
+            (opt: any) => {
+              if (typeof opt === "string") {
+                return { key: opt, value: opt };
+              }
+              return opt;
+            }
+          );
+
+          // Only update if options have changed to avoid infinite loops/flickering
+          // Simple check based on length and first item, can be improved
+          const currentOptions = this.dynamicOptions[field.id] || [];
+          if (
+            JSON.stringify(currentOptions) !== JSON.stringify(normalizedOptions)
+          ) {
+            this.dynamicOptions[field.id] = normalizedOptions;
+
+            // For checkbox fields, rebuild the FormGroup if options changed
+            if (field.type === "checkbox") {
+              const checkboxGroup: any = {};
+              normalizedOptions.forEach((option) => {
+                checkboxGroup[this.sanitizeKey(option.value)] = [false];
+              });
+
+              const existingGroup = this.dynamicForm.get(field.id);
+              if (existingGroup) {
+                this.dynamicForm.removeControl(field.id);
+              }
+              this.dynamicForm.addControl(
+                field.id,
+                this.fb.group(checkboxGroup)
+              );
+            }
+          }
+        }
+      }
+    });
   }
 
   // Check if a string contains template expressions
@@ -895,8 +907,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
     if (field.optionsSource === "code" && field.optionsCode) {
       try {
         const form = this.prepareFormData();
-        const fn = new Function("form", field.optionsCode);
-        const result = fn(form);
+        const fn = new Function("form", "$env", field.optionsCode);
+        const result = fn(form, this.envCode);
         return Array.isArray(result) ? result : [];
       } catch (e) {
         console.error("Error evaluating options code:", e);
@@ -992,8 +1004,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
       };
 
       // Create a function with form and api as arguments
-      const fn = new Function("form", "api", field.customJs);
-      fn(form, api);
+      const fn = new Function("form", "api", "$env", field.customJs);
+      fn(form, api, this.envCode);
     } catch (error) {
       console.error("Error executing button action:", error);
       this.message.error("Failed to execute button action");
@@ -1039,6 +1051,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         setFieldOptionsValue: this.setFieldOptionsValue.bind(this),
       };
 
+
+
       // Create a function with form (as Proxy), api, alert, console, and window as arguments
       // This allows the user's code to access common browser APIs and set form values
       const fn = new Function(
@@ -1047,9 +1061,17 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         "alert",
         "console",
         "window",
+        "$env",
         code
       );
-      fn(formProxy, api, window.alert.bind(window), console, window);
+      fn(
+        formProxy,
+        api,
+        window.alert.bind(window),
+        console,
+        window,
+        this.envCode
+      );
       console.log(`Lifecycle hook '${hookName}' executed successfully`);
     } catch (error) {
       console.error(`Error executing lifecycle hook '${hookName}':`, error);
@@ -1593,14 +1615,19 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   // Evaluate JS code safely
   private evaluateCode(code: string): any {
     try {
+      console.log("Evaluating code:", code);
       // Create a function with 'form' as argument
       // form contains all current field values
       const formValues = this.dynamicForm.getRawValue();
-      const func = new Function("form", code);
-      return func(formValues);
+      const func = new Function("form", "$env", code);
+      return func(formValues, this.envCode);
     } catch (error) {
       console.warn("Error evaluating JS code:", error);
       return null;
     }
+  }
+
+  onTabIndexChange(index: number) {
+    this.formValueChanged();
   }
 }
