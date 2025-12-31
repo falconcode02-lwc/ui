@@ -6,20 +6,20 @@ import {
   EventEmitter,
   OnInit,
   CUSTOM_ELEMENTS_SCHEMA,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
-import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
-import type { LanguageDescription } from '@codemirror/language';
-import { minimalLanguages } from '../../helpers/minimal-languages';
-import { CodeEditorModule } from '@acrodata/code-editor';
-import { javascript } from '@codemirror/lang-javascript';
+} from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { NzIconModule } from "ng-zorro-antd/icon";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzInputModule } from "ng-zorro-antd/input";
+import { NzSelectModule } from "ng-zorro-antd/select";
+import { NzCheckboxModule } from "ng-zorro-antd/checkbox";
+import { NzCardModule } from "ng-zorro-antd/card";
+import { NzToolTipModule } from "ng-zorro-antd/tooltip";
+import type { LanguageDescription } from "@codemirror/language";
+import { minimalLanguages } from "../../helpers/minimal-languages";
+import { CodeEditorModule } from "@acrodata/code-editor";
+import { javascript } from "@codemirror/lang-javascript";
 export interface KeyValuePair {
   id: string;
   key: string;
@@ -28,10 +28,15 @@ export interface KeyValuePair {
   visible?: boolean; // Controls visibility in UI (default: true)
 }
 
-export type ValueControlType = 'text' | 'select' | 'codeeditor' | 'checkbox';
+export type ValueControlType =
+  | "text"
+  | "select"
+  | "codeeditor"
+  | "checkbox"
+  | "password";
 
 @Component({
-  selector: 'app-key-value-builder',
+  selector: "app-key-value-builder",
   standalone: true,
   imports: [
     CommonModule,
@@ -113,6 +118,17 @@ export type ValueControlType = 'text' | 'select' | 'codeeditor' | 'checkbox';
                 nz-input
                 [(ngModel)]="pair.value"
                 placeholder="Enter value"
+                (ngModelChange)="onPairChange()"
+              />
+              }
+
+              <!-- Password Input -->
+              @if (valueControlType === 'password') {
+              <input
+                nz-input
+                type="password"
+                [(ngModel)]="pair.value"
+                placeholder="Enter password"
                 (ngModelChange)="onPairChange()"
               />
               }
@@ -428,32 +444,32 @@ export type ValueControlType = 'text' | 'select' | 'codeeditor' | 'checkbox';
   ],
 })
 export class KeyValueBuilderComponent implements OnInit {
-  @Input() title: string = 'Key-Value Pairs';
+  @Input() title: string = "Key-Value Pairs";
   @Input() initialPairs: KeyValuePair[] = [];
-  @Input() valueControlType: ValueControlType = 'text'; // Controlled from parent
-  @Input() language: string = 'javascript'; // For code editor type
+  @Input() valueControlType: ValueControlType = "text"; // Controlled from parent
+  @Input() language: string = "javascript"; // For code editor type
   @Output() pairsChange = new EventEmitter<KeyValuePair[]>();
 
   pairs = signal<KeyValuePair[]>([]);
   editingSelectPair = signal<KeyValuePair | null>(null);
-  selectOptionsText: string = '';
+  selectOptionsText: string = "";
 
   // Code editor options
   options: any = {
-    theme: 'dark',
-    language: 'javascript',
+    theme: "dark",
+    language: "javascript",
     minimap: { enabled: false },
     fontSize: 14,
     scrollBeyondLastLine: false,
     automaticLayout: true,
     setup: {
-      lineNumbers: 'on',
+      lineNumbers: "on",
     },
     disabled: false,
     readonly: false,
-    placeholder: 'Enter code here...',
+    placeholder: "Enter code here...",
     indentWithTab: true,
-    indentUnit: '2',
+    indentUnit: "2",
     lineWrapping: true,
     highlightWhitespace: true,
   };
@@ -470,7 +486,7 @@ export class KeyValueBuilderComponent implements OnInit {
   addPair() {
     const newPair: KeyValuePair = {
       id: this.generateId(),
-      key: '',
+      key: "",
       value: this.getDefaultValue(),
       selectOptions: [],
     };
@@ -486,32 +502,33 @@ export class KeyValueBuilderComponent implements OnInit {
 
   getDefaultValue(): any {
     switch (this.valueControlType) {
-      case 'checkbox':
+      case "checkbox":
         return false;
-      case 'text':
-      case 'select':
-      case 'codeeditor':
+      case "text":
+      case "password": // Fallthrough for password
+      case "select":
+      case "codeeditor":
       default:
-        return '';
+        return "";
     }
   }
 
   configureSelectOptions(pair: KeyValuePair) {
     this.editingSelectPair.set(pair);
-    this.selectOptionsText = (pair.selectOptions || []).join('\n');
+    this.selectOptionsText = (pair.selectOptions || []).join("\n");
   }
 
   saveSelectOptions() {
     const pair = this.editingSelectPair();
     if (pair) {
       pair.selectOptions = this.selectOptionsText
-        .split('\n')
+        .split("\n")
         .map((line) => line.trim())
         .filter((line) => line.length > 0);
 
       // Reset value if it's not in the new options
       if (pair.value && !pair.selectOptions.includes(pair.value)) {
-        pair.value = '';
+        pair.value = "";
       }
 
       this.onPairChange();
@@ -521,7 +538,7 @@ export class KeyValueBuilderComponent implements OnInit {
 
   closeSelectOptionsModal() {
     this.editingSelectPair.set(null);
-    this.selectOptionsText = '';
+    this.selectOptionsText = "";
   }
 
   onPairChange() {

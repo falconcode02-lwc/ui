@@ -242,6 +242,7 @@ export class PluginService {
         defaultVisible: false,
         defaultEnabled: true,
       });
+     
     }
     const allProperties = [
       ...id,

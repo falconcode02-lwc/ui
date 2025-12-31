@@ -2312,8 +2312,9 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  autoCompleteEditClick(evt: any) {
+  secretEditClick(evt: any) {
     debugger;
+    
     console.log('Edit secret:', evt);
     const secretName = evt.value;
     const secret = this.availableSecrets.find((s) => s.name === secretName);
@@ -2325,7 +2326,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
 
       try {
         if (typeof secret.value === 'string') {
-          //  this.secretFormData = JSON.parse(secret.value);
+           this.secretFormData = JSON.parse(secret.value);
         } else {
           this.secretFormData = secret.value;
         }

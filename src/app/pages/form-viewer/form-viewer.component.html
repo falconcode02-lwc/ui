@@ -116,7 +116,7 @@
           </div>
 
           <form [formGroup]="dynamicForm" (ngSubmit)="onSubmit()">
-            <nz-tabset [nzSize]="'small'" nzType="card">
+            <nz-tabset [nzSize]="'small'" nzType="card" (nzSelectedIndexChange)="onTabIndexChange($event)">
               @for (tab of formSection(); track tab; let i = $index) {
 
               <nz-tab nzClosable [nzTitle]="titleTemplate">

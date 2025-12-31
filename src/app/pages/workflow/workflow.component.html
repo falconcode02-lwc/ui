@@ -648,7 +648,7 @@
 
                     <app-form-viewer @fadeInOut #propertyPanel *ngIf="showPropePanel"
                         (onAutoCompleteAddNewClick)="autoCompleteAddNewClick($event)"
-                        (onAutoCompleteEditClick)="autoCompleteEditClick($event)"
+                        (onAutoCompleteEditClick)="secretEditClick($event)"
                         [preloadedSchema]="getFormSchemaForNode()" [hideHeaderActions]="true"
                         (formValuesChange)="onFormUpdate($event)">
                     </app-form-viewer>
