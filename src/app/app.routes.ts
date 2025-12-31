@@ -153,4 +153,13 @@ export const routes: Routes = [
       import('./pages/profile/profile.routes').then((m) => m.PROFILE_ROUTES),
     data: { breadcrumb: 'Profile' },
   },
+  {
+  path: 'projects',
+  title: 'Projects',
+  loadChildren: () =>
+    import('./pages/projects/project-route').then((m) => m.PROJECT_ROUTES),
+  data: { breadcrumb: 'Projects' },
+},
+
+
 ];
