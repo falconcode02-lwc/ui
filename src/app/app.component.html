@@ -15,6 +15,11 @@
             </li>
             <li nz-submenu nzMatchRouter nzTitle="Add" nzIcon="plus">
                 <ul>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/workspace']"
+                        routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="apartment"></span>
+                        <span>Workspace</span>
+                    </li>
                     <li nz-menu-item nzMatchRouter [routerLink]="['/workflow']"
                         routerLinkActive="ant-menu-item-selected">
                         <span nz-icon nzType="pull-request"></span>

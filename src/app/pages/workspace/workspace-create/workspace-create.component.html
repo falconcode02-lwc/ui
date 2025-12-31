@@ -1,0 +1,55 @@
+<form nz-form [formGroup]="form" (ngSubmit)="submit()">
+
+  <nz-form-item>
+    <nz-form-label nzRequired>Org ID</nz-form-label>
+    <nz-form-control nzErrorTip="Org ID is required">
+      <input nz-input formControlName="orgId" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label nzRequired>Code</nz-form-label>
+    <nz-form-control nzErrorTip="Code is required">
+      <input nz-input formControlName="code" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label nzRequired>Name</nz-form-label>
+    <nz-form-control nzErrorTip="Name is required">
+      <input nz-input formControlName="name" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label nzRequired>Type</nz-form-label>
+    <nz-form-control nzErrorTip="Type is required">
+      <nz-select formControlName="type">
+        <nz-option nzValue="ML" nzLabel="ML"></nz-option>
+        <nz-option nzValue="ETL" nzLabel="ETL"></nz-option>
+      </nz-select>
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label>Description</nz-form-label>
+    <nz-form-control>
+      <input nz-input formControlName="description" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item>
+    <nz-form-label>Icon</nz-form-label>
+    <nz-form-control>
+      <input nz-input formControlName="icon" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <div style="text-align: right"><button nz-button nzType="default" (click)="cancel()">Cancel</button>
+    <button nz-button nzType="primary" [disabled]="form.invalid">
+      Create
+    </button>
+  </div>
+
+
+</form>

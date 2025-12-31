@@ -1,0 +1,103 @@
+<nz-page-header class="page-action">
+  <nz-page-header-title>
+    <nz-icon nzType="apartment" nzTheme="outline"></nz-icon>
+    Workspaces
+  </nz-page-header-title>
+
+  <nz-page-header-subtitle>
+    <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
+      <input type="text" nz-input placeholder="Search workspaces..." [(ngModel)]="searchText" (input)="search()" />
+    </nz-input-group>
+
+    <ng-template #suffixIconButton>
+      <button nz-button nzType="primary" nzSearch (click)="search()">
+        <nz-icon nzType="search"></nz-icon>
+      </button>
+    </ng-template>
+  </nz-page-header-subtitle>
+
+  <nz-page-header-extra>
+    <nz-space>
+      <button *nzSpaceItem nz-button nzType="default" nzShape="round" (click)="load()">
+        <nz-icon nzType="reload"></nz-icon>
+        Refresh
+      </button>
+      <button *nzSpaceItem nz-button nzType="primary" nzShape="round" (click)="openCreateModal()">
+        <nz-icon nzType="plus"></nz-icon>
+        New
+      </button>
+    </nz-space>
+  </nz-page-header-extra>
+</nz-page-header>
+
+<div class="workspace-list">
+
+  <!-- Empty State -->
+  <nz-empty *ngIf="!loading && filteredWorkspaces.length === 0" nzNotFoundContent="No workspaces found">
+    <button nz-button nzType="primary" routerLink="create">
+      <nz-icon nzType="plus"></nz-icon>
+      Create Workspace
+    </button>
+  </nz-empty>
+
+  <!-- List View -->
+  <nz-list *ngIf="filteredWorkspaces.length > 0" [nzDataSource]="filteredWorkspaces" [nzLoading]="loading" nzBordered>
+    <nz-list-item *ngFor="let w of filteredWorkspaces" class="workspace-item">
+      <div class="workspace-content">
+
+        <!-- Main clickable area -->
+        <div class="workspace-main" (click)="load()">
+          <nz-icon nzType="apartment" nzTheme="outline" class="workspace-icon"></nz-icon>
+
+          <div class="workspace-details">
+            <div class="workspace-name">
+              {{ w.name }}
+            </div>
+
+            <div class="workspace-meta">
+              <span class="meta-item">
+                <span class="meta-label">Org:</span> {{ w.orgId }}
+              </span>
+
+              <span class="meta-item">
+                <span class="meta-label">|</span> Type: {{ w.type }}
+              </span>
+
+              <span class="meta-item">
+                <span class="meta-label">|</span> Description: {{ w.description }}
+              </span>
+              
+              <span class="meta-item" *ngIf="w.createdTime">
+                <span class="meta-label">|</span>
+                Created
+                <small><i>{{ formatDate(w.createdTime) }}</i></small>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="workspace-actions">
+          <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomRight"
+            (click)="$event.stopPropagation()">
+            <nz-icon nzType="more" nzTheme="outline"></nz-icon>
+          </button>
+
+          <nz-dropdown-menu #menu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item (click)="edit($event, w)">
+                <nz-icon nzType="edit" nzTheme="outline"></nz-icon>
+                Edit
+              </li>
+              <li nz-menu-item nzDanger (click)="delete($event, w)">
+                <nz-icon nzType="delete" nzTheme="outline"></nz-icon>
+                Delete
+              </li>
+            </ul>
+          </nz-dropdown-menu>
+        </div>
+
+      </div>
+    </nz-list-item>
+  </nz-list>
+</div>
