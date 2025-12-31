@@ -1,0 +1,112 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h1>Projects</h1>
+    <button nz-button nzType="primary" (click)="openCreate()">
+      <span nz-icon nzType="plus"></span>
+      New Project
+    </button>
+  </div>
+
+  <!-- Projects Table -->
+  <nz-card [nzLoading]="loading">
+    <nz-table [nzData]="projects" nzSize="middle" [nzShowPagination]="false">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Icon</th>
+          <th>Description</th>
+          <th>Accessibility</th>
+          <th>Workspace</th>
+          <th style="width:220px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of projects">
+          <td>{{ p.code }}</td>
+          <td>{{ p.name }}</td>
+          <td>{{ p.icon || '-' }}</td>
+          <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            {{ p.description || '-' }}
+          </td>
+          <td>
+            <nz-tag [nzColor]="p.accessibility === 'PUBLIC' ? 'green' : 'red'">
+              {{ p.accessibility }}
+            </nz-tag>
+          </td>
+          <td>{{ p.workspaceCode }}</td>
+          <td>
+            <nz-space nzSize="small">
+              <button *nzSpaceItem nz-button nzSize="small" nzType="default" (click)="openEdit(p)">
+                Edit
+              </button>
+              <!-- <button *nzSpaceItem nz-button nzSize="small" nzType="primary" (click)="startWorkflow(p)">
+                Start
+              </button> -->
+              <button *nzSpaceItem nz-button nzSize="small" nzDanger (click)="deleteProject(p)">
+                Delete
+              </button>
+            </nz-space>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</div>
+
+<!-- Create/Edit Modal -->
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  [nzTitle]="isEditing ? 'Edit Project' : 'New Project'"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="handleOk()"
+  [nzWidth]="600"
+>
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="projectForm" nzLayout="vertical">
+      <nz-form-item>
+        <nz-form-label nzRequired>Code</nz-form-label>
+        <nz-form-control nzErrorTip="Please enter project code">
+          <input nz-input formControlName="code" placeholder="proj1" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzRequired>Name</nz-form-label>
+        <nz-form-control nzErrorTip="Please enter project name">
+          <input nz-input formControlName="name" placeholder="My Project" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label>Icon</nz-form-label>
+        <nz-form-control>
+          <input nz-input formControlName="icon" placeholder="https://example.com/icon.png" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label>Description</nz-form-label>
+        <nz-form-control>
+          <textarea
+            nz-input
+            rows="3"
+            formControlName="description"
+            placeholder="Project description"
+          ></textarea>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzRequired>Accessibility</nz-form-label>
+        <nz-form-control>
+          <nz-select formControlName="accessibility">
+            <nz-option nzValue="PUBLIC" nzLabel="Public"></nz-option>
+            <nz-option nzValue="PRIVATE" nzLabel="Private"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
