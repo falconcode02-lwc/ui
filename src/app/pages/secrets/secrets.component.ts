@@ -16,13 +16,14 @@ import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
+import { NzSelectModule } from 'ng-zorro-antd/select';
 
 @Component({
     selector: 'app-secrets',
     templateUrl: './secrets.component.html',
     styleUrls: ['./secrets.component.scss'],
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, NzButtonModule, NzTableModule, NzModalModule, NzFormModule, NzInputModule, NzPopconfirmModule, NzIconModule, NzSpaceModule, NzPageHeaderModule, NzListModule, NzDropDownModule, NzPaginationModule, NzEmptyModule]
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, NzButtonModule, NzTableModule, NzModalModule, NzFormModule, NzInputModule, NzSelectModule, NzPopconfirmModule, NzIconModule, NzSpaceModule, NzPageHeaderModule, NzListModule, NzDropDownModule, NzPaginationModule, NzEmptyModule]
 })
 export class SecretsComponent implements OnInit {
 
@@ -45,7 +46,8 @@ export class SecretsComponent implements OnInit {
             name: ['', [Validators.required]],
             type: ['text'],
             value: ['', [Validators.required]],
-            metadata: ['']
+            metadata: [''],
+            vaultType: ['DB', [Validators.required]]
         });
     }
 
@@ -96,7 +98,7 @@ export class SecretsComponent implements OnInit {
     openCreate(): void {
         this.isEditing = false;
         this.editingSecret = null;
-        this.form.reset({ type: 'text', metadata: '' });
+    this.form.reset({ type: 'text', metadata: '', vaultType: 'DB' });
         // ensure visibility change is picked up by change detection when loaded via router
         this.isModalVisible = true;
         // small tick to ensure modal overlay is rendered
@@ -115,7 +117,8 @@ export class SecretsComponent implements OnInit {
             name: s.name,
             type: s.type,
             value: s.value,
-            metadata: s.metadata || s.description || ''
+            metadata: s.metadata || s.description || '',
+            vaultType: s.vaultType || 'DB'
         });
         this.isModalVisible = true;
     }
@@ -138,7 +141,7 @@ export class SecretsComponent implements OnInit {
             this.form.markAllAsTouched();
             return;
         }
-        const payload = { ...this.form.value };
+    const payload = { ...this.form.value };
         this.saving = true;
         if (this.isEditing && this.editingSecret && this.editingSecret.id) {
             this.http.updateSecret(this.editingSecret.id, payload).subscribe({
