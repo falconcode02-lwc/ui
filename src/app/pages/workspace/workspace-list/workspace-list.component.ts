@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -18,6 +19,7 @@ import { WorkspaceCreateComponent } from '../workspace-create/workspace-create.c
 import { WorkspaceEditComponent } from '../workspace-update/workspace-update.component';
 import { WorkspaceService } from '../../../service/workspace.service';
 import { Workspace } from '../../../model/workspace-model';
+import { NzSwitchModule } from 'ng-zorro-antd/switch';
 
 @Component({
   selector: 'app-workspace-list',
@@ -32,6 +34,7 @@ import { Workspace } from '../../../model/workspace-model';
     NzListModule,
     NzButtonModule,
     NzIconModule,
+    NzSwitchModule,
     NzDropDownModule,
     NzPageHeaderModule,
     NzEmptyModule,
@@ -56,7 +59,8 @@ export class WorkspaceListComponent implements OnInit {
 
   constructor(
     private service: WorkspaceService,
-    private modal: NzModalService
+    private modal: NzModalService,
+    private message: NzMessageService,
   ) { }
 
   ngOnInit(): void {
@@ -92,7 +96,7 @@ export class WorkspaceListComponent implements OnInit {
 
     this.filteredWorkspaces = this.workspaces.filter(w =>
       w.name?.toLowerCase().includes(text) ||
-      w.orgId?.toLowerCase().includes(text) ||
+      w.code?.toLowerCase().includes(text) ||
       w.type?.toLowerCase().includes(text)
     );
   }
@@ -142,7 +146,36 @@ export class WorkspaceListComponent implements OnInit {
       }
     });
   }
+  onActiveChange(e: any, workspace: Workspace) {
 
+    this.modal.confirm({
+      nzTitle: 'Are you sure?',
+      nzContent: `Do you really want to ${workspace.active ? 'activate' : 'deactivate'} <b>${workspace.name}</b>?`,
+      nzOkText: `Yes, ${workspace.active ? 'Activate' : 'Deactivate'}`,
+      nzOkType: 'primary',
+      nzOkDanger: true,
+      nzOnOk: () => {
+        this.service.active(workspace.id, workspace.active).subscribe({
+          next: () => {
+            this.message.success(`${workspace.active ? 'Activated' : 'Deactivated'} successfully`);
+            this.load();
+          },
+          error: () => {
+            this.message.error(`Failed to ${workspace.active ? 'activate' : 'deactivate'} workflow`)
+            workspace.active = !workspace.active;
+          }
+        });
+      },
+      nzCancelText: 'Cancel',
+      nzOnCancel: () => {
+        console.log('Cancelled')
+        workspace.active = !workspace.active;
+      },
+    });
+    e.preventDefault();
+    e.stopPropagation();
+
+  }
 
   formatDate(arr?: number[]): string {
     if (!arr) return '';

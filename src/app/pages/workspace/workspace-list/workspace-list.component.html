@@ -46,7 +46,7 @@
       <div class="workspace-content">
 
         <!-- Main clickable area -->
-        <div class="workspace-main" (click)="load()">
+        <div class="workspace-main" [routerLink]="['/projects']" style="cursor: pointer;">
           <nz-icon nzType="apartment" nzTheme="outline" class="workspace-icon"></nz-icon>
 
           <div class="workspace-details">
@@ -56,7 +56,7 @@
 
             <div class="workspace-meta">
               <span class="meta-item">
-                <span class="meta-label">Org:</span> {{ w.orgId }}
+                <span class="meta-label">Code:</span> {{ w.code }}
               </span>
 
               <span class="meta-item">
@@ -66,11 +66,17 @@
               <span class="meta-item">
                 <span class="meta-label">|</span> Description: {{ w.description }}
               </span>
-              
+
               <span class="meta-item" *ngIf="w.createdTime">
                 <span class="meta-label">|</span>
                 Created
                 <small><i>{{ formatDate(w.createdTime) }}</i></small>
+              </span>
+
+              <span class="meta-item" *ngIf="w.modifiedTime">
+                <span class="meta-label">|</span>
+                Modified
+                <small><i>{{ formatDate(w.modifiedTime) }}</i></small>
               </span>
             </div>
           </div>
@@ -78,6 +84,11 @@
 
         <!-- Actions -->
         <div class="workspace-actions">
+
+          <nz-switch [(ngModel)]="w.active" (ngModelChange)="onActiveChange($event, w)" [nzCheckedChildren]="'Active'"
+            [nzUnCheckedChildren]="'Inactive'">
+          </nz-switch>
+
           <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomRight"
             (click)="$event.stopPropagation()">
             <nz-icon nzType="more" nzTheme="outline"></nz-icon>
@@ -89,10 +100,10 @@
                 <nz-icon nzType="edit" nzTheme="outline"></nz-icon>
                 Edit
               </li>
-              <li nz-menu-item nzDanger (click)="delete($event, w)">
+              <!-- <li nz-menu-item nzDanger (click)="delete($event, w)">
                 <nz-icon nzType="delete" nzTheme="outline"></nz-icon>
                 Delete
-              </li>
+              </li> -->
             </ul>
           </nz-dropdown-menu>
         </div>

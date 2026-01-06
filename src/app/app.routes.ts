@@ -154,12 +154,12 @@ export const routes: Routes = [
     data: { breadcrumb: 'Profile' },
   },
   {
-  path: 'projects',
-  title: 'Projects',
-  loadChildren: () =>
-    import('./pages/projects/project-route').then((m) => m.PROJECT_ROUTES),
-  data: { breadcrumb: 'Projects' },
-},
+    path: 'projects',
+    title: 'Projects',
+    loadChildren: () =>
+      import('./pages/projects/project-route').then((m) => m.PROJECT_ROUTES),
+    data: { breadcrumb: 'Projects' },
+  },
 
 
 ];

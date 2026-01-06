@@ -4,6 +4,7 @@ export interface Workspace {
   name: string;
   type: string;
   description?: string;
+  active: boolean;
   icon?: string;
   code?: string;
   createdTime?: number[];   // [yyyy, mm, dd, hh, mm, ss, nanos]

@@ -39,4 +39,11 @@ export class WorkspaceService {
   deleteWorkspace(id: string) {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
+
+  active(id: string, active: boolean): Observable<void> {
+    const options = {
+      params: new HttpParams().set('active', active)
+    };
+    return this.http.put<void>(`${this.baseUrl}/${id}/active`, null, options);
+  }
 }

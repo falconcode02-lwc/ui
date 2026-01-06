@@ -38,7 +38,7 @@ export class WorkspaceCreateComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      orgId: ['', [Validators.required, Validators.pattern(/\S+/)]],
+      orgId: ['ORG-12345'],
       code: ['', [Validators.required, Validators.pattern(/\S+/)]],
       name: ['', [Validators.required, Validators.pattern(/\S+/)]],
       description: ['', Validators.pattern(/\S+/)],
