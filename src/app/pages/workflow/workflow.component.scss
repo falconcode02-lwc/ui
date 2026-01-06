@@ -155,7 +155,10 @@
 
 }
 
-
+.f-connection-path.ai-tool {
+    stroke: #818181;
+    filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.4));
+}
 
 
 .f-connection-path.success {
@@ -679,6 +682,29 @@ div.subtitle span.st {
             border-radius: 4px;
         }
     }
+
+    // Resource items (nested under plugins)
+    .resource-item {
+        padding: 6px 8px;
+        margin-bottom: 6px;
+        border: 1px solid #2a2a2a;
+        border-radius: 6px;
+        background: #1f1f1f;
+        cursor: move;
+        user-select: none;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            border-color: #52c41a;
+            background: #252525;
+            transform: translateX(2px);
+            box-shadow: 0 2px 6px rgba(82, 196, 26, 0.15);
+        }
+        
+        &:active {
+            transform: scale(0.98);
+        }
+    }
 }
 
 // Minimap fade in/out animation
@@ -722,4 +748,10 @@ nz-icon[nzType="api"] {
     &.icon-plugin {
         color: #1890ff !important;
     }
+}
+
+.ai-tool {
+    bottom: -6px;
+    right: 10px;    
+    position:absolute;
 }

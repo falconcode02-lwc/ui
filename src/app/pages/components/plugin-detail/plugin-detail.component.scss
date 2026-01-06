@@ -47,6 +47,17 @@
     tbody > tr:hover > td {
       background: #252525;
     }
+
+    .ant-tag {
+        font-size: 11px;
+        border-radius: 4px;
+        
+        code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+        }
+    }
   }
 
   .ant-divider {

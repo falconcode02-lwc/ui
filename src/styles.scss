@@ -743,6 +743,10 @@ app-editor {
     }
 }
 
+.f-connection.aitool .f-connection-path {
+    stroke: #7b7b7b !important;
+    stroke-dasharray: 8 6;
+}
 
 .f-connection.success .f-connection-path {
     stroke: #40c303 !important;
