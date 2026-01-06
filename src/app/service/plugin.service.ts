@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
-import { HttpService } from './http-service';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { Plugin, PluginBlock, PluginProperty } from '../model/plugin-model';
+import { Injectable } from "@angular/core";
+import { HttpService } from "./http-service";
+import { Observable, of } from "rxjs";
+import { map } from "rxjs/operators";
+import { Plugin, PluginBlock, PluginProperty } from "../model/plugin-model";
 
 export interface PluginDto {
   id: number;
@@ -17,6 +17,7 @@ export interface PluginDto {
   active: boolean;
   version: string;
   lastLoadedAt: string;
+  resources?: string;
   sourceCode?: string; // Optional: original source code for editing
 }
 
@@ -50,7 +51,7 @@ export interface PageResponse<T> {
 }
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: "root",
 })
 export class PluginService {
   private pluginCache: PluginBlock[] = [];
@@ -108,7 +109,7 @@ export class PluginService {
    * @param searchTerm Search term to filter plugins
    * @returns Observable of plugin blocks
    */
-  searchPlugins(searchTerm: string = ''): Observable<PluginBlock[]> {
+  searchPlugins(searchTerm: string = ""): Observable<PluginBlock[]> {
     return this.listPlugins(searchTerm, 0, 100).pipe(
       map((response) =>
         response.content.map((dto) => this.convertDtoToPluginBlock(dto))
@@ -143,10 +144,28 @@ export class PluginService {
 
     let pluginPropertiesOpt: any = {};
     let pluginSecretsOpt: any = {};
+    let resources: any[] = [];
     try {
       if (dto.props) {
         const propsObj = JSON.parse(dto.props);
-        console.log('Parsed props for plugin', dto.pluginName, ':', propsObj);
+        console.log("Parsed props for plugin", dto.pluginName, ":", propsObj);
+        // console.log("propsObj.resources:", propsObj.resources);
+        // console.log(
+        //   "Is resources an array?",
+        //   Array.isArray(propsObj.resources)
+        // );
+
+        // Extract resources if they exist
+        if (dto.resources) {
+          try {
+            resources = JSON.parse(dto.resources);
+          } catch (e) {
+            console.log("❌ No resources found or not an array");
+          }
+          console.log("✅ Resources extracted:", resources);
+        } else {
+          console.log("❌ No resources found or not an array");
+        }
 
         // Try multiple possible formats
         if (Array.isArray(propsObj)) {
@@ -164,7 +183,7 @@ export class PluginService {
         } else {
           // Check if any key contains an array
           for (const key in propsObj) {
-            if (Array.isArray(propsObj[key])) {
+            if (Array.isArray(propsObj[key]) && key !== "resources") {
               pluginProperties = propsObj[key];
               break;
             }
@@ -173,7 +192,8 @@ export class PluginService {
 
         pluginPropertiesOpt = { onInit: propsObj.onInit };
 
-        console.log('Extracted plugin_properties:', pluginProperties);
+        console.log("Extracted plugin_properties:", pluginProperties);
+        console.log("Final resources array:", resources);
       }
       if (dto.secrets) {
         try {
@@ -196,57 +216,80 @@ export class PluginService {
             }
           }
           pluginSecretsOpt = { onInit: secObj.onInit };
-          console.log('Extracted plugin_secrets:', pluginSecrets);
+          console.log("Extracted plugin_secrets:", pluginSecrets);
         } catch (e) {
           console.error(
-            'Error parsing plugin secrets for',
+            "Error parsing plugin secrets for",
             dto.pluginName,
-            ':',
+            ":",
             e
           );
         }
       }
     } catch (e) {
-      console.error('Error parsing plugin props for', dto.pluginName, ':', e);
+      console.error("Error parsing plugin props for", dto.pluginName, ":", e);
     }
 
     // Add retry properties to all plugins
     const id = [
       {
-        id: 'id',
-        type: 'text',
-        label: 'ID',
-        placeholder: 'ID',
+        id: "id",
+        type: "text",
+        label: "ID",
+        placeholder: "ID",
         defaultValue: dto.id,
         defaultEnabled: false,
         defaultVisible: false,
       },
       {
-        id: 'name',
-        type: 'text',
-        label: 'Name',
-        placeholder: 'Name',
+        id: "name",
+        type: "text",
+        label: "Name",
+        placeholder: "Name",
         defaultValue: dto.pluginName,
       },
     ];
     let secretsDdl = [];
     if (pluginSecrets.length > 0) {
       secretsDdl.push({
-        id: 'secret',
-        type: 'autocomplete',
-        label: 'Credentials',
-        placeholder: 'Select Credentials',
+        id: "secret",
+        type: "autocomplete",
+        label: "Credentials",
+        placeholder: "Select Credentials",
         required: true,
         options: [],
-        icon: 'search',
+        icon: "search",
         defaultVisible: false,
         defaultEnabled: true,
       });
-     
     }
+
+    // Add resource dropdown if resources exist
+    let resourceDdl = [];
+
+    if (resources && resources.length > 0) {
+      const resourceOptions = resources.map((resource: any) => ({
+        key: resource.method,
+        value: resource.displayName || resource.name,
+      }));
+
+      resourceDdl.push({
+        id: "resource",
+        type: "select",
+        label: "Resource",
+        placeholder: "Select Resource",
+        required: false,
+        options: resourceOptions,
+        icon: "api",
+        defaultVisible: true,
+        defaultEnabled: true,
+      });
+    }
+
     const allProperties = [
       ...id,
       ...secretsDdl,
+      ...resourceDdl,
       ...pluginProperties,
       ...this.getRetryProperties(),
     ];
@@ -256,7 +299,7 @@ export class PluginService {
       icon: dto.icon,
       type: `plugin_${dto.pluginId}`,
       description: dto.pluginDesc,
-      iconColor: '',
+      iconColor: "",
       visible: dto.active,
       input: true,
       output: true,
@@ -277,6 +320,7 @@ export class PluginService {
         plugin_secrets: pluginSecrets,
         plugin_secrets_opt: pluginSecretsOpt,
         plugin_properties_opt: pluginPropertiesOpt,
+        resources: resources, // Store resources for drill-down feature
       },
     };
   }
@@ -294,7 +338,7 @@ export class PluginService {
       icon: plugin.icon,
       type: `plugin_${plugin.plugin_id}`,
       description: plugin.plugin_desc,
-      iconColor: '',
+      iconColor: "",
       visible:
         plugin.is_active !== undefined
           ? plugin.is_active
@@ -316,9 +360,9 @@ export class PluginService {
    */
   private isExternalUrl(icon: string): boolean {
     return (
-      icon?.startsWith('http://') ||
-      icon?.startsWith('https://') ||
-      icon?.startsWith('data:')
+      icon?.startsWith("http://") ||
+      icon?.startsWith("https://") ||
+      icon?.startsWith("data:")
     );
   }
 
@@ -341,54 +385,54 @@ export class PluginService {
       //   group: 'Retry Policy',
       // },
       {
-        id: 'timeoutSeconds',
-        type: 'number',
-        label: 'Timeout (seconds)',
-        placeholder: '120',
+        id: "timeoutSeconds",
+        type: "number",
+        label: "Timeout (seconds)",
+        placeholder: "120",
         defaultValue: 120,
         required: false,
-        info: 'Maximum execution time before timeout',
-        group: 'Retry Policy',
+        info: "Maximum execution time before timeout",
+        group: "Retry Policy",
       },
       {
-        id: 'maximumAttempts',
-        type: 'number',
-        label: 'Maximum Attempts',
-        placeholder: '3',
+        id: "maximumAttempts",
+        type: "number",
+        label: "Maximum Attempts",
+        placeholder: "3",
         defaultValue: 3,
         required: false,
-        info: 'Maximum number of retry attempts',
-        group: 'Retry Policy',
+        info: "Maximum number of retry attempts",
+        group: "Retry Policy",
       },
       {
-        id: 'initialIntervalSeconds',
-        type: 'number',
-        label: 'Initial Retry Interval (seconds)',
-        placeholder: '2',
+        id: "initialIntervalSeconds",
+        type: "number",
+        label: "Initial Retry Interval (seconds)",
+        placeholder: "2",
         defaultValue: 2,
         required: false,
-        info: 'Initial delay before first retry',
-        group: 'Retry Policy',
+        info: "Initial delay before first retry",
+        group: "Retry Policy",
       },
       {
-        id: 'maximumIntervalSeconds',
-        type: 'number',
-        label: 'Maximum Retry Interval (seconds)',
-        placeholder: '60',
+        id: "maximumIntervalSeconds",
+        type: "number",
+        label: "Maximum Retry Interval (seconds)",
+        placeholder: "60",
         defaultValue: 60,
         required: false,
-        info: 'Maximum delay between retries',
-        group: 'Retry Policy',
+        info: "Maximum delay between retries",
+        group: "Retry Policy",
       },
       {
-        id: 'backoffCoefficient',
-        type: 'number',
-        label: 'Backoff Coefficient',
-        placeholder: '2',
+        id: "backoffCoefficient",
+        type: "number",
+        label: "Backoff Coefficient",
+        placeholder: "2",
         defaultValue: 2,
         required: false,
-        info: 'Multiplier for exponential backoff',
-        group: 'Retry Policy',
+        info: "Multiplier for exponential backoff",
+        group: "Retry Policy",
       },
     ];
   }

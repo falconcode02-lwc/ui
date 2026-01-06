@@ -157,6 +157,52 @@
                                         [style.color]="item.pluginData?.id ? '#1890ff' : '#666'"
                                         style="font-size: 14px;"></nz-icon>
                                 </button>
+
+                                <!-- Expand Resources Button -->
+                                <button *ngIf="item.isPlugin && hasResources(item)" nz-button nzType="text" nzSize="small" 
+                                    (click)="togglePluginResources(item.pluginData.plugin_id); $event.stopPropagation()"
+                                    style="position: absolute; top: 4px; right: 32px; padding: 2px 6px; height: 24px; min-width: 24px;">
+                                    <nz-icon [nzType]="isPluginExpanded(item.pluginData.plugin_id) ? 'down' : 'right'"
+                                        style="font-size: 12px; color: #999;"></nz-icon>
+                                </button>
+
+                                <!-- Resource List (Expandable) -->
+                                <div *ngIf="item.isPlugin && hasResources(item) && isPluginExpanded(item.pluginData.plugin_id)"
+                                    style="margin-top: 8px; padding-left: 12px; border-left: 2px solid #3a3a3a;">
+                                    <div fExternalItem 
+                                        [fData]="{
+                                            name: item.name,
+                                            icon: item.icon,
+                                            type: item.type,
+                                            description: resource.displayName,
+                                            iconColor: '',
+                                            visible: true,
+                                            input: true,
+                                            output: true,
+                                            isPlugin: true,
+                                            isResource: true,
+                                            resourceMethod: resource.method,
+                                            pluginData: item.pluginData,
+                                            isExternalIcon: item.isExternalIcon
+                                        }"
+                                        *ngFor="let resource of item.pluginData.resources"
+                                        class="resource-item"
+                                        style="padding: 6px 8px; margin-bottom: 6px; border: 1px solid #2a2a2a; border-radius: 6px; background: #1f1f1f; 
+                                        cursor: move; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
+                                        transition: all 0.2s;">
+                                        <div style="display: flex; align-items: center; gap: 8px; pointer-events: none;">
+                                            <nz-icon nzType="api" style="font-size: 16px; color: #52c41a;"></nz-icon>
+                                            <div style="flex: 1; min-width: 0;">
+                                                <div style="font-size: 12px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                    {{resource.displayName}}
+                                                </div>
+                                                <div *ngIf="resource.descr" style="font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                    {{resource.descr}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </ng-container>
                     </div>
@@ -291,7 +337,7 @@
                         isSelfConnectable="false" fDragHandle fNode [(fNodePosition)]="n.position"
                         fInputConnectableSide="left" fOutputConnectableSide="right"
                         (fNodePositionChange)="onNodeDrag($event)" (click)="selectedNode = n"
-                        [ngStyle]="{width: (n.type == 'aiagent'? '120px': (n.type == 'childwf'?'120px':'')), height: (n.type == 'switches'?  (60+(n.data?.switchval?.length * 15)) +'px':'')}">
+                        [ngStyle]="{width: (n.type == 'aiagent'? '180px': (n.type == 'childwf'?'120px':'')), height: (n.type == 'switches'?  (60+(n.data?.switchval?.length * 15)) +'px':'')}">
 
 
                         <div class="actionbuttons_nodes" *ngIf="n.type != 'start'">
@@ -355,28 +401,7 @@
                         }
 
                         @if (n.type == "aiagent") {
-                        <!-- <div class="ai-model">
-                        <div class="fitter">
-                            <button nz-button nzType="link" nzShape="circle" [nzSize]="'small'" (click)="onMoreClick(n)">
-                                <nz-icon nzType="plus" />
-                            </button>
-                        </div>
-                         
-
-                    </div>
-                    <div class="ai-memory">
-                        <div class="fitter">
-                            <button nz-button nzType="link" nzShape="circle" [nzSize]="'small'"  (click)="onMoreClick(n)">
-                                <nz-icon nzType="plus" />
-                            </button>
-                        </div>
-                         
-                    </div>
-                    <div class="ai-tools">
-                        
-
-                    </div> -->
-
+                            <div fNodeOutput [fOutputId]="n.id+'_aitool'" class="ai-tool" [fOutputMultiple]="true" ><span style="top: -15px;left: -11px;">Tools</span></div>
                         }
                         <div class="outputHolder" *ngIf="n.type == 'switches'">
                             <div fNodeOutput *ngFor="let item of n.data?.switchval" [fOutputId]="item.id"
@@ -434,10 +459,10 @@
 
                     <f-connection [fBehavior]="connection.behavior || 'fixed'"
                         (contextmenu)="openMenu($event, connection)" [fType]="connection.type || 'offset_straight'"
-                        [fOffset]="30" [fStartColor]="connection.startColor || '#ddd'"
+                         [fStartColor]="connection.startColor || '#ddd'"
                         [fEndColor]="connection.endColor || '#ddd'" [fOutputId]="connection.sourcePortId"
                         [fInputId]="connection.targetPortId" [fConnectionId]="connection.id" [fReassignDisabled]="false"
-                        class="{{connection?.cls}}" [class.dashed-connection]="connection.category === 'virtual'">
+                        class="{{connection?.cls}} {{connection?.sourcePortId?.indexOf('aitool') !== -1 ? 'aitool' : ''}}" [class.dashed-connection]="connection.category === 'virtual'">
 
 
                         <!-- <svg viewBox="0 0 10 10" fMarker [type]="eMarkerType.START" [height]="10" [width]="10" [refX]="5"
@@ -469,7 +494,7 @@
                         </svg>
 
                         <div fConnectionContent>
-                            connection content
+                            
                             <!-- <button nz-button nzDanger nzType="primary" 
                             (click)="confirmDeleteConnection(connection.id)"
                             nzShape="circle" [nzSize]="'small'" >
@@ -809,6 +834,11 @@
             <nz-icon nzType="file-text" />
         </button>
 
+        <button *nzSpaceItem nz-button nzType="default" nz-tooltip nzTooltipTitle="Import Workflow"
+            (click)="openImportModal()" [nzSize]="'large'" [disabled]="isWorkflowRunning">
+            <nz-icon nzType="import" />
+        </button>
+
         <button *nzSpaceItem nz-button nzType="default" nz-tooltip nzTooltipTitle="Keyboard Shortcuts (Ctrl+/ or F1)"
             (click)="showShortcutsHelp()" [nzSize]="'large'">
             <nz-icon nzType="question-circle" />
@@ -1009,3 +1039,13 @@
 <app-marketplace [(visible)]="isMarketplaceVisible" (onClose)="closeMarketplace()"
     (onPluginInstalled)="onPluginInstalled($event)">
 </app-marketplace>
+
+<nz-modal nzDraggable [(nzVisible)]="isImportModalVisible" nzTitle="Import Workflow JSON" nzOkText="Import" nzCancelText="Cancel"
+    (nzOnOk)="handleImportOk()" (nzOnCancel)="handleImportCancel()">
+    <ng-container *nzModalContent>
+        <div style="margin-bottom: 8px;">Paste workflow JSON here:</div>
+        <code-editor [style.width]="'100%'" [theme]="'dark'" [(ngModel)]="importJsonRaw" [style.height]="'400px'"
+            [lineWrapping]="true" [highlightWhitespace]="false" [language]="'json'"
+            [languages]="languages" />
+    </ng-container>
+</nz-modal>

@@ -102,6 +102,58 @@
         style="margin: 20px 0;">
       </nz-empty>
 
+      <!-- Plugin Resources / Methods -->
+      <nz-divider nzText="Available Resources / Methods" nzOrientation="left"></nz-divider>
+      
+      <nz-table 
+        *ngIf="pluginResources.length > 0"
+        [nzData]="pluginResources" 
+        [nzShowPagination]="false"
+        [nzSize]="'small'"
+        nzBordered>
+        <thead>
+          <tr>
+            <th nzWidth="40px"><nz-icon nzType="api" style="color: #52c41a;"></nz-icon></th>
+            <th>Resource / Method</th>
+            <th>Description</th>
+            <th>Parameters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let res of pluginResources">
+            <td style="text-align: center;">
+                <nz-icon nzType="api" style="font-size: 16px; color: #52c41a;"></nz-icon>
+            </td>
+            <td>
+              <strong style="color: var(--text-primary);">{{ res.displayName }}</strong>
+              <div style="font-size: 11px; color: var(--text-tertiary); font-family: monospace;">
+                {{ res.method }}
+              </div>
+            </td>
+            <td>
+              <div style="color: var(--text-secondary); font-size: 12px;">
+                {{ res.descr || 'No description provided' }}
+              </div>
+            </td>
+            <td>
+                <div *ngIf="res.properties" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    <nz-tag *ngFor="let prop of res.properties | keyvalue" [nzColor]="'blue'" style="font-size: 10px; margin: 0;">
+                        <code>{{ prop.key }}</code>: {{ prop.value }}
+                    </nz-tag>
+                </div>
+                <span *ngIf="!res.properties || (res.properties | keyvalue).length === 0" style="color: var(--text-tertiary);">No parameters</span>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+
+      <nz-empty 
+        *ngIf="pluginResources.length === 0"
+        nzNotFoundContent="No specific resources or methods defined"
+        [nzNotFoundImage]="'simple'"
+        style="margin: 20px 0;">
+      </nz-empty>
+
       <!-- Plugin Properties -->
       <nz-divider nzText="Configuration Properties" nzOrientation="left"></nz-divider>
       

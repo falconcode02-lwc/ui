@@ -229,6 +229,27 @@
                                 </nz-form-control>
                             </nz-form-item>
 
+                            <!-- AI Tool Configuration -->
+                            <nz-form-item>
+                                <nz-form-label>Is AI Tool</nz-form-label>
+                                <nz-form-control>
+                                    <nz-switch formControlName="isAiTool"></nz-switch>
+                                    <span class="switch-label">
+                                        {{ pluginForm.get('isAiTool')?.value ? 'Yes' : 'No' }}
+                                    </span>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- AI Tool Description (Visible only if isAiTool is true) -->
+                            <nz-form-item *ngIf="pluginForm.get('isAiTool')?.value">
+                                <nz-form-label>AI Tool Description</nz-form-label>
+                                <nz-form-control>
+                                    <textarea nz-input formControlName="aiToolDescription"
+                                        placeholder="Describe how an AI agent should use this tool"
+                                        [nzAutosize]="{ minRows: 2, maxRows: 4 }" maxlength="500"></textarea>
+                                </nz-form-control>
+                            </nz-form-item>
+
                             <nz-divider></nz-divider>
 
                             <!-- Props Configuration -->
