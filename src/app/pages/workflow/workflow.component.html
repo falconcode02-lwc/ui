@@ -52,160 +52,168 @@
         <div style="position: relative; width: 100%; height: 100%;" (click)="onWrapperClick($event)">
             <!-- Right Side Drawer for Blocks -->
             <nz-drawer [nzClosable]="true" [nzVisible]="isBlockDrawerVisible" nzPlacement="right"
-                nzTitle="Workflow Blocks" (nzOnClose)="closeBlockDrawer()" [nzWidth]="320" [nzMask]="false"
-                [nzMaskClosable]="false" nzWrapClassName="workflow-blocks-drawer" (click)="$event.stopPropagation()">
+                [nzTitle]="drawerTitle" [nzWidth]="400" (nzOnClose)="isBlockDrawerVisible = false"
+                [nzMask]="false" [nzMaskClosable]="false" nzWrapClassName="workflow-blocks-drawer" (click)="$event.stopPropagation()">
+                <ng-template #drawerTitle>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <nz-icon nzType="appstore" style="font-size: 18px; color: #1890ff;"></nz-icon>
+                        <span style="font-size: 16px; font-weight: 600;">Workflow Blocks</span>
+                    </div>
+                </ng-template>
+
                 <ng-container *nzDrawerContent>
-                    <!-- Search Input -->
-                    <div style="margin-bottom: 16px; padding: 0 4px;">
-                        <nz-input-group [nzPrefix]="prefixIconSearch" [nzSuffix]="suffixIconClear">
-                            <input type="text" nz-input placeholder="Search blocks and plugins..."
-                                [(ngModel)]="blockSearchTerm" (input)="changeDetectorRef.detectChanges()"
-                                style="border-radius: 6px;" />
+                    <div class="search-container" style="padding: 16px; position: sticky; top: 0; background: #212121; z-index: 10; border-bottom: 1px solid #3a3a3a; margin-bottom: 8px;margin-left: -16px;margin-right: -16px;top: -16px;">
+                        <nz-input-group [nzPrefix]="prefixIcon" [nzSuffix]="suffixIconClear">
+                            <input type="text" nz-input placeholder="Search blocks..." [(ngModel)]="blockSearchTerm" />
                         </nz-input-group>
-                        <ng-template #prefixIconSearch>
-                            <nz-icon nzType="search" style="color: var(--text-secondary);"></nz-icon>
+                        <ng-template #prefixIcon>
+                            <nz-icon nzType="search"></nz-icon>
                         </ng-template>
                         <ng-template #suffixIconClear>
                             <nz-icon *ngIf="blockSearchTerm" nzType="close-circle" nzTheme="fill"
                                 (click)="blockSearchTerm = ''; loadPlugins(); changeDetectorRef.detectChanges()"
                                 style="color: var(--text-secondary); cursor: pointer;"></nz-icon>
                         </ng-template>
-                    </div>
-
-                    <!-- Marketplace Button -->
-                    <div style="margin-bottom: 16px; padding: 0 4px;">
-                        <button nz-button nzType="default" nzBlock (click)="openMarketplace()"
-                            style="height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <nz-icon nzType="shop" style="font-size: 18px;"></nz-icon>
-                            <span style="font-weight: 500;">Plugin Marketplace</span>
-                        </button>
-                    </div>
-
-                    <!-- Loading Indicator -->
-                    <div *ngIf="isLoadingPlugins" style="text-align: center; padding: 20px;">
-                        <nz-spin nzSimple></nz-spin>
-                        <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">Loading plugins...
+                        <div style="margin-top: 12px;">
+                            <button nz-button nzType="primary" nzBlock (click)="openMarketplace()" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <nz-icon nzType="shop"></nz-icon>
+                                Plugin Marketplace
+                            </button>
                         </div>
                     </div>
 
-                    <!-- No results message -->
-                    <div *ngIf="blockSearchTerm && !hasSearchResults()"
-                        style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
-                        <nz-icon nzType="search" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></nz-icon>
-                        <div style="font-size: 14px; margin-bottom: 8px;">No blocks found</div>
-                        <div style="font-size: 12px; opacity: 0.7;">Try a different search term</div>
-                    </div>
+                    <div class="drawer-content" >
+                        <!-- Loading Indicator -->
+                        <div *ngIf="isLoadingPlugins" style="text-align: center; padding: 20px;">
+                            <nz-spin nzSimple></nz-spin>
+                            <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">Loading plugins...</div>
+                        </div>
 
-                    <div *ngFor="let sec of toolbox" style="margin-bottom: 20px;">
-                        <ng-container *ngIf="(sec.blocks | filter:filterBlocksBySearch.bind(this)).length > 0">
-                            <nz-divider nzPlain>
-                                <span style="display: flex; align-items: center; gap: 8px;">
-                                    {{sec.name}}
-                                    <nz-badge *ngIf="sec.name === 'Plugins'" [nzCount]="sec.blocks.length"
-                                        [nzStyle]="{ backgroundColor: '#52c41a' }"></nz-badge>
-                                </span>
-                            </nz-divider>
-                            <div fExternalItem [fData]="item"
-                                *ngFor="let item of sec.blocks | filter:filterBlocksBySearch.bind(this)"
-                                class="block-item" style="padding: 8px; margin-bottom: 8px; border: 1px solid #3a3a3a; border-radius: 8px; background: #2a2a2a; transition: all 0.3s; 
-                                position: relative; user-select: none; -webkit-user-select: none;-moz-user-select: none; -ms-user-select: none; ">
-                                <div (click)="onItemClick(item)"
-                                    style="display: flex; align-items: center; gap: 12px; cursor: move; pointer-events: none;">
-                                    <div
-                                        style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; position: relative;pointer-events: none;">
-                                        <!-- External Icon (Image URL) with error handling -->
-                                        <img *ngIf="item.isExternalIcon" [src]="item.icon"
-                                            (error)="$any($event.target).style.display='none'; $any($event.target).nextElementSibling.style.display='flex'"
-                                            style="width: 24px; height: 24px; object-fit: contain; border-radius: 4px; display: block;pointer-events: none"
-                                            [alt]="item.name">
-
-                                        <!-- Fallback Icon (always rendered, hidden by default if external icon exists) -->
-                                        <nz-icon [nzType]="item.isExternalIcon ? 'api' : (item.icon || 'api')"
-                                            class="icon{{item.type}}"
-                                            [style.display]="item.isExternalIcon ? 'none' : 'flex'"
-                                            style="font-size: 24px; align-items: center; justify-content: center;"
-                                            nzTheme="outline"></nz-icon>
-                                    </div>
-
-                                    <div style="flex: 1;">
-                                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                                            <span style="font-weight: 500; color: var(--text-primary);">
-                                                {{item.name}}
-                                            </span>
-                                            <nz-badge *ngIf="item.isPlugin" nzText="Plugin"
-                                                [nzStyle]="{ backgroundColor: '#1890ff', fontSize: '10px', padding: '0 4px' }">
-                                            </nz-badge>
+                        <ng-container *ngFor="let sec of toolbox">
+                            <ng-container *ngIf="(sec.blocks | filter:filterBlocksBySearch.bind(this)).length > 0">
+                                <nz-divider nzPlain>
+                                    <span style="display: flex; align-items: center; gap: 8px;">
+                                        {{sec.name}}
+                                        <nz-badge *ngIf="sec.name === 'Plugins'" [nzCount]="sec.blocks.length"
+                                            [nzStyle]="{ backgroundColor: '#52c41a' }"></nz-badge>
+                                    </span>
+                                </nz-divider>
+                                <div fExternalItem [fData]="item" (click)="!(item.isPlugin && hasResources(item)) ? onItemClick(item): openResourceDrawer(item); $event.stopPropagation()"
+                                    *ngFor="let item of sec.blocks | filter:filterBlocksBySearch.bind(this)"
+                                    class="block-item" style="padding: 8px; margin-bottom: 8px; border: 1px solid #3a3a3a; border-radius: 8px; background: #2a2a2a; transition: all 0.3s; 
+                                    position: relative; user-select: none; -webkit-user-select: none;-moz-user-select: none; -ms-user-select: none; cursor: pointer;">
+                                    <div style="display: flex; align-items: center; gap: 12px; pointer-events: none;">
+                                        <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; position: relative;">
+                                            <img *ngIf="item.isExternalIcon" [src]="item.icon"
+                                                (error)="$any($event.target).style.display='none'; $any($event.target).nextElementSibling.style.display='flex'"
+                                                style="width: 24px; height: 24px; object-fit: contain; border-radius: 4px; display: block;pointer-events: none">
+                                            <nz-icon [nzType]="item.isExternalIcon ? 'api' : (item.icon || 'api')"
+                                                [style.display]="item.isExternalIcon ? 'none' : 'flex'"
+                                                style="font-size: 24px; color: #1890ff;"></nz-icon>
                                         </div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">
-                                            {{item.description}}
-                                        </div>
-                                        <div *ngIf="item.pluginData"
-                                            style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;">
-                                            ID: {{item.pluginData.plugin_id}} • v{{item.pluginData.plugin_version}} •
-                                            {{item.pluginData.plugin_author}}
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 2px;">{{item.name}}</div>
+                                            <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.2;">{{item.description}}</div>
                                         </div>
                                     </div>
+                                    
+                                    <!-- Plugin Info Button -->
+                                    <button *ngIf="item.isPlugin" nz-button nzType="text" nzSize="small" nz-tooltip
+                                        [nzTooltipTitle]="item.pluginData?.id ? 'View plugin details' : 'Plugin ID not available'"
+                                        (click)="item.pluginData?.id ? openPluginDetail(item.pluginData.id, $event) : null; $event.stopPropagation()"
+                                        [disabled]="!item.pluginData?.id"
+                                        style="position: absolute; top: 4px; right: 4px; padding: 2px 6px; height: 24px; min-width: 24px;">
+                                        <nz-icon nzType="info-circle"
+                                            [style.color]="item.pluginData?.id ? '#1890ff' : '#666'"
+                                            style="font-size: 14px;"></nz-icon>
+                                    </button>
+
+                                    <!-- Open Resource Drawer Button -->
+                                    <button *ngIf="item.isPlugin && hasResources(item)" nz-button nzType="text" nzSize="small" nz-tooltip
+                                        nzTooltipTitle="View resources"
+                                        (click)="openResourceDrawer(item); $event.stopPropagation()"
+                                        style="position: absolute; top: 4px; right: 32px; padding: 2px 6px; height: 24px; min-width: 24px;">
+                                        <nz-icon nzType="right" style="font-size: 12px; color: #999;"></nz-icon>
+                                    </button>
                                 </div>
-
-                                <!-- Plugin Info Button -->
-                                <button *ngIf="item.isPlugin" nz-button nzType="text" nzSize="small" nz-tooltip
-                                    [nzTooltipTitle]="item.pluginData?.id ? 'View plugin details' : 'Plugin ID not available'"
-                                    (click)="item.pluginData?.id ? openPluginDetail(item.pluginData.id, $event) : null"
-                                    [disabled]="!item.pluginData?.id"
-                                    style="position: absolute; top: 4px; right: 4px; padding: 2px 6px; height: 24px; min-width: 24px;">
-                                    <nz-icon nzType="info-circle"
-                                        [style.color]="item.pluginData?.id ? '#1890ff' : '#666'"
-                                        style="font-size: 14px;"></nz-icon>
-                                </button>
-
-                                <!-- Expand Resources Button -->
-                                <button *ngIf="item.isPlugin && hasResources(item)" nz-button nzType="text" nzSize="small" 
-                                    (click)="togglePluginResources(item.pluginData.plugin_id); $event.stopPropagation()"
-                                    style="position: absolute; top: 4px; right: 32px; padding: 2px 6px; height: 24px; min-width: 24px;">
-                                    <nz-icon [nzType]="isPluginExpanded(item.pluginData.plugin_id) ? 'down' : 'right'"
-                                        style="font-size: 12px; color: #999;"></nz-icon>
-                                </button>
-
-                                <!-- Resource List (Expandable) -->
-                                <div *ngIf="item.isPlugin && hasResources(item) && isPluginExpanded(item.pluginData.plugin_id)"
-                                    style="margin-top: 8px; padding-left: 12px; border-left: 2px solid #3a3a3a;">
-                                    <div fExternalItem 
-                                        [fData]="{
-                                            name: item.name,
-                                            icon: item.icon,
-                                            type: item.type,
-                                            description: resource.displayName,
-                                            iconColor: '',
-                                            visible: true,
-                                            input: true,
-                                            output: true,
-                                            isPlugin: true,
-                                            isResource: true,
-                                            resourceMethod: resource.method,
-                                            pluginData: item.pluginData,
-                                            isExternalIcon: item.isExternalIcon
-                                        }"
-                                        *ngFor="let resource of item.pluginData.resources"
-                                        class="resource-item"
-                                        style="padding: 6px 8px; margin-bottom: 6px; border: 1px solid #2a2a2a; border-radius: 6px; background: #1f1f1f; 
-                                        cursor: move; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
-                                        transition: all 0.2s;">
-                                        <div style="display: flex; align-items: center; gap: 8px; pointer-events: none;">
-                                            <nz-icon nzType="api" style="font-size: 16px; color: #52c41a;"></nz-icon>
-                                            <div style="flex: 1; min-width: 0;">
-                                                <div style="font-size: 12px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                                    {{resource.displayName}}
-                                                </div>
-                                                <div *ngIf="resource.descr" style="font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                                    {{resource.descr}}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                
+                            </ng-container>
                         </ng-container>
                     </div>
+                </ng-container>
+            </nz-drawer>
+
+            <!-- Secondary Resource Drawer -->
+            <nz-drawer [nzClosable]="true" [nzVisible]="isResourceDrawerVisible" nzPlacement="right"
+                [nzTitle]="resourceDrawerTitle" [nzMask]="false" 
+                 [nzWidth]="400" (nzOnClose)="closeResourceDrawer()"
+                nzClassName="resource-drawer">
+                <ng-template #resourceDrawerTitle>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-right: 24px;">
+                        <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+                            <nz-icon *ngIf="selectedPluginForResources?.icon && !selectedPluginForResources?.isExternalIcon" 
+                                [nzType]="selectedPluginForResources.icon" style="font-size: 18px; color: #1890ff;"></nz-icon>
+                            <img *ngIf="selectedPluginForResources?.isExternalIcon" [src]="selectedPluginForResources.icon" 
+                                style="width: 18px; height: 18px; object-fit: contain;">
+                            <span style="font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {{selectedPluginForResources?.name}}
+                            </span>
+                        </div>
+                        <button nz-button nzType="text" nzSize="small" (click)="openPluginDetailFromResource($event)" 
+                            nz-tooltip nzTooltipTitle="View Plugin Details">
+                            <nz-icon nzType="info-circle" style="font-size: 16px; color: #1890ff;"></nz-icon>
+                        </button>
+                    </div>
+                </ng-template>
+                <ng-container *nzDrawerContent>
+                <div>
+                    <!-- Search bar for resources -->
+                    <div style="margin-bottom: 16px;">
+                        <nz-input-group [nzPrefix]="prefixIcon">
+                            <input type="text" nz-input placeholder="Search resources..." [(ngModel)]="resourceSearchTerm" />
+                        </nz-input-group>
+                        <ng-template #prefixIcon>
+                            <nz-icon nzType="search"></nz-icon>
+                        </ng-template>
+                    </div>
+                     
+                    <!-- Resource list -->
+                    <div fExternalItem 
+                        [fData]="{
+                            name: selectedPluginForResources.name,
+                            icon: selectedPluginForResources.icon,
+                            type: selectedPluginForResources.type,
+                            description: resource.displayName,
+                            iconColor: '',
+                            visible: true,
+                            input: true,
+                            output: true,
+                            isPlugin: true,
+                            isResource: true,
+                            resourceMethod: resource.method,
+                            pluginData: selectedPluginForResources.pluginData,
+                            isExternalIcon: selectedPluginForResources.isExternalIcon
+                        }"
+                        *ngFor="let resource of getFilteredResources()"
+                        class="resource-item"
+                        style="padding: 10px 12px; margin-bottom: 10px; border: 1px solid #3a3a3a; border-radius: 8px; background: #2a2a2a; 
+                        cursor: move; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
+                        transition: all 0.3s;">
+                        <div style="display: flex; align-items: center; gap: 10px; pointer-events: none;">
+                            <nz-icon nzType="api" style="font-size: 18px; color: #52c41a;"></nz-icon>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{resource.displayName}}
+                                </div>
+                                <div *ngIf="resource.descr" style="font-size: 11px; color: var(--text-secondary); opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{resource.descr}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <nz-empty *ngIf="getFilteredResources().length === 0" nzNotFoundContent="No resources found"></nz-empty>
+                </div>
                 </ng-container>
             </nz-drawer>
             <nz-dropdown-menu #menu="nzDropdownMenu" >
@@ -447,10 +455,9 @@
                         <div class="subtitle">
                             <span class="tt">{{n.data?.name}}</span>
 
-
                             <span class="st">{{n.data?.conditionInline
                                 ||n.data?.conditionCall
-                                || n.data?.call || (n.data?.waitSeconds ? n.data?.waitSeconds + ' sec' : '') ||
+                                || n?.data?.resource || n.data?.call || (n.data?.waitSeconds ? n.data?.waitSeconds + ' sec' : '') ||
                                 n.data?.childwf || n.data?.aiagent}}</span>
                         </div>
                     </div>
