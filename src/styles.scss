@@ -11,7 +11,7 @@
     --bg-tertiary: #3a3a3a;
     --text-primary: #ffffff;
     --text-secondary: #a0a0a0;
-    --border-color: #404040;
+    --border-color: #535456;
     --accent-color: #ff6d5a;
     --accent-hover: #ff8b7a;
     --connection-color: #888;
@@ -103,7 +103,7 @@ nz-content {
 .ant-picker,
 .ant-picker-input input,
 textarea.ant-input {
-    background: var(--bg-tertiary) !important;
+    background: var( --bg-primary) !important;
     border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
 
@@ -549,9 +549,17 @@ f-flow .f-minimap .f-minimap-node {
     background: #282c34 !important;
 }
 
-// .ͼo {
-//     background-color: transparent !important;
-// }
+.ͼo {
+    background-color: var( --bg-primary) !important;
+    border:1px solid var(--border-color) !important;
+}
+
+.ͼo.cm-focused {
+    outline: none !important;
+      border-color: var(--accent-color) !important;
+        box-shadow: 0 0 0 2px rgba(255, 109, 90, 0.2) !important;
+}
+
 
 // .ͼo .cm-gutters {
 //     background: #141414 !important;

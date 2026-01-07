@@ -291,6 +291,11 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   // Resource expansion state
   expandedPlugins: Set<string> = new Set<string>();
 
+  // Secondary Resource Drawer state
+  isResourceDrawerVisible: boolean = false;
+  selectedPluginForResources: any = null;
+  resourceSearchTerm: string = "";
+
   public eConnectionBehaviour = EFConnectionBehavior;
 
   protected readonly eMarkerType = EFMarkerType;
@@ -1092,6 +1097,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         event.preventDefault();
       } else if (this.isBlockDrawerVisible) {
         this.closeBlockDrawer();
+        this.closeResourceDrawer();
         event.preventDefault();
       } else if (this.isEditOpen) {
         this.handleEditCancel();
@@ -2993,6 +2999,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     if (this.isBlockDrawerVisible) {
       this.closeBlockDrawer();
     }
+    this.closeResourceDrawer();
   }
 
   onCanvasMove() {
@@ -3067,6 +3074,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
 
   onItemClick(item: any) {
     this.isBlockDrawerVisible = false;
+
     let newid = uuidv4();
     // compute the visible canvas center in flow/world coordinates
 
@@ -3908,6 +3916,65 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   openMarketplace() {
     this.isMarketplaceVisible = true;
     this.changeDetectorRef.detectChanges();
+  }
+
+  /**
+   * Filter resources in the secondary drawer based on search term
+   */
+  getFilteredResources(): any[] {
+    if (
+      !this.selectedPluginForResources ||
+      !this.selectedPluginForResources.pluginData?.resources
+    ) {
+      return [];
+    }
+
+    const resources = this.selectedPluginForResources.pluginData.resources;
+    if (!this.resourceSearchTerm) {
+      return resources;
+    }
+
+    const term = this.resourceSearchTerm.toLowerCase();
+    return resources.filter(
+      (res: any) =>
+        (res.displayName && res.displayName.toLowerCase().includes(term)) ||
+        (res.method && res.method.toLowerCase().includes(term))
+    );
+  }
+
+  /**
+   * Close the secondary resource drawer
+   */
+  closeResourceDrawer() {
+    this.isResourceDrawerVisible = false;
+    this.selectedPluginForResources = null;
+    this.resourceSearchTerm = "";
+  }
+
+  /**
+   * Open plugin details from the secondary resource drawer
+   */
+  openPluginDetailFromResource(event: MouseEvent) {
+    if (
+      this.selectedPluginForResources &&
+      this.selectedPluginForResources.pluginData?.id
+    ) {
+      this.openPluginDetail(
+        this.selectedPluginForResources.pluginData.id,
+        event
+      );
+    }
+  }
+
+  /**
+   * Open the secondary resource drawer for a plugin
+   */
+  openResourceDrawer(item: any) {
+    if (item.isPlugin && item.pluginData?.resources?.length > 0) {
+      this.selectedPluginForResources = item;
+      this.isResourceDrawerVisible = true;
+      this.resourceSearchTerm = "";
+    }
   }
 
   /**

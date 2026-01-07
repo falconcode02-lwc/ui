@@ -93,7 +93,7 @@
       <!-- Form Display -->
       <div class="form-display" *ngIf="formSchema() && !submittedData()" [style.height]="formSchema()?.height || '100%'"
         [style.width]="formSchema()?.width || '100%'">
-        <nz-card>
+        <nz-card style="border: 0">
           <div class="form-header" *ngIf="formSchema()?.title || formSchema()?.description">
             <h2 *ngIf="formSchema()?.title" style="display: flex; align-items: center; gap: 10px">
               <ng-container *ngIf="formSchema()?.iconUrl; else fallbackIcon">
