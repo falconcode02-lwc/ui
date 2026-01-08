@@ -405,7 +405,6 @@ export class FormBuilderComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    debugger;
     // Check if we're editing an existing form
     this.route.params.subscribe((params) => {
       const id = params["id"];
@@ -1011,7 +1010,6 @@ export class FormBuilderComponent implements OnInit {
 
   // Helper methods to update form config
   updateFormConfigField(field: keyof FormConfig, value: any) {
-    debugger;
     this.formConfig.update((c) => ({ ...c, [field]: value }));
   }
 

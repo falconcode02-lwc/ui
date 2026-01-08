@@ -45,6 +45,11 @@ import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 
 import { HttpService } from '../../service/http-service';
+import {
+  VAULT_TYPE_OPTIONS,
+  getVaultTypeLabel,
+  VaultType,
+} from '../../common/vault-type';
 import { Mutator } from '@foblex/mutator';
 import { QueueService } from '../../classes/Queue';
 
@@ -1360,7 +1365,6 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   getFormSchemaForSecret() {
-    debugger;
     let secretsField = [
       ...[
         {
@@ -1375,6 +1379,17 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           defaultValue: this.selectedNode?.data?.name,
           info: 'Enter unique name',
           secondaryText: 'Required unique name',
+        },
+        {
+          id: 'vaultType',
+          type: 'select',
+          label: 'Vault Type',
+          placeholder: 'Select vault',
+          required: true,
+          defaultVisible: true,
+          defaultEnabled: true,
+          defaultValue: 'DB',
+          options: VAULT_TYPE_OPTIONS,
         },
       ],
       ...this.selectedNode?.meta?.pluginData?.plugin_secrets,
@@ -1955,7 +1970,6 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   addNode(node: any) {
-    debugger;
     if (node.type === 'switches') {
       let switchDefault = {
         id: node.id + '_default',
@@ -2188,7 +2202,6 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   onMoreClick(node: any, directClick = true) {
-    debugger;
     if (node == undefined) {
       let nodeIds: any = this.fFlowComponent.getSelection().fNodeIds;
       node = this.nodes().find((x: any) => x.id === nodeIds[0]);
@@ -2282,7 +2295,6 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   bindSecrets(type: any) {
-    debugger;
     if (this.selectedNode?.meta?.pluginData?.plugin_secrets) {
       this.httpsService.listSecretsByType(type).subscribe((d) => {
         console.log('listSecretsByType', d);
@@ -2292,7 +2304,10 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           let scr = [];
           for (let i = 0; i < d.length; i++) {
             const element = d[i];
-            scr.push({ key: element.name, value: element.name });
+            const vt = (element as any)?.vaultType;
+            const vtLabel = getVaultTypeLabel(vt);
+            const suffix = vtLabel ? ` (${vtLabel})` : '';
+            scr.push({ key: `${element.name}${suffix}`, value: element.name });
           }
           setTimeout(() => {
             this.propertyPanel.setFieldVisibility('secret', true);
@@ -2313,8 +2328,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   secretEditClick(evt: any) {
-    debugger;
-    
+
     console.log('Edit secret:', evt);
     const secretName = evt.value;
     const secret = this.availableSecrets.find((s) => s.name === secretName);
@@ -2333,6 +2347,9 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
 
         // Ensure secretName is set in form data
         this.secretFormData['secretName'] = secret.name;
+
+  // Ensure vaultType is set in form data (for the Vault Type dropdown)
+  this.secretFormData['vaultType'] = (secret as any).vaultType || this.secretFormData['vaultType'] || 'DB';
 
         this.openSecretManagerForm = true;
 
@@ -2621,11 +2638,23 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     if (this.secretPropertyPanel.isFormValid()) {
       let secretName = this.secretFormData['secretName'];
 
+      const vaultTypeValue =
+        typeof this.secretFormData?.vaultType === 'object'
+          ? this.secretFormData?.vaultType?.value
+          : this.secretFormData?.vaultType;
+
+  // Persist ONLY the value (DB/AZURE/GCP) at root. Don't include in `value`.
+  const resolvedVaultType = (vaultTypeValue || 'DB') as VaultType;
+
+  // Remove vaultType from the JSON `value` payload (user requested).
+  const { vaultType: _omitVaultType, ...valueObj } = this.secretFormData || {};
+
       let payload = {
         name: secretName,
         type: this.selectedNode?.data?.call[0],
-        value: JSON.stringify(this.secretFormData),
+  value: JSON.stringify(valueObj),
         metadata: '',
+        vaultType: resolvedVaultType,
       };
 
       if (this.isSecretEditMode && this.currentSecretId) {
@@ -3015,7 +3044,6 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   onItemClick(item: any) {
-    debugger;
     this.isBlockDrawerVisible = false;
     let newid = uuidv4();
     // compute the visible canvas center in flow/world coordinates
@@ -3199,7 +3227,6 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           const requiredProps = pluginData.plugin_properties.filter(
             (p: any) => p.required === true && p.defaultVisible === true
           );
-          debugger;
           requiredProps.forEach((prop: any) => {
             const value = getPluginFieldValue(node, prop.id);
             let isValid = false;
