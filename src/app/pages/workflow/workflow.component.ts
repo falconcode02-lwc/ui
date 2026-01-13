@@ -2338,43 +2338,46 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       this.isSecretEditMode = true;
       this.currentSecretId = secret.id;
 
-      try {
-        if (typeof secret.value === 'string') {
-           this.secretFormData = JSON.parse(secret.value);
-        } else {
-          this.secretFormData = secret.value;
+      // Initialize form data with basic fields
+      this.secretFormData = {
+        secretName: secret.name,
+        vaultType: (secret as any).vaultType || 'DB'
+      };
+
+      if (typeof secret.value === 'string') {
+        try {
+          const parsed = JSON.parse(secret.value);
+          this.secretFormData = { ...this.secretFormData, ...parsed };
+        } catch (e) {
+          console.warn('Failed to parse secret value, possibly masked for vault type', (secret as any).vaultType);
         }
-
-        // Ensure secretName is set in form data
-        this.secretFormData['secretName'] = secret.name;
-
-  // Ensure vaultType is set in form data (for the Vault Type dropdown)
-  this.secretFormData['vaultType'] = (secret as any).vaultType || this.secretFormData['vaultType'] || 'DB';
-
-        this.openSecretManagerForm = true;
-
-        // Wait for modal to open and form to initialize
-        setTimeout(() => {
-          if (this.secretPropertyPanel) {
-            // We need to set the form values
-            // Since FormViewer doesn't expose a direct setValues method that takes an object,
-            // we might need to rely on preloadedSchema or similar mechanism,
-            // OR we can use the fact that secretFormData is bound to onFormSecretUpdate
-            // But onFormSecretUpdate is an output.
-
-            // Actually, FormViewer has a `loadForm` method but it takes a schema.
-            // It also has `dynamicForm` which is public.
-
-            // Let's try to patch the values
-            this.secretPropertyPanel.dynamicForm.patchValue(
-              this.secretFormData
-            );
-          }
-        }, 100);
-      } catch (e) {
-        console.error('Error parsing secret value', e, secret.value);
-        this.message.error('Failed to load secret data');
+      } else {
+        this.secretFormData = { ...this.secretFormData, ...secret.value };
       }
+
+      // Ensure vaultType is set in form data (for the Vault Type dropdown)
+      this.secretFormData['vaultType'] = (secret as any).vaultType || this.secretFormData['vaultType'] || 'DB';
+
+      this.openSecretManagerForm = true;
+
+      // Wait for modal to open and form to initialize
+      setTimeout(() => {
+        if (this.secretPropertyPanel) {
+          // We need to set the form values
+          // Since FormViewer doesn't expose a direct setValues method that takes an object,
+          // we might need to rely on preloadedSchema or similar mechanism,
+          // OR we can use the fact that secretFormData is bound to onFormSecretUpdate
+          // But onFormSecretUpdate is an output.
+
+          // Actually, FormViewer has a `loadForm` method but it takes a schema.
+          // It also has `dynamicForm` which is public.
+
+          // Let's try to patch the values
+          this.secretPropertyPanel.dynamicForm.patchValue(
+            this.secretFormData
+          );
+        }
+      }, 100);
     } else {
       this.message.warning('Secret not found');
     }
