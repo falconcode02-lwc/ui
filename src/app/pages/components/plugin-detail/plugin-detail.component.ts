@@ -206,4 +206,15 @@ export class PluginDetailComponent {
     if (this.isExternalIcon(this.plugin.icon)) return this.plugin.icon;
     return this.plugin.icon || this.defaultIcon;
   }
+
+  isObject(val: any): boolean {
+    return val && typeof val === "object" && !Array.isArray(val);
+  }
+
+  getMatchingProperty(key: string): any {
+    if (!this.pluginProperties) return null;
+    return this.pluginProperties.find(
+      (p) => p.id === key || p.name === key || p.key === key
+    );
+  }
 }

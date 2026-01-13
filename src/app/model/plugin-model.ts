@@ -23,6 +23,7 @@ export interface Plugin {
   id: number;
   is_active?: boolean; // Legacy field name
   active?: boolean; // New field name from DTO
+  pluginType?: string; // Type of plugin (e.g. "Source", "Logic", "Action")
   icon: string; // Can be external URL or internal icon name
   plugin_author: string;
   plugin_desc: string;
@@ -38,6 +39,7 @@ export interface Plugin {
   plugin_secrets_opt?: any; // Optional secret definitions (secured) produced by plugin.setSercrets(...)
   resources?: PluginResource[]; // Available resources for the plugin
   lastLoadedAt?: string; // Timestamp of last load
+  plugin_type?: string;
 }
 
 export interface PluginBlock {

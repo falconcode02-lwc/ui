@@ -19,6 +19,7 @@ export interface PluginDto {
   lastLoadedAt: string;
   resources?: string;
   sourceCode?: string; // Optional: original source code for editing
+  pluginType?: string;
 }
 
 export interface PageResponse<T> {
@@ -148,7 +149,7 @@ export class PluginService {
     try {
       if (dto.props) {
         const propsObj = JSON.parse(dto.props);
-        console.log("Parsed props for plugin", dto.pluginName, ":", propsObj);
+        console.log(" ", dto.pluginName, ":", propsObj);
         // console.log("propsObj.resources:", propsObj.resources);
         // console.log(
         //   "Is resources an array?",
@@ -157,6 +158,7 @@ export class PluginService {
 
         // Extract resources if they exist
         if (dto.resources) {
+          debugger;
           try {
             resources = JSON.parse(dto.resources);
           } catch (e) {
@@ -266,12 +268,20 @@ export class PluginService {
 
     // Add resource dropdown if resources exist
     let resourceDdl = [];
-
+    debugger;
     if (resources && resources.length > 0) {
-      const resourceOptions = resources.map((resource: any) => ({
-        key: resource.method,
-        value: resource.displayName || resource.name,
-      }));
+      let selectedResource = "";
+      const resourceOptions = resources.map((resource: any) => {
+        if (resource.selected) {
+          selectedResource = resource.method;
+        }
+        return {
+          key: resource.method,
+          value: resource.displayName || resource.name,
+        };
+      });
+
+      console.log("resourceOptions", resources);
 
       resourceDdl.push({
         id: "resource",
@@ -283,6 +293,7 @@ export class PluginService {
         icon: "api",
         defaultVisible: true,
         defaultEnabled: true,
+        defaultValue: selectedResource,
       });
     }
 
@@ -320,6 +331,7 @@ export class PluginService {
         plugin_secrets: pluginSecrets,
         plugin_secrets_opt: pluginSecretsOpt,
         plugin_properties_opt: pluginPropertiesOpt,
+        plugin_type: dto.pluginType,
         resources: resources, // Store resources for drill-down feature
       },
     };

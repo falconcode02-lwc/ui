@@ -206,11 +206,13 @@
                   </div>
 
                   <!-- Code Editor -->
-                  <code-editor *ngIf="field.type === 'codeeditor'" [style.height]="'180px'" [formControlName]="field.id"
+                  <code-editor *ngIf="field.type === 'codeeditor'" [style.height]="'180px'"
+                  [style.width]="'100%'"
+                  [formControlName]="field.id"
                     [theme]="options.theme" [setup]="options.setup" [disabled]="options.disabled"
                     [readonly]="options.readonly" [placeholder]="options.placeholder"
                     [indentWithTab]="options.indentWithTab" [extensions]="extensions" [indentUnit]="options.indentUnit"
-                    [lineWrapping]="options.lineWrapping" [highlightWhitespace]="options.highlightWhitespace"
+                    [lineWrapping]="'options.lineWrapping'" [highlightWhitespace]="options.highlightWhitespace"
                     [language]="options.language" [languages]="languages" />
                   <!-- <app-editor
                 *ngIf="field.type === 'codeeditor'"

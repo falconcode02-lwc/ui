@@ -64,6 +64,7 @@ export interface PluginFormData {
   aiToolDescription: string;
   props?: string;
   secrets?: string; // JSON schema used for plugin.setSecrets
+  pluginType: string;
 }
 
 @Component({
@@ -214,6 +215,11 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
       const isAiTool = isAiToolRaw ? isAiToolRaw[1] === "true" : false;
       const aiToolDescription = extractSetter("AiToolDescription");
 
+      const pluginTypeRaw = code.match(
+        /plugin\s*\.\s*setPluginType\s*\(\s*PluginType\.([A-Z_]+)\s*\)/
+      );
+      const pluginType = pluginTypeRaw ? pluginTypeRaw[1] : "PLUGIN";
+
       this.pluginForm.patchValue(
         {
           version: extractSetter("Version"),
@@ -226,6 +232,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
           aiToolDescription: aiToolDescription,
           props: propsValue,
           secrets: secretsValue,
+          pluginType: pluginType,
         },
         { emitEvent: false }
       );
@@ -738,6 +745,26 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
         }
       });
 
+    // pluginType
+    this.pluginForm.get("pluginType")?.valueChanges.subscribe((val: string) => {
+      const current =
+        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+      if (!current) {
+        return;
+      }
+      const escaped = this.escapeJavaString(val ?? "");
+      const replaced = this.replacePluginSetter(
+        current,
+        "PluginType",
+        `"${escaped}"`
+      );
+      if (replaced !== current) {
+        this.suppressAutoGenerateOnce = true;
+        this.generatedCode = replaced;
+        this.cdr.markForCheck();
+      }
+    });
+
     // Subscribe to form changes to regenerate code (unless suppressed once)
     this.pluginForm.valueChanges.subscribe(() => {
       if (this.suppressAutoGenerateOnce) {
@@ -797,6 +824,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
       aiToolDescription: ["", [Validators.maxLength(500)]],
       props: [""],
       secrets: [""],
+      pluginType: ["PLUGIN", [Validators.required]],
     });
   }
 
@@ -858,6 +886,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
       aiToolDescription: "",
       props: "",
       secrets: "",
+      pluginType: "PLUGIN",
     });
     this.iconPreview = "";
     this.drawerVisible = true;
@@ -911,6 +940,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
       aiToolDescription: (plugin as any).aiToolDescription || "",
       props: decodedProps,
       secrets: decodedSecrets,
+      pluginType: plugin.pluginType || "PLUGIN",
     });
 
     this.updateIconPreview();
@@ -1421,6 +1451,9 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
       )}");
       plugin.setProps(${propsFormatted});
       plugin.setSecrets(${secretsFormatted});
+      plugin.setPluginType(PluginType.${
+        (plugin as any).pluginType || "PLUGIN"
+      });
 
       pluginService.register(plugin);
   }`;
@@ -1530,12 +1563,35 @@ public class <Plugin ID> extends Function {
   public FunctionResponse invoke(FRequest req) {
       // TODO: Implement plugin logic here
       
-      @new FunctionResponse res;
-      res.setStatus(FunctionStatus.SUCCESS);
-      res.setMessage("Successfully executed");
+
+      @new FunctionResponse res; // declare Response Object
+      res.setStatus(FunctionStatus.SUCCESS); // FunctionStatus.SUCCESS | FunctionStatus.FAILED
+      res.setMessage("Successfully executed"); // set Message for log purpose
+      res.setNext(new HashMap<String, String>()); // set response for next execution node
       return res;
   }
 
+/*
+  @FResource(name="Name to visible in resource drop down", description="Set proper description for AI as tool", selected=false)
+  public FunctionResponse sampleUniqueResourceMethod(FRequest req, @FParam(value="text", description="message")String message)
+  {
+      // InputMap mp = req.getPluginProps(); // sample get props
+      // Vault vault =  getVault(mp); // sample get vault
+      // vault.getValue("chat_id") // sample value
+      
+
+
+
+      @new FunctionResponse res; // declare Response Object
+      res.setStatus(FunctionStatus.SUCCESS); // FunctionStatus.SUCCESS | FunctionStatus.FAILED
+      res.setMessage("Successfully executed"); // set Message for log purpose
+      res.setNext(new HashMap<String, String>()); // set response for next execution node
+      return res;
+  } 
+*/
+
+
+  // change this section from left side pannel
   @onload
   void registerPlugin() {
       @new PluginDto plugin;
@@ -1551,6 +1607,9 @@ public class <Plugin ID> extends Function {
       )}");
       plugin.setProps(${propsFormatted});
       plugin.setSecrets(${secretsFormatted});
+      plugin.setPluginType(PluginType.${
+        (plugin as any).pluginType || "PLUGIN"
+      });
 
       pluginService.register(plugin);
   }

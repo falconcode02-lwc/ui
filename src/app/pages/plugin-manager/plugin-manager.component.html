@@ -123,6 +123,20 @@
                                 </nz-form-control>
                             </nz-form-item>
 
+                            <!-- Plugin Type -->
+                            <nz-form-item>
+                                <nz-form-label nzRequired>Plugin Type</nz-form-label>
+                                <nz-form-control>
+                                    <nz-select formControlName="pluginType">
+                                        <nz-option nzValue="CUSTOM" nzLabel="CUSTOM"></nz-option>
+                                        <nz-option nzValue="PLUGIN" nzLabel="PLUGIN"></nz-option>
+                                        <nz-option nzValue="TOOL" nzLabel="TOOL"></nz-option>
+                                        <nz-option nzValue="MEMORY" nzLabel="MEMORY"></nz-option>
+                                        <nz-option nzValue="AI_MODEL" nzLabel="AI MODEL"></nz-option>
+                                    </nz-select>
+                                </nz-form-control>
+                            </nz-form-item>
+
                             <!-- Version -->
                             <nz-form-item>
                                 <nz-form-label nzRequired>Version</nz-form-label>
