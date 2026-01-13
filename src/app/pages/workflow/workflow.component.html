@@ -223,7 +223,10 @@
                     <!-- <li nz-menu-item > <nz-icon nzType="play-circle" /> Execute</li> -->
                     
                     <li nz-menu-item (click)="isBlockDrawerVisible = true"> <nz-icon nzType="plus" /> Add New</li>
+                    <li nz-menu-item (click)="onCopyClick()"> <nz-icon nzType="copy" /> Copy</li>
+                    <li nz-menu-item (click)="onPasteClick()"> <nz-icon nzType="snippets" /> Paste</li>
                     <li nz-menu-item (click)="onDuplicateClick()"> <nz-icon nzType="copy" /> Duplicate</li>
+
                     <li nz-menu-item (click)="addNotes()"> <nz-icon nzType="file-text" /> Add Note</li>
                     <li nz-menu-item (click)="deleteNode()" nzDanger> <nz-icon nzType="delete" /> Delete</li>
                     <li nz-menu-item (click)="onMoreClick(undefined)"> <nz-icon nzType="ellipsis" /> Properties</li>
@@ -341,7 +344,7 @@
 
 
                     <div *ngFor="let n of nodes()" (contextmenu)="openMenu($event, n)" (dblclick)="onMoreClick(n)"
-                        fNodeParentId="{{n.parentId}}" class="{{n.type}} {{n.runstatus}}" [fNodeId]="n.id"
+                        fNodeParentId="{{n.parentId}}" class="{{n.type}} {{n.runstatus}} {{n?.meta?.pluginData?.plugin_type}}" [fNodeId]="n.id"
                         isSelfConnectable="false" fDragHandle fNode [(fNodePosition)]="n.position"
                         fInputConnectableSide="left" fOutputConnectableSide="right"
                         (fNodePositionChange)="onNodeDrag($event)" (click)="selectedNode = n"
@@ -407,10 +410,13 @@
                         @if (n.input == true) {
                         <div fNodeInput [fInputId]="n.id" [fInputMultiple]="true" class="left"></div>
                         }
-
+ 
                         @if (n.type == "aiagent") {
+                            
+                            <div fNodeOutput [fOutputId]="n.id+'_aimodel'" class="ai-model" [fOutputMultiple]="false" ><span style="top: -15px;left: -11px;">Model</span></div>
                             <div fNodeOutput [fOutputId]="n.id+'_aitool'" class="ai-tool" [fOutputMultiple]="true" ><span style="top: -15px;left: -11px;">Tools</span></div>
                         }
+                        
                         <div class="outputHolder" *ngIf="n.type == 'switches'">
                             <div fNodeOutput *ngFor="let item of n.data?.switchval" [fOutputId]="item.id"
                                 [fOutputMultiple]="true"><span>{{item.key}}</span></div>
@@ -419,7 +425,7 @@
 
                         </div>
 
-                        <div class="outputHolder" *ngIf="n.output == true && n.type != 'switches'">
+                        <div class="outputHolder" *ngIf="n.output == true && n.type != 'switches' && n?.meta?.pluginData?.plugin_type != 'AI_MODEL'">
                             <div fNodeOutput [fOutputId]="n.id" [fOutputMultiple]="true"></div>
 
                             @if (n.type == 'condition') {
@@ -451,7 +457,7 @@
                             </nz-space>
                         </ng-template>
 
-                        <span class="title">{{n.meta.html}}</span>
+                        <span class="title" *ngIf="n?.meta?.pluginData?.plugin_type != 'AI_MODEL'">{{n.meta.html}}</span>
                         <div class="subtitle">
                             <span class="tt">{{n.data?.name}}</span>
 
@@ -469,7 +475,7 @@
                          [fStartColor]="connection.startColor || '#ddd'"
                         [fEndColor]="connection.endColor || '#ddd'" [fOutputId]="connection.sourcePortId"
                         [fInputId]="connection.targetPortId" [fConnectionId]="connection.id" [fReassignDisabled]="false"
-                        class="{{connection?.cls}} {{connection?.sourcePortId?.indexOf('aitool') !== -1 ? 'aitool' : ''}}" [class.dashed-connection]="connection.category === 'virtual'">
+                        class="{{connection?.cls}} {{connection?.sourcePortId?.indexOf('aitool') !== -1 ? 'aitool' : ''}} {{connection?.sourcePortId?.indexOf('aimodel') !== -1 ? 'aimodel' : ''}}" [class.dashed-connection]="connection.category === 'virtual'">
 
 
                         <!-- <svg viewBox="0 0 10 10" fMarker [type]="eMarkerType.START" [height]="10" [width]="10" [refX]="5"
@@ -676,16 +682,15 @@
 
             <!-- Center: Form -->
             <div style="flex:1; overflow:auto; display:flex; align-items:flex-start; justify-content:center;">
-                <div style="width:880px;">
-
-                    <app-form-viewer @fadeInOut #propertyPanel *ngIf="showPropePanel"
+                 
+                    <app-form-viewer style="width:100%" @fadeInOut #propertyPanel *ngIf="showPropePanel"
                         (onAutoCompleteAddNewClick)="autoCompleteAddNewClick($event)"
                         (onAutoCompleteEditClick)="secretEditClick($event)"
                         [preloadedSchema]="getFormSchemaForNode()" [hideHeaderActions]="true"
                         (formValuesChange)="onFormUpdate($event)">
                     </app-form-viewer>
 
-                </div>
+                 
             </div>
 
             <!-- Right: Outputs -->

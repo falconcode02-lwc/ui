@@ -756,6 +756,11 @@ app-editor {
     stroke-dasharray: 8 6;
 }
 
+.f-connection.aimodel .f-connection-path {
+    stroke: #7b7b7b !important;
+    stroke-dasharray: 8 6;
+}
+
 .f-connection.success .f-connection-path {
     stroke: #40c303 !important;
     stroke-dasharray: 8 6;
@@ -961,4 +966,8 @@ thead.ant-table-thead th {
 .ant-table tr td{
     
     border-bottom: 1px solid var(--border-color, #404040)!important;
+}
+
+.plugin.AI_MODEL{
+        border-radius: 50%!important;
 }

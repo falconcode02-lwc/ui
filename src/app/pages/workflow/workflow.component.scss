@@ -155,7 +155,7 @@
 
 }
 
-.f-connection-path.ai-tool {
+.f-connection-path.ai-tool, .f-connection-path.ai-model {
     stroke: #818181;
     filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.4));
 }
@@ -751,7 +751,13 @@ nz-icon[nzType="api"] {
 }
 
 .ai-tool {
-    bottom: -6px;
+    bottom: -8px;
     right: 10px;    
+    position:absolute;
+}
+
+.ai-model {
+    bottom: -8px;
+    left: 20px;    
     position:absolute;
 }

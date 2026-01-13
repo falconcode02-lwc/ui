@@ -138,7 +138,25 @@
             <td>
                 <div *ngIf="res.properties" style="display: flex; flex-wrap: wrap; gap: 4px;">
                     <nz-tag *ngFor="let prop of res.properties | keyvalue" [nzColor]="'blue'" style="font-size: 10px; margin: 0;">
-                        <code>{{ prop.key }}</code>: {{ prop.value }}
+                        <ng-container *ngIf="getMatchingProperty($any(prop.key)) as match; else unmatched">
+                             <strong>{{ match.label || match.name || prop.key }}</strong>
+                             <span>: {{ match.type || match.fieldType }}</span>
+                             <span *ngIf="match.info || match.description" style="margin-left: 4px; opacity: 0.8; font-style: italic;">
+                                ({{ match.info || match.description }})
+                             </span>
+                        </ng-container>
+                        <ng-template #unmatched>
+                            <code>{{ prop.key }}</code>
+                            <ng-container *ngIf="isObject(prop.value); else simpleVal">
+                                 : <span style="font-weight: 600;">{{ $any(prop.value).type }}</span>
+                                 <span *ngIf="$any(prop.value).description" style="margin-left: 4px; opacity: 0.8; font-style: italic;">
+                                    ({{ $any(prop.value).description }})
+                                 </span>
+                            </ng-container>
+                            <ng-template #simpleVal>
+                                : {{ prop.value }}
+                            </ng-template>
+                        </ng-template>
                     </nz-tag>
                 </div>
                 <span *ngIf="!res.properties || (res.properties | keyvalue).length === 0" style="color: var(--text-tertiary);">No parameters</span>

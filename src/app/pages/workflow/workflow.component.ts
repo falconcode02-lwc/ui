@@ -206,6 +206,8 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   private readonly _injector = inject(Injector);
   notes = `### Add Notes`;
   setReadOnly = false;
+  copiedNodes: any[] = [];
+  contextMenuPosition: { x: number; y: number } = { x: 0, y: 0 };
 
   // @ViewChild('editor', { static: true }) editorRef!: ElementRef;
 
@@ -709,29 +711,42 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     this.pluginService.getAllPlugins().subscribe({
       next: (plugins: PluginBlock[]) => {
         console.log("Loaded plugins:", plugins);
+
+        // Group plugins by pluginType
+        const groupedPlugins: { [key: string]: PluginBlock[] } = {};
+
         plugins.forEach((p) => {
-          console.log(`Plugin ${p.name}:`, {
-            isPlugin: p.isPlugin,
-            pluginData: p.pluginData,
-            hasId: p.pluginData?.id !== undefined,
-          });
+          const type = p.pluginData?.pluginType || "Plugins";
+          // Capitalize first letter strictly
+          const sectionName = type.charAt(0).toUpperCase() + type.slice(1);
+
+          if (!groupedPlugins[sectionName]) {
+            groupedPlugins[sectionName] = [];
+          }
+          groupedPlugins[sectionName].push(p);
         });
 
-        // Add plugins to toolbox as a new section
-        const pluginSection: ToolboxSection = {
-          name: "Plugins",
-          blocks: plugins,
-        };
+        // Reset toolbox to only keep static sections (e.g. "Core")
+        // Assuming "Core" is always the first one and others were dynamic.
+        // If there are other static sections, we might need a better way to filter.
+        // For now, let's keep sections that are NOT generated from plugins.
+        // Or simpler: just reset to the initial static definition if available,
+        // to be safe let's assume index 0 is Core and keep it.
+        // But better approach: Filter out sections that we know are plugin sections?
+        // Let's rely on cleaning up and rebuilding.
 
-        // Check if Plugins section already exists
-        const existingPluginIndex = this.toolbox.findIndex(
-          (section) => section.name === "Plugins"
-        );
-        if (existingPluginIndex >= 0) {
-          this.toolbox[existingPluginIndex] = pluginSection;
-        } else {
-          this.toolbox.push(pluginSection);
-        }
+        // Safer approach: Keep only "Core" section
+        this.toolbox = this.toolbox.filter((s) => s.name === "Core");
+
+        // Add dynamic sections
+        Object.keys(groupedPlugins)
+          .sort()
+          .forEach((sectionName) => {
+            this.toolbox.push({
+              name: sectionName,
+              blocks: groupedPlugins[sectionName],
+            });
+          });
 
         this.isLoadingPlugins = false;
         this.changeDetectorRef.detectChanges();
@@ -906,7 +921,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       dataplace: "metaData",
       options: [],
       required: true,
-      visiblefor: ["aiagent"],
+      visiblefor: [],
     },
     {
       type: "editor",
@@ -916,7 +931,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       dataplace: "metaData",
       options: [],
       required: true,
-      visiblefor: ["aiagent"],
+      visiblefor: [],
     },
     {
       type: "select",
@@ -925,7 +940,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       dataplace: "metaData",
       options: [],
       required: false,
-      visiblefor: ["aiagent"],
+      visiblefor: [],
     },
 
     {
@@ -935,7 +950,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       dataplace: "metaData",
       placeholder: "Enter key to store data",
       required: true,
-      visiblefor: ["aiagent"],
+      visiblefor: [],
     },
     {
       type: "number",
@@ -949,35 +964,35 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       label: "Timeout",
       name: "timeoutSeconds",
       placeholder: "Enter in Seconds",
-      visiblefor: ["function", "aiagent"],
+      visiblefor: ["function"],
     },
     {
       type: "number",
       label: "Max Attempts",
       name: "maximumAttempts",
       placeholder: "Enter in Seconds",
-      visiblefor: ["function", "aiagent"],
+      visiblefor: ["function"],
     },
     {
       type: "number",
       label: "Interval Sec.",
       name: "initialIntervalSeconds",
       placeholder: "Enter in Seconds",
-      visiblefor: ["function", "aiagent"],
+      visiblefor: ["function"],
     },
     {
       type: "number",
       label: "Max Interval Sec.",
       name: "maximumIntervalSeconds",
       placeholder: "Enter in Seconds",
-      visiblefor: ["function", "aiagent"],
+      visiblefor: ["function"],
     },
     {
       type: "number",
       label: "Increament By",
       name: "backoffCoefficient",
       placeholder: "Eg. 2.0",
-      visiblefor: ["function", "aiagent"],
+      visiblefor: ["function"],
     },
   ];
 
@@ -1204,6 +1219,9 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   contextMenu($event: MouseEvent, menu: NzDropdownMenuComponent): void {
+    this.contextMenuPosition = { x: $event.clientX, y: $event.clientY };
+    $event.preventDefault();
+    $event.stopPropagation();
     this.nzContextMenuService.create($event, menu);
   }
 
@@ -1286,7 +1304,45 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     console.log("Effective Plugin Data:", effectivePluginData);
 
     // If it's a plugin node with plugin_properties, use those
-    if (
+    if (this.selectedNode.type === "aiagent") {
+      fields = [
+        {
+          id: "prompt",
+          type: "codeeditor",
+          label: "User Prompt",
+          placeholder: "Enter code",
+          required: false,
+          icon: "code",
+          defaultVisible: true,
+          defaultEnabled: true,
+          language: "json",
+          defaultValue: this.selectedNode.data?.["prompt"],
+        },
+        {
+          id: "systemprompt",
+          type: "codeeditor",
+          label: "System Prompt",
+          placeholder: "Enter code",
+          required: false,
+          icon: "code",
+          defaultVisible: true,
+          defaultEnabled: true,
+          language: "json",
+          defaultValue: this.selectedNode.data?.["systemprompt"],
+        },
+        {
+          id: "model",
+          type: "text",
+          label: "Model",
+          placeholder: "Enter model",
+          required: false,
+          icon: "font-size",
+          defaultVisible: false,
+          defaultEnabled: true,
+          defaultValue: this.selectedNode.data?.["model"],
+        },
+      ];
+    } else if (
       isPluginNode &&
       effectivePluginData?.plugin_properties &&
       effectivePluginData.plugin_properties.length > 0
@@ -2230,13 +2286,21 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       for (let index = 0; index < nodeIds.length; index++) {
         const element = nodeIds[index];
         let node = this.nodes().find((x: any) => x.id === element);
-        let newNode = JSON.parse(JSON.stringify(node));
-        newNode.id = uuidv4();
-        newNode.data.id = newNode.id;
-        let newndpos = newNode.position;
-        newndpos.y += 90;
-        newndpos.x += 90;
-        (newNode.position = newndpos), this.addNode(newNode);
+        if (node) {
+          let newNode = JSON.parse(JSON.stringify(node));
+          newNode.id = uuidv4();
+          if (newNode.data) newNode.data.id = newNode.id;
+
+          // Ensure position exists
+          if (!newNode.position) newNode.position = { x: 0, y: 0 };
+
+          let newndpos = { ...newNode.position };
+          newndpos.y += 90;
+          newndpos.x += 90;
+          newNode.position = newndpos;
+
+          this.addNode(newNode);
+        }
       }
     }
 
@@ -2250,6 +2314,22 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     // (newNode.position = newndpos), this.addNode(newNode);
   }
 
+  onCopyClick() {
+    let nodeIds = this.fFlowComponent.getSelection().fNodeIds;
+    if (nodeIds.length > 0) {
+      this.copiedNodes = this.nodes()
+        .filter((x: any) => nodeIds.includes(x.id))
+        .map((n: any) => JSON.parse(JSON.stringify(n)));
+      this.message.success("Copied " + this.copiedNodes.length + " nodes");
+    } else if (this.selectedforDelete && (this.selectedforDelete as any).id) {
+      // Fallback to right-clicked node if no selection (optional, but good UX)
+      this.copiedNodes = [JSON.parse(JSON.stringify(this.selectedforDelete))];
+      this.message.success("Copied 1 node");
+    } else {
+      this.message.info("No node selected to copy");
+    }
+  }
+
   onMoreClick(node: any, directClick = true) {
     if (node == undefined) {
       let nodeIds: any = this.fFlowComponent.getSelection().fNodeIds;
@@ -2258,43 +2338,43 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     if (directClick) this.showPropePanel = true;
     if (node.type == "aiagent") {
       // Load agents first, then open property panel
-      const list = this.getDdlControl("aiagent");
-      if (list && (!list.options || list.options.length === 0)) {
-        // Agents not loaded yet, load them first
-        this.httpsService.listAgents().subscribe(
-          (d: any) => {
-            console.log("Agent list received:", d);
-            let agentOption: any = [];
-            if (Array.isArray(d)) {
-              for (let i = 0; i < d.length; i++) {
-                const element = d[i];
-                agentOption.push(element.agentId);
-              }
-              this.bindDdlControl("aiagent", agentOption);
-              // Now open the property panel after agents are loaded
-              this.isPropertyPanelVisible = true;
-              this.selectedNode = node;
-              this.changeDetectorRef.detectChanges();
-            } else {
-              console.error("Agent list is not an array:", d);
-              // Still open the panel even if there's an error
-              this.isPropertyPanelVisible = true;
-              this.selectedNode = node;
-            }
-            this.changeDetectorRef.detectChanges();
-          },
-          (error) => {
-            console.error("Error loading agents:", error);
-            // Still open the panel even if there's an error
-            this.isPropertyPanelVisible = true;
-            this.selectedNode = node;
-          }
-        );
-        return; // Don't continue, wait for the subscription to complete
-      } else {
-        // Agents already loaded, just call getAgentList to ensure they're up to date
-        this.getAgentList();
-      }
+      // // // const list = this.getDdlControl("aiagent");
+      // // // if (list && (!list.options || list.options.length === 0)) {
+      // // //   // Agents not loaded yet, load them first
+      // // //   this.httpsService.listAgents().subscribe(
+      // // //     (d: any) => {
+      // // //       console.log("Agent list received:", d);
+      // // //       let agentOption: any = [];
+      // // //       if (Array.isArray(d)) {
+      // // //         for (let i = 0; i < d.length; i++) {
+      // // //           const element = d[i];
+      // // //           agentOption.push(element.agentId);
+      // // //         }
+      // // //         this.bindDdlControl("aiagent", agentOption);
+      // // //         // Now open the property panel after agents are loaded
+      // // //         this.isPropertyPanelVisible = true;
+      // // //         this.selectedNode = node;
+      // // //         this.changeDetectorRef.detectChanges();
+      // // //       } else {
+      // // //         console.error("Agent list is not an array:", d);
+      // // //         // Still open the panel even if there's an error
+      // // //         this.isPropertyPanelVisible = true;
+      // // //         this.selectedNode = node;
+      // // //       }
+      // // //       this.changeDetectorRef.detectChanges();
+      // // //     },
+      // // //     (error) => {
+      // // //       console.error("Error loading agents:", error);
+      // // //       // Still open the panel even if there's an error
+      // // //       this.isPropertyPanelVisible = true;
+      // // //       this.selectedNode = node;
+      // // //     }
+      // // //   );
+      // //   return; // Don't continue, wait for the subscription to complete
+      // } else {
+      //   // Agents already loaded, just call getAgentList to ensure they're up to date
+      //   this.getAgentList();
+      // }
     }
     this.isPropertyPanelVisible = true;
     this.selectedNode = node;
@@ -2503,8 +2583,42 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     const { nodes = [], connections = [] } = rawJson;
     // Build lookup for each node
     const nodeMap: any = {};
+
     // console.log('L:L:LL:L ',this.connections());
     nodes.forEach((node: any) => {
+      debugger;
+      const pluginType = node?.meta?.pluginData?.plugin_type;
+
+      if (node?.type == "aiagent") {
+        nodeMap[node.id] = { data: {} };
+        // nodeMap[node.id][""]["aimodel"] = {};
+
+        let aiConnections = this.connections().filter((a: any) => {
+          return a.sourcePortId.startsWith(node.id);
+        });
+
+        aiConnections.forEach((a: any) => {
+          let port = a.sourcePortId.split("_")[1];
+
+          if (port == "aimodel") {
+            nodeMap[node.id]["data"]["aimodel"] = a.targetPortId;
+          }
+
+          if (port == "aitool") {
+            if (nodeMap[node.id]?.data?.aitool != null) {
+              nodeMap[node.id]["data"]["aitool"].push(a.targetPortId);
+            } else {
+              debugger;
+              nodeMap[node.id]["data"]["aitool"] = [a.targetPortId];
+            }
+          }
+        });
+
+        //  nodeMap[node.id]['aitool'] = [];
+        //  nodeMap[node.id]['aimodel'] = [];
+        //  nodeMap[node.id]['aimodel'] = [];
+      }
+
       if (node.data?.switchval) {
         //console.log('tttt')
         for (let i = 0; i < node.data?.switchval.length; i++) {
@@ -2536,7 +2650,6 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
             dataExtend[placeKey] = { ...dataExtend[placeKey], ...dd };
           }
         });
-      } else {
       }
 
       let switchFinalVal: any = null;
@@ -2552,6 +2665,15 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         }));
       }
 
+      let selResource = {};
+      if (node?.meta?.pluginData?.resources) {
+        selResource = node?.meta?.pluginData?.resources?.find((res: any) => {
+          return (
+            res.name == node.data?.call[0] + ":" + node.data?.data?.resource
+          );
+        });
+      }
+
       nodeMap[node.id] = {
         id: node.id,
         type: node.type,
@@ -2561,8 +2683,19 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         switchval: switchFinalVal,
         conditionInline: node.data?.conditionInline || "",
         signalName: node.data?.signal,
+        resource: selResource,
         ...dataExtend,
-        pluginprop: node.data?.data,
+        pluginprop:
+          node.type == "aiagent"
+            ? {
+                prompt: node?.data?.prompt,
+                systemprompt: node?.data?.systemprompt,
+              }
+            : node.data?.data,
+        ai: {
+          aimodel: nodeMap[node.id]?.data?.aimodel,
+          aitool: nodeMap[node.id]?.data?.aitool,
+        },
         config: {
           timeoutSeconds: node.data?.timeoutSeconds || null,
           waitSeconds: node.data?.waitSeconds || 1,
@@ -2574,6 +2707,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         next: null,
         nextFalse: null,
       };
+
       console.log("{}{}{}{}{}{}{>>>> ", nodeMap);
     });
 
@@ -3870,8 +4004,10 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
 
   selectedforDelete = {};
   openMenu(event: MouseEvent, node: any): void {
+    this.contextMenuPosition = { x: event.clientX, y: event.clientY };
     this.selectedforDelete = node;
     event.preventDefault();
+    event.stopPropagation();
     this.nzDropdownService.create(event, this.menu);
   }
 
@@ -3881,8 +4017,97 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     this.selectedNote = stknote;
     this.isNoteEditModal = true;
     e.preventDefault();
-    e.stopPropagation();
-    return;
+  }
+
+  onPasteClick() {
+    if (this.copiedNodes.length > 0) {
+      let targetX = 0;
+      let targetY = 0;
+      let usedMousePos = false;
+
+      // Try to get canvas position from contextMenuPosition
+      try {
+        const canvas = this.fCanvasComponent;
+        if (canvas) {
+          // Safely access host element
+          const host =
+            (canvas as any).hostElement || (canvas as any).fCanvasHost;
+
+          if (host) {
+            const rect = host.getBoundingClientRect();
+            const pan =
+              typeof canvas.getPosition === "function"
+                ? canvas.getPosition()
+                : { x: 0, y: 0 };
+            const scale =
+              typeof canvas.getScale === "function" ? canvas.getScale() : 1;
+
+            // Check if contextMenuPosition is valid (not 0,0 unless clicked at 0,0)
+            if (
+              this.contextMenuPosition.x !== 0 ||
+              this.contextMenuPosition.y !== 0
+            ) {
+              const relX = this.contextMenuPosition.x - rect.left;
+              const relY = this.contextMenuPosition.y - rect.top;
+
+              targetX = (relX - pan.x) / scale;
+              targetY = (relY - pan.y) / scale;
+              usedMousePos = true;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Paste position calculation failed", e);
+      }
+
+      // Fallback to center of screen if mouse position failed
+      if (!usedMousePos) {
+        try {
+          const center = this.getCanvasCenterPosition();
+          targetX = center.x;
+          targetY = center.y;
+          usedMousePos = true;
+        } catch (e) {
+          console.warn("Fallback to center failed", e);
+        }
+      }
+
+      let minX = Infinity;
+      let minY = Infinity;
+      this.copiedNodes.forEach((n) => {
+        const pos = n.position || { x: 0, y: 0 };
+        if (pos.x < minX) minX = pos.x;
+        if (pos.y < minY) minY = pos.y;
+      });
+
+      this.copiedNodes.forEach((originalNode) => {
+        let newNode = JSON.parse(JSON.stringify(originalNode));
+        newNode.id = uuidv4();
+        if (newNode.data) newNode.data.id = newNode.id;
+
+        const origPos = originalNode.position || { x: 0, y: 0 };
+
+        if (usedMousePos) {
+          // Calculate offset of this node from group top-left
+          const offsetX = origPos.x - minX;
+          const offsetY = origPos.y - minY;
+
+          newNode.position = {
+            x: targetX + offsetX,
+            y: targetY + offsetY,
+          };
+        } else {
+          // Extreme fallback
+          newNode.position = { x: origPos.x + 50, y: origPos.y + 50 };
+        }
+
+        this.addNode(newNode);
+      });
+
+      this.changeDetectorRef.detectChanges();
+    } else {
+      this.message.warning("Nothing to paste");
+    }
   }
 
   /**

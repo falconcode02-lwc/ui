@@ -195,8 +195,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
 
   envCode = {
     backendHost: environment.apiUrl,
-    webhookUrl: environment.apiUrl + '/api/v1/workflowManager/webhook'
-  }
+    webhookUrl: environment.apiUrl + "/api/v1/workflowManager/webhook",
+  };
   // Optional callback: parent can handle "Add New" for autocomplete/select and return created option
   @Input() onAutocompleteAddNew?: (payload: {
     field: FormField;
@@ -228,7 +228,7 @@ export class FormViewerComponent implements OnInit, OnDestroy {
   options: any = {
     theme: "dark",
     language: "javascript",
-    minimap: { enabled: false },
+    minimap: { enabled: true },
     fontSize: 14,
     scrollBeyondLastLine: false,
     automaticLayout: true,
@@ -402,7 +402,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         (field.type === "select" ||
           field.type === "autocomplete" ||
           field.type === "radio" ||
-          field.type === "checkbox"||  field.type === "password")
+          field.type === "checkbox" ||
+          field.type === "password")
       ) {
         this.fetchOptionsFromApi(field);
       }
@@ -482,7 +483,8 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         (field.type === "select" ||
           field.type === "autocomplete" ||
           field.type === "radio" ||
-          field.type === "checkbox"||  field.type === "password")
+          field.type === "checkbox" ||
+          field.type === "password")
       ) {
         const hasTemplates =
           this.hasTemplateExpressions(field.apiBinding.url) ||
@@ -1050,8 +1052,6 @@ export class FormViewerComponent implements OnInit, OnDestroy {
         setFieldVisibility: this.setFieldVisibility.bind(this),
         setFieldOptionsValue: this.setFieldOptionsValue.bind(this),
       };
-
-
 
       // Create a function with form (as Proxy), api, alert, console, and window as arguments
       // This allows the user's code to access common browser APIs and set form values
