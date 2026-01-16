@@ -6,17 +6,15 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.workflow-list {
-    padding: 16px;
-    max-width: 1200px;
-    margin: 0 auto;
+.project-list {
+    padding: 24px;
+    background: var(--bg-primary, #141414);
 
     nz-list {
-
         border-color: #303030;
     }
 
-    .workflow-item {
+    .project-item {
         background-color: var(--bg-secondary) !important;
         padding: 0 !important;
         margin-bottom: 16px;
@@ -27,7 +25,6 @@
 
         &:hover {
             background-color: var(--bg-tertiary) !important;
-
         }
 
         &:last-child {
@@ -35,35 +32,34 @@
         }
     }
 
-    .workflow-content {
+    .project-content {
         display: flex;
         align-items: center;
         justify-content: space-between;
         width: 100%;
         padding: 16px 20px;
-
     }
 
-    .workflow-main {
+    .project-main {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
         flex: 1;
         min-width: 0;
     }
 
-    .workflow-icon {
-        font-size: 20px;
-        color: #1890ff;
+    .project-icon {
+        font-size: 24px;
+        color: var(--accent-color, #ff6d5a);
         flex-shrink: 0;
     }
 
-    .workflow-details {
+    .project-details {
         flex: 1;
         min-width: 0;
     }
 
-    .workflow-name {
+    .project-name {
         font-size: 15px;
         font-weight: 600;
         color: rgba(255, 255, 255, 0.85);
@@ -73,10 +69,9 @@
         text-overflow: ellipsis;
     }
 
-    .workflow-meta {
+    .project-meta {
         display: flex;
         align-items: center;
-
         gap: 8px;
         font-size: 13px;
         color: rgba(255, 255, 255, 0.45);
@@ -85,7 +80,6 @@
         .meta-item {
             display: flex;
             align-items: center;
-
             gap: 4px;
         }
 
@@ -94,57 +88,10 @@
         }
     }
 
-    .workflow-actions {
+    .project-actions {
         display: flex;
         align-items: center;
         gap: 12px;
         flex-shrink: 0;
-    }
-}
-
-.project-selection-container {
-    p {
-        margin-bottom: 16px;
-        color: rgba(255, 255, 255, 0.65);
-    }
-
-    .project-item-clickable {
-        cursor: pointer;
-        transition: all 0.3s ease;
-        padding: 12px 16px;
-        border-radius: 4px;
-        margin-bottom: 8px;
-
-        &:hover {
-            background: rgba(24, 144, 255, 0.1);
-            border-color: #1890ff;
-        }
-
-        .project-item-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .project-icon {
-            font-size: 18px;
-            color: #1890ff;
-        }
-
-        .project-info {
-            display: flex;
-            flex-direction: column;
-
-            .project-name {
-                font-weight: 600;
-                color: rgba(255, 255, 255, 0.85);
-            }
-
-            .project-code {
-                font-size: 12px;
-                color: rgba(255, 255, 255, 0.45);
-            }
-        }
     }
 }

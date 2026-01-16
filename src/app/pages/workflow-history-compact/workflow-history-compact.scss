@@ -851,6 +851,9 @@ $border-glow: rgba(0, 212, 255, 0.3);
 
 .io-card-body {
   padding: 0;
+  max-height: 400px;
+  overflow: auto;
+  @include custom-scrollbar($accent-cyan, 6px);
 
   ::ng-deep {
     code-editor {

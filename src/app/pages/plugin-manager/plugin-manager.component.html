@@ -23,6 +23,24 @@
 
 <div class="plugin-manager">
     <!-- Plugin List Table -->
+    <!-- Filter Controls -->
+    <div class="filter-section">
+        <div class="filter-buttons">
+            <button 
+                *ngFor="let type of pluginTypes" 
+                nz-button 
+                [nzType]="selectedPluginType === type ? 'primary' : 'default'"
+                (click)="filterByType(type)"
+                class="filter-btn"
+                [class.active]="selectedPluginType === type">
+                {{ type }}
+                <nz-tag [nzColor]="selectedPluginType === type ? 'blue' : 'default'" class="type-count">
+                    {{ getPluginTypeCount(type) }}
+                </nz-tag>
+            </button>
+        </div>
+    </div>
+
     <!-- Empty State -->
     <nz-empty *ngIf="!loading && filteredPlugins.length === 0" nzNotFoundContent="No plugins found">
         <button nz-button nzType="primary" (click)="openCreateDrawer()" nzShape="round">

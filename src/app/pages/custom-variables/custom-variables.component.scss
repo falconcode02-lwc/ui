@@ -41,14 +41,197 @@
     li {
       padding: 6px 12px;
       cursor: pointer;
+      transition: all 0.2s ease;
     }
 
     li:hover {
       background: rgba(0,0,0,0.04);
+      transform: translateX(4px);
     }
   }
 }
 
 .content-pane{
     padding-left: 16px;
+}
+
+// Interactive enhancements
+.group-item {
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px !important;
+
+  &:hover {
+    background: linear-gradient(90deg, rgba(24, 144, 255, 0.08) 0%, transparent 100%);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  &.active-group {
+    background: linear-gradient(90deg, rgba(24, 144, 255, 0.15) 0%, rgba(24, 144, 255, 0.05) 100%);
+    border-left: 3px solid #1890ff;
+    font-weight: 600;
+    color: #1890ff;
+    
+    .group-name {
+      color: #1890ff;
+    }
+  }
+
+  .group-name {
+    flex: 1;
+    transition: color 0.3s ease;
+  }
+}
+
+// Table row hover effects
+::ng-deep {
+  .ant-table-tbody > tr {
+    transition: all 0.3s ease;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+      background: rgba(24, 144, 255, 0.03) !important;
+    }
+  }
+}
+
+// Value cell enhancements
+.value-cell-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  position: relative;
+
+  .type-badge {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .value-cell {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .copy-btn {
+    opacity: 0;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    
+    &:hover {
+      color: #1890ff;
+      transform: scale(1.1);
+    }
+  }
+
+  &:hover .copy-btn {
+    opacity: 1;
+  }
+}
+
+// Button animations
+button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// Badge animations
+::ng-deep {
+  .ant-badge {
+    animation: slideIn 0.3s ease;
+  }
+
+  .ant-badge-count {
+    box-shadow: 0 2px 8px rgba(82, 196, 26, 0.3);
+    font-weight: 600;
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Form validation feedback
+::ng-deep {
+  .ant-form-item-has-success {
+    .ant-input,
+    .ant-input-affix-wrapper {
+      border-color: #52c41a;
+      box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.1);
+    }
+  }
+
+  .ant-form-item-has-error {
+    .ant-input,
+    .ant-input-affix-wrapper {
+      animation: shake 0.3s ease;
+    }
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+// Drawer enhancements
+::ng-deep {
+  .ant-drawer-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+  }
+
+  .ant-drawer-header {
+    background: linear-gradient(90deg, #1890ff 0%, #096dd9 100%);
+    color: white;
+    
+    .ant-drawer-title {
+      color: white;
+      font-weight: 600;
+    }
+
+    .ant-drawer-close {
+      color: white;
+      
+      &:hover {
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+  }
 }

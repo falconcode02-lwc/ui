@@ -69,6 +69,64 @@ nz-header {
     // background: #fff;
     box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
     border-bottom: 1px solid #515151;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+// Environment Selectors (Workspace and Project Dropdowns)
+.environment-selectors {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: 16px;
+    
+    .workspace-select,
+    .project-select {
+        min-width: 180px;
+        
+        ::ng-deep {
+            .ant-select-selector {
+                background: rgba(255, 255, 255, 0.08) !important;
+                border-color: rgba(255, 255, 255, 0.2) !important;
+                color: #fff !important;
+                
+                &:hover {
+                    border-color: rgba(255, 255, 255, 0.4) !important;
+                }
+            }
+            
+            .ant-select-selection-placeholder {
+                color: rgba(255, 255, 255, 0.45) !important;
+            }
+            
+            .ant-select-selection-item {
+                color: #fff !important;
+            }
+            
+            .ant-select-arrow {
+                color: rgba(255, 255, 255, 0.6) !important;
+            }
+            
+            .ant-select-clear {
+                background: rgba(0, 0, 0, 0.5);
+                color: rgba(255, 255, 255, 0.6);
+                
+                &:hover {
+                    color: rgba(255, 255, 255, 0.9);
+                }
+            }
+            
+            // Disabled state
+            &.ant-select-disabled {
+                .ant-select-selector {
+                    background: rgba(255, 255, 255, 0.04) !important;
+                    border-color: rgba(255, 255, 255, 0.1) !important;
+                    color: rgba(255, 255, 255, 0.3) !important;
+                }
+            }
+        }
+    }
 }
 
 nz-content {

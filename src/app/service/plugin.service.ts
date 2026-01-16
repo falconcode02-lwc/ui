@@ -20,6 +20,8 @@ export interface PluginDto {
   resources?: string;
   sourceCode?: string; // Optional: original source code for editing
   pluginType?: string;
+  workspaceKey?: string;
+  projectKey?: string;
 }
 
 export interface PageResponse<T> {
@@ -64,16 +66,21 @@ export class PluginService {
    * @param q Search query for pluginName or pluginId
    * @param page Page number (0-based)
    * @param size Page size
+   * @param pluginType Optional plugin type filter
    * @returns Observable of paginated plugin DTOs
    */
   listPlugins(
     q?: string,
     page: number = 0,
-    size: number = 20
+    size: number = 20,
+    pluginType?: string
   ): Observable<PageResponse<PluginDto>> {
     let url = `/api/plugins?page=${page}&size=${size}`;
     if (q && q.trim()) {
       url += `&q=${encodeURIComponent(q)}`;
+    }
+    if (pluginType && pluginType !== "ALL") {
+      url += `&pluginType=${encodeURIComponent(pluginType)}`;
     }
     return this.httpService.get<PageResponse<PluginDto>>(url) as Observable<
       PageResponse<PluginDto>

@@ -5,15 +5,15 @@ import {
   ChangeDetectionStrategy,
   ViewChild,
   effect,
-  ComponentRef,
-  ViewContainerRef,
-  CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
   AfterViewInit,
   NgZone,
   HostListener,
+  OnDestroy,
+  CUSTOM_ELEMENTS_SCHEMA,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { Subscription } from "rxjs";
 import {
   FormBuilder,
   FormGroup,
@@ -42,6 +42,7 @@ import { NzListModule } from "ng-zorro-antd/list";
 import { NzDropDownModule } from "ng-zorro-antd/dropdown";
 import { NzPaginationModule } from "ng-zorro-antd/pagination";
 import { PluginService, PluginDto } from "../../service/plugin.service";
+import { ContextService } from "../../service/context.service";
 import { FormBuilderComponent } from "../form-builder/form-builder.component";
 import { CodeEditor } from "@acrodata/code-editor";
 import { java } from "@codemirror/lang-java";
@@ -102,7 +103,10 @@ export interface PluginFormData {
   styleUrls: ["./plugin-manager.component.scss"],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PluginManagerComponent implements OnInit, AfterViewInit {
+export class PluginManagerComponent
+  implements OnInit, AfterViewInit, OnDestroy
+{
+  private contextSub?: Subscription;
   // Store polling interval reference
   private codeEditorSyncInterval: any;
   languages: LanguageDescription[] = minimalLanguages.slice();
@@ -439,6 +443,18 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
   searchText = "";
   loading = false;
 
+  // Plugin Type Filtering
+  selectedPluginType: string = "ALL";
+  pluginTypes: string[] = [
+    "ALL",
+    "CUSTOM",
+    "PLUGIN",
+    "TOOL",
+    "MEMORY",
+    "AI_MODEL",
+  ];
+  groupedPlugins: Map<string, PluginDto[]> = new Map();
+
   // Pagination
   pageIndex = 1;
   pageSize = 10;
@@ -502,6 +518,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
     private cdr: ChangeDetectorRef,
     private modal: NzModalService,
     private httpService: HttpService,
+    private contextService: ContextService,
     private ngZone: NgZone
   ) {}
 
@@ -519,7 +536,14 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.initForm();
-    this.loadPlugins();
+    this.contextSub = this.contextService.workspace$.subscribe(() => {
+      this.loadPlugins();
+    });
+    this.contextSub.add(
+      this.contextService.project$.subscribe(() => {
+        this.loadPlugins();
+      })
+    );
 
     // Selective update: when Version changes, update just plugin.setVersion("...") in code
     this.pluginForm.get("version")?.valueChanges.subscribe((v: string) => {
@@ -834,13 +858,19 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
   loadPlugins(): void {
     this.loading = true;
     this.pluginService
-      .listPlugins(undefined, this.pageIndex - 1, this.pageSize)
+      .listPlugins(
+        this.searchText || undefined,
+        this.pageIndex - 1,
+        this.pageSize,
+        this.selectedPluginType
+      )
       .subscribe({
         next: (response) => {
           this.plugins = response.content;
           this.filteredPlugins = response.content;
           this.total = response.totalElements;
           this.loading = false;
+          this.groupPluginsByType();
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -853,18 +883,63 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Search/filter plugins
+   * Search/filter plugins (server-side)
    */
   search(): void {
-    const keyword = this.searchText.toLowerCase();
-    this.filteredPlugins = this.plugins.filter(
-      (p) =>
-        p.pluginName.toLowerCase().includes(keyword) ||
-        p.pluginDesc.toLowerCase().includes(keyword) ||
-        p.pluginAuthor.toLowerCase().includes(keyword) ||
-        p.version.toLowerCase().includes(keyword)
-    );
-    this.cdr.markForCheck();
+    // Reset to first page when searching
+    this.pageIndex = 1;
+    this.loadPlugins();
+  }
+
+  /**
+   * Filter plugins by type
+   */
+  filterByType(type: string): void {
+    this.selectedPluginType = type;
+    this.search();
+  }
+
+  /**
+   * Get plugins for a specific type
+   */
+  getPluginsByType(type: string): PluginDto[] {
+    return this.filteredPlugins.filter((p) => p.pluginType === type);
+  }
+
+  /**
+   * Get count of plugins for each type (server-side)
+   */
+  getPluginTypeCount(type: string): number {
+    // For server-side filtering, show the total from the current filter
+    if (type === this.selectedPluginType) {
+      return this.total;
+    }
+    // For other types, we don't have the count without making additional API calls
+    return 0;
+  }
+
+  /**
+   * Group filtered plugins by their type
+   */
+  groupPluginsByType(): void {
+    this.groupedPlugins.clear();
+
+    if (this.selectedPluginType === "ALL") {
+      // Group by all types
+      this.pluginTypes.forEach((type) => {
+        if (type !== "ALL") {
+          const pluginsOfType = this.filteredPlugins.filter(
+            (p) => p.pluginType === type
+          );
+          if (pluginsOfType.length > 0) {
+            this.groupedPlugins.set(type, pluginsOfType);
+          }
+        }
+      });
+    } else {
+      // Single group for selected type
+      this.groupedPlugins.set(this.selectedPluginType, this.filteredPlugins);
+    }
   }
 
   /**
@@ -1703,6 +1778,9 @@ public class <Plugin ID> extends Function {
 
   /**
    * Handle page change
+   */
+  /**
+   * Handle pagination change
    */
   onPageChange(page: number): void {
     this.pageIndex = page;

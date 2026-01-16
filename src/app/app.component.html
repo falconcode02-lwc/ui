@@ -122,6 +122,41 @@
                     <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
                 </span>
 
+                <!-- Workspace and Project Dropdowns -->
+                <div class="environment-selectors">
+                    <nz-select 
+                        nzSize="small"
+                        [(ngModel)]="selectedWorkspace"
+                        (ngModelChange)="onWorkspaceChange($event)"
+                        nzPlaceHolder="Select Workspace"
+                        nzShowSearch
+                        nzAllowClear
+                        [nzDisabled]="isSelectionDisabled"
+                        class="workspace-select">
+                        <nz-option 
+                            *ngFor="let workspace of workspaces" 
+                            [nzValue]="workspace.code || workspace.id" 
+                            [nzLabel]="workspace.name">
+                        </nz-option>
+                    </nz-select>
+
+                    <nz-select 
+                    nzSize="small"
+                        [(ngModel)]="selectedProject"
+                        (ngModelChange)="onProjectChange($event)"
+                        nzPlaceHolder="Select Project"
+                        nzShowSearch
+                        nzAllowClear
+                        [nzDisabled]="!selectedWorkspace || isSelectionDisabled"
+                        class="project-select">
+                        <nz-option 
+                            *ngFor="let project of projects" 
+                            [nzValue]="project.id" 
+                            [nzLabel]="project.name">
+                        </nz-option>
+                    </nz-select>
+                </div>
+
                 <ng-content select="[header]"></ng-content>
             </div>
             <nz-breadcrumb>
