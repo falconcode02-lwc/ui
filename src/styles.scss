@@ -721,14 +721,18 @@ app-editor {
     width: 100%;
 }
 
-// @font-face {
-//     font-family: "codicon";
-//     src: url("/assets/monaco/vs/base/browser/ui/codicons/codicon/codicon.ttf") format("truetype");
-// }
+/* Import Monaco Editor CSS */
+@import "monaco-editor/min/vs/editor/editor.main.css";
 
-// .monaco-editor .codicon {
-//     font-family: "codicon" !important;
-// }
+/* Fix for Monaco icons (folding, etc.) in deployment */
+@font-face {
+    font-family: "codicon";
+    src: url("/ff/assets/monaco/vs/base/browser/ui/codicons/codicon/codicon.ttf") format("truetype");
+}
+
+.monaco-editor .codicon {
+    font-family: "codicon" !important;
+}
 
 
 

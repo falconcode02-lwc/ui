@@ -44,14 +44,10 @@ import { NzPaginationModule } from "ng-zorro-antd/pagination";
 import { PluginService, PluginDto } from "../../service/plugin.service";
 import { ContextService } from "../../service/context.service";
 import { FormBuilderComponent } from "../form-builder/form-builder.component";
-import { CodeEditor } from "@acrodata/code-editor";
-import { java } from "@codemirror/lang-java";
-import { EditorView } from "@codemirror/view";
+import { MonacoEditorComponent } from "../../common/editor-component/editor.component";
 import { HttpService } from "../../service/http-service";
 import { NzResizableModule, NzResizeEvent } from "ng-zorro-antd/resizable";
 import { NzSplitterModule } from "ng-zorro-antd/splitter";
-import { minimalLanguages } from "../../helpers/minimal-languages";
-import type { LanguageDescription } from "@codemirror/language";
 
 export interface PluginFormData {
   pluginName: string;
@@ -90,7 +86,7 @@ export interface PluginFormData {
     NzToolTipModule,
     NzTabsModule,
     NzUploadModule,
-    CodeEditor,
+    MonacoEditorComponent,
     NzResizableModule,
     NzSplitterModule,
     NzPageHeaderModule,
@@ -109,13 +105,11 @@ export class PluginManagerComponent
   private contextSub?: Subscription;
   // Store polling interval reference
   private codeEditorSyncInterval: any;
-  languages: LanguageDescription[] = minimalLanguages.slice();
-  editorOptions = { theme: "vs-dark", language: "javascript" };
   /**
    * Sync form fields from code editor content
    */
   private syncFormFromCodeEditor(): void {
-    const code = this.codeEditor?.view?.state.doc.toString() || "";
+    const code = this.monacoEditor?.editor?.getValue() || "";
     if (!code) return;
     // Helper to extract quoted setter value (handles escaped quotes and multiline)
     const extractSetter = (setter: string) => {
@@ -268,7 +262,7 @@ export class PluginManagerComponent
    */
   deployPluginFromDrawer(): void {
     const javaCode =
-      this.codeEditor?.view?.state.doc.toString() || this.generatedCode;
+      this.monacoEditor?.editor?.getValue() || this.generatedCode;
     const loadingId = this.message.loading("Deploying...", {
       nzDuration: 0,
     }).messageId;
@@ -464,13 +458,8 @@ export class PluginManagerComponent
   private formBuilderModalRef?: NzModalRef;
 
   // Code Editor
-  @ViewChild(CodeEditor) codeEditor?: CodeEditor;
+  @ViewChild(MonacoEditorComponent) monacoEditor?: MonacoEditorComponent;
   generatedCode = "";
-  javaExtensions = [
-    java(),
-    EditorView.editable.of(false),
-    EditorView.lineWrapping,
-  ];
 
   // Icon Upload
   iconPreview: string = "";
@@ -549,7 +538,7 @@ export class PluginManagerComponent
     this.pluginForm.get("version")?.valueChanges.subscribe((v: string) => {
       const newVersion = v ?? "";
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -569,7 +558,7 @@ export class PluginManagerComponent
     // Selective updates for other quoted setters
     this.pluginForm.get("pluginName")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -588,7 +577,7 @@ export class PluginManagerComponent
 
     this.pluginForm.get("pluginDesc")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -609,9 +598,7 @@ export class PluginManagerComponent
       .get("pluginAuthor")
       ?.valueChanges.subscribe((val: string) => {
         const current =
-          this.codeEditor?.view?.state.doc.toString() ||
-          this.generatedCode ||
-          "";
+          this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
         if (!current) {
           return;
         }
@@ -632,9 +619,7 @@ export class PluginManagerComponent
       .get("pluginDocument")
       ?.valueChanges.subscribe((val: string) => {
         const current =
-          this.codeEditor?.view?.state.doc.toString() ||
-          this.generatedCode ||
-          "";
+          this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
         if (!current) {
           return;
         }
@@ -653,7 +638,7 @@ export class PluginManagerComponent
 
     this.pluginForm.get("icon")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -679,7 +664,7 @@ export class PluginManagerComponent
     // setProps - always base64 encode the JSON
     this.pluginForm.get("props")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -707,7 +692,7 @@ export class PluginManagerComponent
     // setSecrets - always base64 encode the JSON
     this.pluginForm.get("secrets")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -735,7 +720,7 @@ export class PluginManagerComponent
     // isAiTool
     this.pluginForm.get("isAiTool")?.valueChanges.subscribe((val: boolean) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) return;
       const pattern =
         /(plugin\s*\.\s*setAiTool\s*\(\s*)(true|false)(\s*\)\s*;)/;
@@ -752,9 +737,7 @@ export class PluginManagerComponent
       .get("aiToolDescription")
       ?.valueChanges.subscribe((val: string) => {
         const current =
-          this.codeEditor?.view?.state.doc.toString() ||
-          this.generatedCode ||
-          "";
+          this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
         if (!current) return;
         const escaped = this.escapeJavaString(val ?? "");
         const replaced = this.replacePluginSetter(
@@ -772,7 +755,7 @@ export class PluginManagerComponent
     // pluginType
     this.pluginForm.get("pluginType")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -810,10 +793,10 @@ export class PluginManagerComponent
     if (this.codeEditorSyncInterval) {
       clearInterval(this.codeEditorSyncInterval);
     }
-    let lastCode = this.codeEditor?.view?.state.doc.toString() || "";
+    let lastCode = this.monacoEditor?.editor?.getValue() || "";
     this.codeEditorSyncInterval = setInterval(() => {
       if (this.drawerVisible) {
-        const currentCode = this.codeEditor?.view?.state.doc.toString() || "";
+        const currentCode = this.monacoEditor?.editor?.getValue() || "";
         if (currentCode !== lastCode) {
           lastCode = currentCode;
           this.syncFormFromCodeEditor();
@@ -1373,7 +1356,7 @@ export class PluginManagerComponent
   compilePluginAndShow(): void {
     this.codeVersion = 0;
     const javaCode =
-      this.codeEditor?.view?.state.doc.toString() || this.generatedCode;
+      this.monacoEditor?.editor?.getValue() || this.generatedCode;
     const loadingId = this.message.loading("Compiling...", {
       nzDuration: 0,
     }).messageId;
@@ -1791,8 +1774,7 @@ public class <Plugin ID> extends Function {
    * Export current plugin as base64-encoded .ffx file
    */
   exportPlugin(): void {
-    const code =
-      this.codeEditor?.view?.state.doc.toString() || this.generatedCode;
+    const code = this.monacoEditor?.editor?.getValue() || this.generatedCode;
     const base64 = btoa(unescape(encodeURIComponent(code)));
     const blob = new Blob([base64], { type: "application/octet-stream" });
     const url = window.URL.createObjectURL(blob);
@@ -1818,15 +1800,7 @@ public class <Plugin ID> extends Function {
         const base64 = e.target.result;
         const code = decodeURIComponent(escape(atob(base64)));
         this.generatedCode = code;
-        if (this.codeEditor?.view) {
-          this.codeEditor.view.dispatch({
-            changes: {
-              from: 0,
-              to: this.codeEditor.view.state.doc.length,
-              insert: code,
-            },
-          });
-        }
+        // Monaco Editor will automatically update via ngModel binding
         setTimeout(() => this.syncFormFromCodeEditor(), 100);
         this.message.success("Plugin imported from .ffx file");
       } catch {
