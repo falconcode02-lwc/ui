@@ -5,6 +5,7 @@ import {
   OnInit,
   Input,
   Inject,
+  Optional,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import {
@@ -395,7 +396,7 @@ export class FormBuilderComponent implements OnInit {
     private router: Router,
     private message: NzMessageService,
     private modal: NzModalService,
-    @Inject(NZ_MODAL_DATA) public data: any
+    @Optional() @Inject(NZ_MODAL_DATA) public data: any
   ) {
     if (this.data?.hideSaveButton !== undefined)
       this.hideSaveButton = this.data?.hideSaveButton ?? false;

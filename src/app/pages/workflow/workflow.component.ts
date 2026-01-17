@@ -104,8 +104,10 @@ import { MarkdownModule, MarkdownService } from "ngx-markdown";
 import { PluginDetailComponent } from "../components/plugin-detail/plugin-detail.component";
 import { MarketplaceComponent } from "../marketplace/marketplace.component";
 import { BreadcrumbService } from "../../service/breadcrumb.service";
+import { ContextService } from "../../service/context.service";
 import { PluginService } from "../../service/plugin.service";
 import { PluginBlock, ToolboxSection } from "../../model/plugin-model";
+import { Subscription } from "rxjs";
 
 @Pipe({
   name: "filter",
@@ -204,6 +206,7 @@ const connectionBuilders = {
 export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   protected readonly state = inject(FlowState);
   private readonly _injector = inject(Injector);
+  private readonly contextService = inject(ContextService);
   notes = `### Add Notes`;
   setReadOnly = false;
   copiedNodes: any[] = [];
@@ -282,6 +285,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   memoryForm!: FormGroup;
   toolForm!: FormGroup;
   agentMemoryList: any[] = [];
+  private contextSub?: Subscription;
 
   // Plugin detail modal state
   isPluginDetailVisible: boolean = false;
@@ -601,6 +605,18 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   canvas: any[] = [];
   private editor!: Drawflow;
   gridSize = 20;
+
+  updateUrlParams(): void {
+    const workspace = this.contextService.getWorkspace();
+    const project = this.contextService.getProject();
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { workspace, project },
+      queryParamsHandling: "merge",
+    });
+  }
+
   // nodes: any[] = [];
   // connections: any[] = [];
   loadFromJson(json: any) {
@@ -676,6 +692,28 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     if (runid) {
       this.startExecutionPolling(runid);
     }
+
+    // Init context from Query Params if available
+    const workspaceParam = this.route.snapshot.queryParamMap.get("workspace");
+    const projectParam = this.route.snapshot.queryParamMap.get("project");
+
+    if (workspaceParam) {
+      this.contextService.setWorkspace(workspaceParam);
+    }
+    if (projectParam) {
+      this.contextService.setProject(projectParam);
+    }
+
+    this.contextSub = this.contextService.workspace$.subscribe((ws) => {
+      this.updateUrlParams();
+      this.loadPlugins();
+    });
+    this.contextSub.add(
+      this.contextService.project$.subscribe((p) => {
+        this.updateUrlParams();
+        this.loadPlugins();
+      })
+    );
     if (this.workflowId) {
       setTimeout(() => {
         if (runid) {
@@ -3894,7 +3932,10 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   getWorkflowStatus(workflowId: any) {
     this.isWorkflowRunning = true;
     this.workflowService
-      .getWorkflowStepsStatus("", workflowId)
+      .getWorkflowStepsStatus(
+        this.contextService.getWorkspace() || "",
+        workflowId
+      )
       .subscribe((d: any) => {
         if (d.status == "SUCCESS") {
           let result = d.result;

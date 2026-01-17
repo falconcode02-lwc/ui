@@ -1,30 +1,40 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
 import {
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
   Validators,
-} from '@angular/forms';
-import { NzTableModule } from 'ng-zorro-antd/table';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzSpaceModule } from 'ng-zorro-antd/space';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzCardModule } from 'ng-zorro-antd/card';
-import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzModalModule } from 'ng-zorro-antd/modal';
-import { NzFormModule } from 'ng-zorro-antd/form';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzSelectModule } from 'ng-zorro-antd/select';
-import { ProjectService } from './project-service';
-import { Project } from './project-model';
+  FormsModule,
+} from "@angular/forms";
+import { NzTableModule } from "ng-zorro-antd/table";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzSpaceModule } from "ng-zorro-antd/space";
+import { NzIconModule } from "ng-zorro-antd/icon";
+import { NzCardModule } from "ng-zorro-antd/card";
+import { NzTagModule } from "ng-zorro-antd/tag";
+import { NzModalModule } from "ng-zorro-antd/modal";
+import { NzFormModule } from "ng-zorro-antd/form";
+import { NzInputModule } from "ng-zorro-antd/input";
+import { NzSelectModule } from "ng-zorro-antd/select";
+import { NzPageHeaderModule } from "ng-zorro-antd/page-header";
+import { NzListModule } from "ng-zorro-antd/list";
+import { NzEmptyModule } from "ng-zorro-antd/empty";
+import { NzDropDownModule } from "ng-zorro-antd/dropdown";
+import { NzPopconfirmModule } from "ng-zorro-antd/popconfirm";
+import { NzMessageService } from "ng-zorro-antd/message";
+import { ProjectService } from "./project-service";
+import { Project } from "./project-model";
+import { ContextService } from "../../service/context.service";
+import { Subscription } from "rxjs";
 
 @Component({
-  selector: 'app-projects',
+  selector: "app-projects",
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     NzTableModule,
     NzButtonModule,
     NzSpaceModule,
@@ -35,31 +45,46 @@ import { Project } from './project-model';
     NzFormModule,
     NzInputModule,
     NzSelectModule,
+    NzPageHeaderModule,
+    NzListModule,
+    NzEmptyModule,
+    NzDropDownModule,
+    NzPopconfirmModule,
   ],
-  templateUrl: './project-component.html',
+  templateUrl: "./project-component.html",
+  styleUrl: "./project-component.scss",
 })
 export class ProjectComponent implements OnInit {
   projects: Project[] = [];
+  filteredProjects: Project[] = [];
+  searchText: string = "";
   loading = false;
   isModalVisible = false;
   isEditing = false;
   currentId: string | null = null;
   projectForm!: FormGroup;
+  private workspaceSub?: Subscription;
 
   constructor(
     private projectService: ProjectService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private message: NzMessageService,
+    private contextService: ContextService
   ) {}
 
   ngOnInit(): void {
     this.projectForm = this.fb.group({
-      code: ['', Validators.required],
-      name: ['', Validators.required],
-      icon: [''],
-      description: [''],
-      accessibility: ['PUBLIC', Validators.required],
+      code: ["", Validators.required],
+      name: ["", Validators.required],
+      icon: [""],
+      description: [""],
+      accessibility: ["PUBLIC", Validators.required],
     });
-    this.loadProjects();
+
+    // Subscribe to global workspace changes
+    this.workspaceSub = this.contextService.workspace$.subscribe(() => {
+      this.loadProjects();
+    });
   }
 
   loadProjects(): void {
@@ -67,24 +92,35 @@ export class ProjectComponent implements OnInit {
     this.projectService.getAll().subscribe({
       next: (list) => {
         this.projects = list;
+        this.filteredProjects = list;
         this.loading = false;
       },
       error: () => {
         this.loading = false;
-        alert('Failed to load projects');
+        this.message.error("Failed to load projects");
       },
     });
+  }
+
+  search(): void {
+    const keyword = this.searchText.toLowerCase();
+    this.filteredProjects = this.projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(keyword) ||
+        p.code.toLowerCase().includes(keyword) ||
+        (p.description && p.description.toLowerCase().includes(keyword))
+    );
   }
 
   openCreate(): void {
     this.isEditing = false;
     this.currentId = null;
     this.projectForm.reset({
-      code: '',
-      name: '',
-      icon: '',
-      description: '',
-      accessibility: 'PUBLIC',
+      code: "",
+      name: "",
+      icon: "",
+      description: "",
+      accessibility: "PUBLIC",
     });
     this.isModalVisible = true;
   }
@@ -95,16 +131,16 @@ export class ProjectComponent implements OnInit {
     this.projectForm.patchValue({
       code: p.code,
       name: p.name,
-      icon: p.icon || '',
-      description: p.description || '',
-      accessibility: p.accessibility || 'PUBLIC',
+      icon: p.icon || "",
+      description: p.description || "",
+      accessibility: p.accessibility || "PUBLIC",
     });
     this.isModalVisible = true;
   }
 
   handleOk(): void {
     if (this.projectForm.invalid) {
-      Object.values(this.projectForm.controls).forEach(control => {
+      Object.values(this.projectForm.controls).forEach((control) => {
         control.markAsDirty();
         control.updateValueAndValidity();
       });
@@ -116,20 +152,20 @@ export class ProjectComponent implements OnInit {
     if (this.isEditing && this.currentId) {
       this.projectService.update(this.currentId, payload).subscribe({
         next: () => {
-          alert('✅ Project updated');
+          this.message.success("Project updated successfully");
           this.isModalVisible = false;
           this.loadProjects();
         },
-        error: () => alert('❌ Update failed'),
+        error: () => this.message.error("Failed to update project"),
       });
     } else {
       this.projectService.create(payload).subscribe({
         next: () => {
-          alert('✅ Project created');
+          this.message.success("Project created successfully");
           this.isModalVisible = false;
           this.loadProjects();
         },
-        error: () => alert('❌ Create failed'),
+        error: () => this.message.error("Failed to create project"),
       });
     }
   }
@@ -139,21 +175,27 @@ export class ProjectComponent implements OnInit {
   }
 
   deleteProject(p: Project): void {
-    if (!p.id || !confirm('Delete this project?')) return;
+    if (!p.id) return;
     this.projectService.delete(p.id).subscribe({
       next: () => {
-        alert('✅ Deleted');
+        this.message.success("Project deleted successfully");
         this.loadProjects();
       },
-      error: () => alert('❌ Delete failed'),
+      error: () => this.message.error("Failed to delete project"),
     });
   }
 
   startWorkflow(p: Project): void {
     if (!p.id) return;
     this.projectService.startWorkflow(p.id).subscribe({
-      next: () => alert('✅ Workflow started'),
-      error: () => alert('❌ Start failed'),
+      next: () => this.message.success("Workflow started successfully"),
+      error: () => this.message.error("Failed to start workflow"),
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.workspaceSub) {
+      this.workspaceSub.unsubscribe();
+    }
   }
 }

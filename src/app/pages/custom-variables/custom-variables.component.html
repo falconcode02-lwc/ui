@@ -19,11 +19,14 @@
         <nz-splitter-panel [nzDefaultSize]="'20%'" class="group-pane">
             <div style="padding-right: 16px;">
                 <nz-list nzBordered>
-
                     @for (item of groupOptions; track item) {
-                    <nz-list-item (click)="selectGroupItem(item)">
-                        <!-- <span nz-typography><mark>[ITEM]</mark></span> -->
-                        {{ item }}
+                    <nz-list-item (click)="selectGroupItem(item)" 
+                                  [class.active-group]="selectedGroup === item"
+                                  class="group-item">
+                        <span class="group-name">{{ item }}</span>
+                        <nz-badge [nzCount]="getGroupCount(item)" 
+                                  [nzStyle]="{ backgroundColor: '#52c41a' }">
+                        </nz-badge>
                     </nz-list-item>
                     }
                 </nz-list>
@@ -55,8 +58,20 @@
                             <td>{{ v.group }}</td>
                             <td>{{ v.key }}</td>
                             <td>
-                                <div class="value-cell" [title]="(v.value | json)">
-                                    <pre>{{ v.value | json }}</pre>
+                                <div class="value-cell-wrapper">
+                                    <nz-tag [nzColor]="getTypeColor(getValueType(v.value))" 
+                                            class="type-badge">
+                                        {{ getValueType(v.value) }}
+                                    </nz-tag>
+                                    <div class="value-cell" [title]="(v.value | json)">
+                                        <pre>{{ v.value | json }}</pre>
+                                    </div>
+                                    <button nz-button nzType="text" nzSize="small" 
+                                            class="copy-btn"
+                                            nz-tooltip nzTooltipTitle="Copy to clipboard"
+                                            (click)="copyToClipboard(v.value)">
+                                        <span nz-icon nzType="copy" nzTheme="outline"></span>
+                                    </button>
                                 </div>
                             </td>
                             <td>
@@ -106,9 +121,17 @@
 
             <nz-form-item>
                 <nz-form-label>Value</nz-form-label>
-                <nz-form-control>
+                <nz-form-control [nzValidateStatus]="jsonValidationStatus"
+                                 [nzErrorTip]="jsonValidationStatus === 'error' ? 'Invalid JSON format' : ''">
                     <textarea nz-input formControlName="value" rows="6"
-                        placeholder='Plain text or JSON (e.g. "dark" or {"a":1})'></textarea>
+                        placeholder='Any value: plain text, numbers, or JSON objects/arrays'></textarea>
+                    <button nz-button nzType="dashed" nzSize="small" 
+                            style="margin-top: 8px;"
+                            (click)="formatJson()"
+                            type="button">
+                        <span nz-icon nzType="align-left" nzTheme="outline"></span>
+                        Format JSON
+                    </button>
                 </nz-form-control>
             </nz-form-item>
 

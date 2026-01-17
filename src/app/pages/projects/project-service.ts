@@ -1,23 +1,28 @@
-import { Injectable } from '@angular/core';
-import { HttpService } from '../../service/http-service';
-import { Observable } from 'rxjs';
-import { Project } from './project-model';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../environments/environment';
+import { Injectable } from "@angular/core";
+import { HttpService } from "../../service/http-service";
+import { Observable } from "rxjs";
+import { Project } from "./project-model";
+import { HttpClient } from "@angular/common/http";
+import { environment } from "../../environments/environment";
+import { ContextService } from "../../service/context.service";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class ProjectService {
-  private readonly base = 'projects';
-  private readonly workspaceCode = 'DEV_WORKSPACE';
-
+  private readonly base = "projects";
   constructor(
     private http: HttpService,
-    private httpClient: HttpClient
+    private httpClient: HttpClient,
+    private contextService: ContextService
   ) {}
+
+  private getSelectedWorkspace(): string {
+    return this.contextService.getWorkspace() || "DEFAULT";
+  }
 
   // list all projects in a workspace
   getAll(): Observable<Project[]> {
-    return this.http.get(`/api/${this.base}/workspace/${this.workspaceCode}`);
+    const workspaceCode = this.getSelectedWorkspace();
+    return this.http.get(`/api/${this.base}/workspace/${workspaceCode}`);
   }
 
   // get one project by id
@@ -25,8 +30,11 @@ export class ProjectService {
     return this.http.get(`/api/${this.base}/${id}`);
   }
 
-  // create project (workspaceCode is set server-side)
+  // create project
   create(p: Project): Observable<Project> {
+    if (!p.workspaceCode) {
+      p.workspaceCode = this.getSelectedWorkspace();
+    }
     return this.http.post(`/api/${this.base}`, p);
   }
 
@@ -37,7 +45,9 @@ export class ProjectService {
 
   // delete project – uses HttpClient directly, HttpService untouched
   delete(id: string): Observable<void> {
-    const url = `${environment.apiUrl}/api/${this.base}/${encodeURIComponent(id)}`;
+    const url = `${environment.apiUrl}/api/${this.base}/${encodeURIComponent(
+      id
+    )}`;
     return this.httpClient.delete<void>(url);
   }
 

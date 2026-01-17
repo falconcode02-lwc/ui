@@ -5,15 +5,15 @@ import {
   ChangeDetectionStrategy,
   ViewChild,
   effect,
-  ComponentRef,
-  ViewContainerRef,
-  CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
   AfterViewInit,
   NgZone,
   HostListener,
+  OnDestroy,
+  CUSTOM_ELEMENTS_SCHEMA,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { Subscription } from "rxjs";
 import {
   FormBuilder,
   FormGroup,
@@ -42,15 +42,12 @@ import { NzListModule } from "ng-zorro-antd/list";
 import { NzDropDownModule } from "ng-zorro-antd/dropdown";
 import { NzPaginationModule } from "ng-zorro-antd/pagination";
 import { PluginService, PluginDto } from "../../service/plugin.service";
+import { ContextService } from "../../service/context.service";
 import { FormBuilderComponent } from "../form-builder/form-builder.component";
-import { CodeEditor } from "@acrodata/code-editor";
-import { java } from "@codemirror/lang-java";
-import { EditorView } from "@codemirror/view";
+import { MonacoEditorComponent } from "../../common/editor-component/editor.component";
 import { HttpService } from "../../service/http-service";
 import { NzResizableModule, NzResizeEvent } from "ng-zorro-antd/resizable";
 import { NzSplitterModule } from "ng-zorro-antd/splitter";
-import { minimalLanguages } from "../../helpers/minimal-languages";
-import type { LanguageDescription } from "@codemirror/language";
 
 export interface PluginFormData {
   pluginName: string;
@@ -89,7 +86,7 @@ export interface PluginFormData {
     NzToolTipModule,
     NzTabsModule,
     NzUploadModule,
-    CodeEditor,
+    MonacoEditorComponent,
     NzResizableModule,
     NzSplitterModule,
     NzPageHeaderModule,
@@ -102,16 +99,17 @@ export interface PluginFormData {
   styleUrls: ["./plugin-manager.component.scss"],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PluginManagerComponent implements OnInit, AfterViewInit {
+export class PluginManagerComponent
+  implements OnInit, AfterViewInit, OnDestroy
+{
+  private contextSub?: Subscription;
   // Store polling interval reference
   private codeEditorSyncInterval: any;
-  languages: LanguageDescription[] = minimalLanguages.slice();
-  editorOptions = { theme: "vs-dark", language: "javascript" };
   /**
    * Sync form fields from code editor content
    */
   private syncFormFromCodeEditor(): void {
-    const code = this.codeEditor?.view?.state.doc.toString() || "";
+    const code = this.monacoEditor?.editor?.getValue() || "";
     if (!code) return;
     // Helper to extract quoted setter value (handles escaped quotes and multiline)
     const extractSetter = (setter: string) => {
@@ -264,7 +262,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
    */
   deployPluginFromDrawer(): void {
     const javaCode =
-      this.codeEditor?.view?.state.doc.toString() || this.generatedCode;
+      this.monacoEditor?.editor?.getValue() || this.generatedCode;
     const loadingId = this.message.loading("Deploying...", {
       nzDuration: 0,
     }).messageId;
@@ -439,6 +437,18 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
   searchText = "";
   loading = false;
 
+  // Plugin Type Filtering
+  selectedPluginType: string = "ALL";
+  pluginTypes: string[] = [
+    "ALL",
+    "CUSTOM",
+    "PLUGIN",
+    "TOOL",
+    "MEMORY",
+    "AI_MODEL",
+  ];
+  groupedPlugins: Map<string, PluginDto[]> = new Map();
+
   // Pagination
   pageIndex = 1;
   pageSize = 10;
@@ -448,13 +458,8 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
   private formBuilderModalRef?: NzModalRef;
 
   // Code Editor
-  @ViewChild(CodeEditor) codeEditor?: CodeEditor;
+  @ViewChild(MonacoEditorComponent) monacoEditor?: MonacoEditorComponent;
   generatedCode = "";
-  javaExtensions = [
-    java(),
-    EditorView.editable.of(false),
-    EditorView.lineWrapping,
-  ];
 
   // Icon Upload
   iconPreview: string = "";
@@ -502,6 +507,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
     private cdr: ChangeDetectorRef,
     private modal: NzModalService,
     private httpService: HttpService,
+    private contextService: ContextService,
     private ngZone: NgZone
   ) {}
 
@@ -519,13 +525,20 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.initForm();
-    this.loadPlugins();
+    this.contextSub = this.contextService.workspace$.subscribe(() => {
+      this.loadPlugins();
+    });
+    this.contextSub.add(
+      this.contextService.project$.subscribe(() => {
+        this.loadPlugins();
+      })
+    );
 
     // Selective update: when Version changes, update just plugin.setVersion("...") in code
     this.pluginForm.get("version")?.valueChanges.subscribe((v: string) => {
       const newVersion = v ?? "";
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -545,7 +558,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
     // Selective updates for other quoted setters
     this.pluginForm.get("pluginName")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -564,7 +577,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
 
     this.pluginForm.get("pluginDesc")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -585,9 +598,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
       .get("pluginAuthor")
       ?.valueChanges.subscribe((val: string) => {
         const current =
-          this.codeEditor?.view?.state.doc.toString() ||
-          this.generatedCode ||
-          "";
+          this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
         if (!current) {
           return;
         }
@@ -608,9 +619,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
       .get("pluginDocument")
       ?.valueChanges.subscribe((val: string) => {
         const current =
-          this.codeEditor?.view?.state.doc.toString() ||
-          this.generatedCode ||
-          "";
+          this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
         if (!current) {
           return;
         }
@@ -629,7 +638,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
 
     this.pluginForm.get("icon")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -655,7 +664,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
     // setProps - always base64 encode the JSON
     this.pluginForm.get("props")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -683,7 +692,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
     // setSecrets - always base64 encode the JSON
     this.pluginForm.get("secrets")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -711,7 +720,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
     // isAiTool
     this.pluginForm.get("isAiTool")?.valueChanges.subscribe((val: boolean) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) return;
       const pattern =
         /(plugin\s*\.\s*setAiTool\s*\(\s*)(true|false)(\s*\)\s*;)/;
@@ -728,9 +737,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
       .get("aiToolDescription")
       ?.valueChanges.subscribe((val: string) => {
         const current =
-          this.codeEditor?.view?.state.doc.toString() ||
-          this.generatedCode ||
-          "";
+          this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
         if (!current) return;
         const escaped = this.escapeJavaString(val ?? "");
         const replaced = this.replacePluginSetter(
@@ -748,7 +755,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
     // pluginType
     this.pluginForm.get("pluginType")?.valueChanges.subscribe((val: string) => {
       const current =
-        this.codeEditor?.view?.state.doc.toString() || this.generatedCode || "";
+        this.monacoEditor?.editor?.getValue() || this.generatedCode || "";
       if (!current) {
         return;
       }
@@ -786,10 +793,10 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
     if (this.codeEditorSyncInterval) {
       clearInterval(this.codeEditorSyncInterval);
     }
-    let lastCode = this.codeEditor?.view?.state.doc.toString() || "";
+    let lastCode = this.monacoEditor?.editor?.getValue() || "";
     this.codeEditorSyncInterval = setInterval(() => {
       if (this.drawerVisible) {
-        const currentCode = this.codeEditor?.view?.state.doc.toString() || "";
+        const currentCode = this.monacoEditor?.editor?.getValue() || "";
         if (currentCode !== lastCode) {
           lastCode = currentCode;
           this.syncFormFromCodeEditor();
@@ -834,13 +841,19 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
   loadPlugins(): void {
     this.loading = true;
     this.pluginService
-      .listPlugins(undefined, this.pageIndex - 1, this.pageSize)
+      .listPlugins(
+        this.searchText || undefined,
+        this.pageIndex - 1,
+        this.pageSize,
+        this.selectedPluginType
+      )
       .subscribe({
         next: (response) => {
           this.plugins = response.content;
           this.filteredPlugins = response.content;
           this.total = response.totalElements;
           this.loading = false;
+          this.groupPluginsByType();
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -853,18 +866,63 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Search/filter plugins
+   * Search/filter plugins (server-side)
    */
   search(): void {
-    const keyword = this.searchText.toLowerCase();
-    this.filteredPlugins = this.plugins.filter(
-      (p) =>
-        p.pluginName.toLowerCase().includes(keyword) ||
-        p.pluginDesc.toLowerCase().includes(keyword) ||
-        p.pluginAuthor.toLowerCase().includes(keyword) ||
-        p.version.toLowerCase().includes(keyword)
-    );
-    this.cdr.markForCheck();
+    // Reset to first page when searching
+    this.pageIndex = 1;
+    this.loadPlugins();
+  }
+
+  /**
+   * Filter plugins by type
+   */
+  filterByType(type: string): void {
+    this.selectedPluginType = type;
+    this.search();
+  }
+
+  /**
+   * Get plugins for a specific type
+   */
+  getPluginsByType(type: string): PluginDto[] {
+    return this.filteredPlugins.filter((p) => p.pluginType === type);
+  }
+
+  /**
+   * Get count of plugins for each type (server-side)
+   */
+  getPluginTypeCount(type: string): number {
+    // For server-side filtering, show the total from the current filter
+    if (type === this.selectedPluginType) {
+      return this.total;
+    }
+    // For other types, we don't have the count without making additional API calls
+    return 0;
+  }
+
+  /**
+   * Group filtered plugins by their type
+   */
+  groupPluginsByType(): void {
+    this.groupedPlugins.clear();
+
+    if (this.selectedPluginType === "ALL") {
+      // Group by all types
+      this.pluginTypes.forEach((type) => {
+        if (type !== "ALL") {
+          const pluginsOfType = this.filteredPlugins.filter(
+            (p) => p.pluginType === type
+          );
+          if (pluginsOfType.length > 0) {
+            this.groupedPlugins.set(type, pluginsOfType);
+          }
+        }
+      });
+    } else {
+      // Single group for selected type
+      this.groupedPlugins.set(this.selectedPluginType, this.filteredPlugins);
+    }
   }
 
   /**
@@ -1298,7 +1356,7 @@ export class PluginManagerComponent implements OnInit, AfterViewInit {
   compilePluginAndShow(): void {
     this.codeVersion = 0;
     const javaCode =
-      this.codeEditor?.view?.state.doc.toString() || this.generatedCode;
+      this.monacoEditor?.editor?.getValue() || this.generatedCode;
     const loadingId = this.message.loading("Compiling...", {
       nzDuration: 0,
     }).messageId;
@@ -1704,6 +1762,9 @@ public class <Plugin ID> extends Function {
   /**
    * Handle page change
    */
+  /**
+   * Handle pagination change
+   */
   onPageChange(page: number): void {
     this.pageIndex = page;
     this.loadPlugins();
@@ -1713,8 +1774,7 @@ public class <Plugin ID> extends Function {
    * Export current plugin as base64-encoded .ffx file
    */
   exportPlugin(): void {
-    const code =
-      this.codeEditor?.view?.state.doc.toString() || this.generatedCode;
+    const code = this.monacoEditor?.editor?.getValue() || this.generatedCode;
     const base64 = btoa(unescape(encodeURIComponent(code)));
     const blob = new Blob([base64], { type: "application/octet-stream" });
     const url = window.URL.createObjectURL(blob);
@@ -1740,15 +1800,7 @@ public class <Plugin ID> extends Function {
         const base64 = e.target.result;
         const code = decodeURIComponent(escape(atob(base64)));
         this.generatedCode = code;
-        if (this.codeEditor?.view) {
-          this.codeEditor.view.dispatch({
-            changes: {
-              from: 0,
-              to: this.codeEditor.view.state.doc.length,
-              insert: code,
-            },
-          });
-        }
+        // Monaco Editor will automatically update via ngModel binding
         setTimeout(() => this.syncFormFromCodeEditor(), 100);
         this.message.success("Plugin imported from .ffx file");
       } catch {
