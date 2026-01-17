@@ -39,6 +39,16 @@ export const routes: Routes = [
       ).then((m) => m.WORKFLOW_HISTORY_COMPACT_ROUTES),
   },
   {
+    path: 'workspace',
+    loadChildren: () =>
+      import(
+        './pages/workspace/workspace-list/workspace-list.routes'
+      ).then(
+        (m) => m.WORKSPACE_LIST_ROUTES
+      ),
+    data: { breadcrumb: 'Workspace' },
+  },
+  {
     path: 'workflow',
     loadChildren: () =>
       import('./pages/workflow/workflow-list/workflow-list.route').then(
@@ -143,4 +153,13 @@ export const routes: Routes = [
       import('./pages/profile/profile.routes').then((m) => m.PROFILE_ROUTES),
     data: { breadcrumb: 'Profile' },
   },
+  {
+    path: 'projects',
+    title: 'Projects',
+    loadChildren: () =>
+      import('./pages/projects/project-route').then((m) => m.PROJECT_ROUTES),
+    data: { breadcrumb: 'Projects' },
+  },
+
+
 ];

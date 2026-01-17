@@ -148,6 +148,50 @@
         flex-shrink: 0;
     }
 
+    // Filter Section
+    .filter-section {
+        margin-bottom: 20px;
+        padding: 16px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color, #303030);
+        border-radius: 8px;
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        &.active {
+            box-shadow: 0 2px 8px rgba(255, 109, 90, 0.3);
+        }
+
+        .type-count {
+            margin-left: 4px;
+            font-size: 11px;
+            padding: 0 6px;
+            min-width: 24px;
+            text-align: center;
+        }
+    }
+
     .pagination-container {
         margin-top: 16px;
         display: flex;
@@ -416,11 +460,18 @@
         border-radius: 4px;
         overflow: hidden;
         background: #0f0f0f;
+        display: flex;
 
-        code-editor {
+        code-editor,
+        app-editor {
             display: block;
             width: 100%;
             height: 100%;
+        }
+
+        // Ensure Monaco Editor container takes full height
+        app-editor ::ng-deep .editor {
+            height: 100% !important;
         }
     }
 

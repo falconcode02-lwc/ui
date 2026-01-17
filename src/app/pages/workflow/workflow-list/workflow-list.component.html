@@ -100,3 +100,38 @@
         </app-workflow-import>
     </ng-container>
 </nz-modal>
+
+<!-- Project Selection Modal -->
+<nz-modal
+  [(nzVisible)]="isProjectModalVisible"
+  nzTitle="Select Project"
+  [nzFooter]="null"
+  [nzClosable]="false"
+  [nzMaskClosable]="false"
+  [nzKeyboard]="false"
+>
+  <ng-container *nzModalContent>
+    <div class="project-selection-container">
+      <p>Please select a project to view the workflow list.</p>
+      
+      <nz-list [nzDataSource]="projects" [nzLoading]="projectLoading" nzBordered>
+        <nz-list-item *ngFor="let project of projects" (click)="selectProject(project)" class="project-item-clickable">
+          <div class="project-item-content">
+            <span nz-icon nzType="folder" nzTheme="outline" class="project-icon"></span>
+            <div class="project-info">
+              <span class="project-name">{{ project.name }}</span>
+              <span class="project-code">{{ project.code }}</span>
+            </div>
+          </div>
+        </nz-list-item>
+        <nz-list-empty *ngIf="!projectLoading && projects.length === 0">
+          <nz-empty nzNotFoundContent="No projects found in this workspace">
+            <button nz-button nzType="primary" (click)="router.navigate(['/projects'])">
+              Go to Projects
+            </button>
+          </nz-empty>
+        </nz-list-empty>
+      </nz-list>
+    </div>
+  </ng-container>
+</nz-modal>

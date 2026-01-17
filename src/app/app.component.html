@@ -15,10 +15,20 @@
             </li>
             <li nz-submenu nzMatchRouter nzTitle="Add" nzIcon="plus">
                 <ul>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/workspace']"
+                        routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="apartment"></span>
+                        <span>Workspace</span>
+                    </li>
                     <li nz-menu-item nzMatchRouter [routerLink]="['/workflow']"
                         routerLinkActive="ant-menu-item-selected">
                         <span nz-icon nzType="pull-request"></span>
                         <span>Workflow</span>
+                    </li>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/projects']"
+                        routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="folder"></span>
+                        <span>Project</span>
                     </li>
                     <li nz-menu-item nzMatchRouter [routerLink]="['/secrets']"
                         routerLinkActive="ant-menu-item-selected">
@@ -111,6 +121,41 @@
                 <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
                     <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
                 </span>
+
+                <!-- Workspace and Project Dropdowns -->
+                <div class="environment-selectors">
+                    <nz-select 
+                        nzSize="small"
+                        [(ngModel)]="selectedWorkspace"
+                        (ngModelChange)="onWorkspaceChange($event)"
+                        nzPlaceHolder="Select Workspace"
+                        nzShowSearch
+                        nzAllowClear
+                        [nzDisabled]="isSelectionDisabled"
+                        class="workspace-select">
+                        <nz-option 
+                            *ngFor="let workspace of workspaces" 
+                            [nzValue]="workspace.code || workspace.id" 
+                            [nzLabel]="workspace.name">
+                        </nz-option>
+                    </nz-select>
+
+                    <nz-select 
+                    nzSize="small"
+                        [(ngModel)]="selectedProject"
+                        (ngModelChange)="onProjectChange($event)"
+                        nzPlaceHolder="Select Project"
+                        nzShowSearch
+                        nzAllowClear
+                        [nzDisabled]="!selectedWorkspace || isSelectionDisabled"
+                        class="project-select">
+                        <nz-option 
+                            *ngFor="let project of projects" 
+                            [nzValue]="project.id" 
+                            [nzLabel]="project.name">
+                        </nz-option>
+                    </nz-select>
+                </div>
 
                 <ng-content select="[header]"></ng-content>
             </div>

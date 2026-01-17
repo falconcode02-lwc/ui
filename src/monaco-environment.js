@@ -1,18 +1,19 @@
 self.MonacoEnvironment = {
   getWorkerUrl: function (_moduleId, label) {
+    const base = "/ff/assets/monaco/vs";
     if (label === 'json') {
-      return './assets/monaco/workers/json.worker.js';
+      return base + '/language/json/jsonWorker.js';
     }
     if (label === 'css') {
-      return './assets/monaco/workers/css.worker.js';
+      return base + '/language/css/cssWorker.js';
     }
     if (label === 'html') {
-      return './assets/monaco/workers/html.worker.js';
+      return base + '/language/html/htmlWorker.js';
     }
     if (label === 'typescript' || label === 'javascript') {
-      return './assets/monaco/workers/ts.worker.js';
+      return base + '/language/typescript/tsWorker.js';
     }
 
-    return './assets/monaco/workers/editor.worker.js';
+    return base + '/editor/editor.worker.js';
   }
 };

@@ -4,31 +4,32 @@ import {
   Component,
   CUSTOM_ELEMENTS_SCHEMA,
   Input,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { NzListModule } from 'ng-zorro-antd/list';
-import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
-import { NzEmptyModule } from 'ng-zorro-antd/empty';
-import { HttpService } from '../../service/http-service';
-import { NzMessageService } from 'ng-zorro-antd/message';
-import { NzSplitterModule } from 'ng-zorro-antd/splitter';
-import { CodeEditor } from '@acrodata/code-editor';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { languages } from '@codemirror/language-data';
-import { NzFlexModule } from 'ng-zorro-antd/flex';
-import { NzCollapseModule } from 'ng-zorro-antd/collapse';
-import { presetColors } from 'ng-zorro-antd/core/color';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzTimelineModule } from 'ng-zorro-antd/timeline';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
-import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
-import { ActivatedRoute, Router } from '@angular/router';
-import { WorkflowService } from '../../service/workflow.service';
-import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
-import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+} from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { NzListModule } from "ng-zorro-antd/list";
+import { NzTagModule } from "ng-zorro-antd/tag";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzIconModule } from "ng-zorro-antd/icon";
+import { NzModalModule, NzModalService } from "ng-zorro-antd/modal";
+import { NzEmptyModule } from "ng-zorro-antd/empty";
+import { HttpService } from "../../service/http-service";
+import { NzMessageService } from "ng-zorro-antd/message";
+import { NzSplitterModule } from "ng-zorro-antd/splitter";
+import { CodeEditor } from "@acrodata/code-editor";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { languages } from "@codemirror/language-data";
+import { NzFlexModule } from "ng-zorro-antd/flex";
+import { NzCollapseModule } from "ng-zorro-antd/collapse";
+import { presetColors } from "ng-zorro-antd/core/color";
+import { NzInputModule } from "ng-zorro-antd/input";
+import { NzTimelineModule } from "ng-zorro-antd/timeline";
+import { NzDividerModule } from "ng-zorro-antd/divider";
+import { NzDescriptionsModule } from "ng-zorro-antd/descriptions";
+import { ActivatedRoute, Router } from "@angular/router";
+import { WorkflowService } from "../../service/workflow.service";
+import { NzPageHeaderModule } from "ng-zorro-antd/page-header";
+import { NzToolTipModule } from "ng-zorro-antd/tooltip";
+import { ContextService } from "../../service/context.service";
 
 interface WorkflowStat {
   label: string;
@@ -39,9 +40,9 @@ interface WorkflowStat {
 
 @Component({
   standalone: true,
-  selector: 'app-workflow-history',
-  templateUrl: './workflow-history-compact.component.html',
-  styleUrl: './workflow-history-compact.scss',
+  selector: "app-workflow-history",
+  templateUrl: "./workflow-history-compact.component.html",
+  styleUrl: "./workflow-history-compact.scss",
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     CommonModule,
@@ -69,23 +70,23 @@ interface WorkflowStat {
 })
 export class WorkflowHistoryCompactComponent implements AfterViewInit {
   colors = presetColors;
-  selectEventID: string = '';
-  workflowId: string = '';
+  selectEventID: string = "";
+  workflowId: string = "";
   statusList: WorkflowStat[] = [];
-  status = '';
-  code = '';
+  status = "";
+  code = "";
   events: any[] = [];
-  inputdata: any = '';
-  resultdata: any = '';
+  inputdata: any = "";
+  resultdata: any = "";
   options: any = {
-    language: 'java',
-    theme: 'dark',
-    setup: 'basic',
+    language: "java",
+    theme: "dark",
+    setup: "basic",
     disabled: false,
     readonly: false,
-    placeholder: '',
+    placeholder: "",
     indentWithTab: true,
-    indentUnit: '',
+    indentUnit: "",
     lineWrapping: true, // Enable wrap text feature
     highlightWhitespace: false,
   };
@@ -98,11 +99,11 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
 
   // Interactive features
   expandedEventIds: Set<string> = new Set();
-  filterStatus: string = 'all';
-  searchTerm: string = '';
-  hoveredEventId: string = '';
-  sortOrder: 'asc' | 'desc' = 'desc'; // Default: newest first
-  workflowdefId: string = '';
+  filterStatus: string = "all";
+  searchTerm: string = "";
+  hoveredEventId: string = "";
+  sortOrder: "asc" | "desc" = "desc"; // Default: newest first
+  workflowdefId: string = "";
   // Statistics
   stats = {
     total: 0,
@@ -119,22 +120,24 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private workflowservice: WorkflowService,
-    private router: Router
-  ) { }
+    private router: Router,
+    private contextService: ContextService
+  ) {}
 
   ngOnInit() {
     this.events = [];
-    this.workflowId = this.route.snapshot.paramMap.get('id')!;
+    this.workflowId = this.route.snapshot.paramMap.get("id")!;
     if (this.workflowId) this.onSearchClick();
   }
 
   onSearchClick() {
     this.compactEvents = [];
-    this.status = '';
+    this.status = "";
+    const namespace = this.contextService.getWorkspace() || "default";
     this.httpsService
-      .getDashboardHistory(this.workflowId)
+      .getDashboardHistory(this.workflowId, namespace)
       .subscribe((d: any) => {
-        debugger
+        debugger;
         this.events = d.events;
         this.makeCompact();
         if (this.compactEvents.length > 0) {
@@ -146,7 +149,10 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
   }
 
   viewInEditor() {
-    this.router.navigate(['/workflow/designer/' + this.workflowdefId, this.workflowId]);
+    this.router.navigate([
+      "/workflow/designer/" + this.workflowdefId,
+      this.workflowId,
+    ]);
   }
   makeCompact() {
     let compactInnerEvent = [];
@@ -156,7 +162,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
       let evts: any = this.events[i];
       console.log(evts);
 
-      if (evts.eventType === 'EVENT_TYPE_WORKFLOW_EXECUTION_STARTED') {
+      if (evts.eventType === "EVENT_TYPE_WORKFLOW_EXECUTION_STARTED") {
         let d =
           evts?.workflowExecutionStartedEventAttributes?.input?.payloads[0]
             .data;
@@ -165,19 +171,18 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
         let ds = JSON.parse(k);
         this.inputdata = this.pretty(ds);
         this.workflowdefId = ds.workflowDefId;
-
-      } else if (evts.eventType === 'EVENT_TYPE_TIMER_STARTED') {
+      } else if (evts.eventType === "EVENT_TYPE_TIMER_STARTED") {
         let eventId = evts.eventId;
         let EVENT_TYPE_TIMER_STARTED: any = evts;
 
         let EVENT_TYPE_TIMER_FIRED: any = this.events.find((d) => {
           return (
-            d.eventType === 'EVENT_TYPE_TIMER_FIRED' &&
+            d.eventType === "EVENT_TYPE_TIMER_FIRED" &&
             d.eventId == parseInt(eventId) + 1
           );
         });
-        EVENT_TYPE_TIMER_STARTED.AType = 'TIMER';
-        EVENT_TYPE_TIMER_STARTED.icon = 'clock-circle';
+        EVENT_TYPE_TIMER_STARTED.AType = "TIMER";
+        EVENT_TYPE_TIMER_STARTED.icon = "clock-circle";
 
         let k = {
           ...EVENT_TYPE_TIMER_STARTED,
@@ -188,24 +193,24 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
         if (EVENT_TYPE_TIMER_FIRED) k.details.push(EVENT_TYPE_TIMER_FIRED);
 
         this.compactEvents.push(k);
-      } else if (evts.eventType === 'EVENT_TYPE_ACTIVITY_TASK_SCHEDULED') {
+      } else if (evts.eventType === "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED") {
         // console.log(evts[i]);
         let eventId = evts.eventId;
         let EVENT_TYPE_ACTIVITY_TASK_SCHEDULED: any = evts;
 
-        EVENT_TYPE_ACTIVITY_TASK_SCHEDULED.AType = 'ACTIVITY';
-        EVENT_TYPE_ACTIVITY_TASK_SCHEDULED.icon = 'function';
+        EVENT_TYPE_ACTIVITY_TASK_SCHEDULED.AType = "ACTIVITY";
+        EVENT_TYPE_ACTIVITY_TASK_SCHEDULED.icon = "function";
 
         let EVENT_TYPE_ACTIVITY_TASK_STARTED: any = this.events.find((d) => {
           return (
-            d.eventType === 'EVENT_TYPE_ACTIVITY_TASK_STARTED' &&
+            d.eventType === "EVENT_TYPE_ACTIVITY_TASK_STARTED" &&
             d.eventId == parseInt(eventId) + 1
           );
         });
 
         let EVENT_TYPE_ACTIVITY_TASK_COMPLETED: any = this.events.find((d) => {
           return (
-            d.eventType === 'EVENT_TYPE_ACTIVITY_TASK_COMPLETED' &&
+            d.eventType === "EVENT_TYPE_ACTIVITY_TASK_COMPLETED" &&
             d.eventId == parseInt(eventId) + 2
           );
         });
@@ -222,9 +227,9 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
         let fn =
           EVENT_TYPE_ACTIVITY_TASK_SCHEDULED
             .activityTaskScheduledEventAttributes?.activityType?.name;
-        if (fn == 'CallCondition') {
-          EVENT_TYPE_ACTIVITY_TASK_SCHEDULED.AType = 'If Condition';
-          EVENT_TYPE_ACTIVITY_TASK_SCHEDULED.icon = 'sisternode';
+        if (fn == "CallCondition") {
+          EVENT_TYPE_ACTIVITY_TASK_SCHEDULED.AType = "If Condition";
+          EVENT_TYPE_ACTIVITY_TASK_SCHEDULED.icon = "sisternode";
         }
 
         let k = {
@@ -242,18 +247,18 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
 
         this.compactEvents.push(k);
         console.log(this.compactEvents);
-      } else if (evts.eventType === 'EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED') {
-        this.status = 'completed';
+      } else if (evts.eventType === "EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED") {
+        this.status = "completed";
         let respay =
           evts?.workflowExecutionCompletedEventAttributes?.result?.payloads;
         if (respay && respay instanceof Array) {
           let arr = this.tryDecodeIfBase64(respay[0].data);
-          this.resultdata = this.pretty(JSON.parse(arr || '{}'));
+          this.resultdata = this.pretty(JSON.parse(arr || "{}"));
         }
-      } else if (evts.eventType === 'EVENT_TYPE_WORKFLOW_EXECUTION_FAILED') {
-        this.status = 'failed';
+      } else if (evts.eventType === "EVENT_TYPE_WORKFLOW_EXECUTION_FAILED") {
+        this.status = "failed";
       } else {
-        this.status = 'processing';
+        this.status = "processing";
       }
       // else if (evts.eventType === 'EVENT_TYPE_WORKFLOW_TASK_SCHEDULED') {
       //     let eventId = evts.eventId;
@@ -286,7 +291,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
     this.calculateStats();
   }
 
-  ngAfterViewInit() { }
+  ngAfterViewInit() {}
 
   trackByIndex(_: number, item: any) {
     return item?.eventId ?? item?.id ?? _;
@@ -304,25 +309,25 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
       ev?.timestampMillis ??
       ev?.event_time ??
       null;
-    if (!t) return '';
-    if (typeof t === 'number') {
+    if (!t) return "";
+    if (typeof t === "number") {
       const ms = t > 1e12 ? t : t * 1000;
       return new Date(ms).toLocaleTimeString();
     }
     try {
       const d = new Date(t);
       if (!isNaN(d.getTime())) return d.toLocaleTimeString();
-    } catch { }
+    } catch {}
     return String(t);
   }
 
   summary(ev: any): string {
     // lightweight summary: prefer a short attribute or decoded payload
-    const userMeta = this.getNested(ev, ['userMetadata', 'summary']);
+    const userMeta = this.getNested(ev, ["userMetadata", "summary"]);
     if (userMeta) {
-      const enc = ''; //this.tryDecodeIfBase64(this.getNested(userMeta, ['metadata', 'encoding']));
-      const dat = this.tryDecodeIfBase64(this.getNested(userMeta, ['data']));
-      return `${enc ?? 'user'} ${dat ?? '-'}`;
+      const enc = ""; //this.tryDecodeIfBase64(this.getNested(userMeta, ['metadata', 'encoding']));
+      const dat = this.tryDecodeIfBase64(this.getNested(userMeta, ["data"]));
+      return `${enc ?? "user"} ${dat ?? "-"}`;
     }
 
     const attrs =
@@ -334,18 +339,18 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
 
     if (attrs) {
       const candidates = [
-        'activityType',
-        'name',
-        'reason',
-        'message',
-        'input',
-        'details',
+        "activityType",
+        "name",
+        "reason",
+        "message",
+        "input",
+        "details",
       ];
       for (const k of candidates) {
         const v = this.getNested(attrs, [k]);
         if (v)
           return this.truncate(
-            String(typeof v === 'object' ? JSON.stringify(v) : v),
+            String(typeof v === "object" ? JSON.stringify(v) : v),
             80
           );
       }
@@ -353,19 +358,19 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
 
     // try payloads array first element
     const payloads =
-      this.getNested(ev, ['attributes', 'payloads']) ??
-      this.getNested(ev, ['payloads']);
+      this.getNested(ev, ["attributes", "payloads"]) ??
+      this.getNested(ev, ["payloads"]);
     if (Array.isArray(payloads) && payloads.length) {
       const p = payloads[0];
       const candidate = p?.data ?? p;
-      if (typeof candidate === 'string') {
+      if (typeof candidate === "string") {
         return (
           this.tryDecodeIfBase64(candidate) ?? this.truncate(candidate, 80)
         );
       }
     }
 
-    return '';
+    return "";
   }
 
   selectedEvent: any = {};
@@ -405,7 +410,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
   }
 
   tryDecodeIfBase64(s: any): string | null {
-    if (typeof s !== 'string') return null;
+    if (typeof s !== "string") return null;
     const trimmed = s.trim();
     if (!trimmed) return null;
     const base64Regex =
@@ -415,7 +420,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
       const decoded = atob(trimmed);
       try {
         const parsed = JSON.parse(decoded);
-        return typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
+        return typeof parsed === "string" ? parsed : JSON.stringify(parsed);
       } catch {
         return decoded;
       }
@@ -425,16 +430,16 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
   }
 
   truncate(s: string, len = 100) {
-    return s.length > len ? s.slice(0, len - 1) + '…' : s;
+    return s.length > len ? s.slice(0, len - 1) + "…" : s;
   }
 
   escapeHtml(s: string) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  getInput(data: any) { }
+  getInput(data: any) {}
 
-  getOutPut(data: any) { }
+  getOutPut(data: any) {}
 
   eventTime1(event: any): string {
     return new Date(event?.eventTime).toLocaleString();
@@ -442,7 +447,7 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
 
   summary1(event: any): string {
     return (
-      event?.activityTaskScheduledEventAttributes?.activityType?.name || 'N/A'
+      event?.activityTaskScheduledEventAttributes?.activityType?.name || "N/A"
     );
   }
 
@@ -457,25 +462,25 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
 
   failureSummary(event: any): string {
     const failure = event?.activityTaskStartedEventAttributes?.lastFailure;
-    if (!failure) return event?.error || 'No error';
-    let msg = failure.message || '';
-    if (failure?.cause?.message) msg += '\nCause: ' + failure.cause.message;
-    if (failure?.cause?.source) msg += '\nSource: ' + failure.cause.source;
+    if (!failure) return event?.error || "No error";
+    let msg = failure.message || "";
+    if (failure?.cause?.message) msg += "\nCause: " + failure.cause.message;
+    if (failure?.cause?.source) msg += "\nSource: " + failure.cause.source;
     return msg.trim();
   }
 
   colorForEvent(type: string): string {
     switch (type) {
-      case 'EVENT_TYPE_ACTIVITY_TASK_SCHEDULED':
-        return 'blue';
-      case 'EVENT_TYPE_ACTIVITY_TASK_STARTED':
-        return 'green';
-      case 'EVENT_TYPE_ACTIVITY_TASK_COMPLETED':
-        return 'purple';
-      case 'EVENT_TYPE_ACTIVITY_TASK_FAILED':
-        return 'red';
+      case "EVENT_TYPE_ACTIVITY_TASK_SCHEDULED":
+        return "blue";
+      case "EVENT_TYPE_ACTIVITY_TASK_STARTED":
+        return "green";
+      case "EVENT_TYPE_ACTIVITY_TASK_COMPLETED":
+        return "purple";
+      case "EVENT_TYPE_ACTIVITY_TASK_FAILED":
+        return "red";
       default:
-        return 'default';
+        return "default";
     }
   }
 
@@ -487,20 +492,20 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
       const jsonStr = atob(base64Data);
       return JSON.parse(jsonStr);
     } catch (e) {
-      console.error('Failed to decode activity result:', e);
-      return { error: 'Invalid or undecodable data' };
+      console.error("Failed to decode activity result:", e);
+      return { error: "Invalid or undecodable data" };
     }
   }
 
   terminateWorkflow() {
     this.workflowservice
-      .terminateWorkflows(this.workflowId, '')
+      .terminateWorkflows(this.workflowId, "")
       .subscribe((d) => {
-        if (d.status === 'SUCCESS') {
-          this.message.success('Successfully Terminated!', { nzDuration: 500 });
+        if (d.status === "SUCCESS") {
+          this.message.success("Successfully Terminated!", { nzDuration: 500 });
           this.onSearchClick();
         } else {
-          this.message.error('Failed to terminate! ' + d.errorMessage, {
+          this.message.error("Failed to terminate! " + d.errorMessage, {
             nzDuration: 8000,
           });
         }
@@ -526,22 +531,22 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
   }
 
   clearHoveredEvent() {
-    this.hoveredEventId = '';
+    this.hoveredEventId = "";
   }
 
   getFilteredEvents() {
     let filtered = this.compactEvents;
 
-    if (this.filterStatus !== 'all') {
+    if (this.filterStatus !== "all") {
       filtered = filtered.filter((ev) => {
-        if (this.filterStatus === 'error') return ev.error;
-        if (this.filterStatus === 'success')
+        if (this.filterStatus === "error") return ev.error;
+        if (this.filterStatus === "success")
           return (
             !ev.error &&
             ev.details?.some(
               (d: any) =>
-                d.eventType?.includes('COMPLETED') ||
-                d.eventType?.includes('TIMER_FIRED')
+                d.eventType?.includes("COMPLETED") ||
+                d.eventType?.includes("TIMER_FIRED")
             )
           );
         return true;
@@ -566,14 +571,14 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
       const timeB = new Date(
         b.eventTime || b.details?.[0]?.eventTime
       ).getTime();
-      return this.sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+      return this.sortOrder === "asc" ? timeA - timeB : timeB - timeA;
     });
 
     return filtered;
   }
 
   toggleSort() {
-    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
   }
 
   calculateStats() {
@@ -581,8 +586,8 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
     this.stats.completed = this.compactEvents.filter((ev) =>
       ev.details?.some(
         (d: any) =>
-          d.eventType?.includes('COMPLETED') ||
-          d.eventType?.includes('TIMER_FIRED')
+          d.eventType?.includes("COMPLETED") ||
+          d.eventType?.includes("TIMER_FIRED")
       )
     ).length;
     this.stats.failed = this.compactEvents.filter((ev) => ev.error).length;
@@ -606,13 +611,13 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
   }
 
   getEventDuration(event: any): string {
-    if (!event.details || event.details.length < 2) return '';
+    if (!event.details || event.details.length < 2) return "";
 
     const timestamps = event.details
       .map((d: any) => new Date(d.eventTime).getTime())
       .filter((t: number) => !isNaN(t));
 
-    if (timestamps.length < 2) return '';
+    if (timestamps.length < 2) return "";
 
     const start = Math.min(...timestamps);
     const end = Math.max(...timestamps);
@@ -643,19 +648,19 @@ export class WorkflowHistoryCompactComponent implements AfterViewInit {
   }
 
   getEventStatusColor(event: any): string {
-    if (event.error) return 'error';
+    if (event.error) return "error";
     if (
       event.details?.some(
         (d: any) =>
-          d.eventType?.includes('COMPLETED') ||
-          d.eventType?.includes('TIMER_FIRED')
+          d.eventType?.includes("COMPLETED") ||
+          d.eventType?.includes("TIMER_FIRED")
       )
     )
-      return 'success';
-    return 'processing';
+      return "success";
+    return "processing";
   }
 
   getEventIcon(event: any): string {
-    return event.icon || 'clock-circle';
+    return event.icon || "clock-circle";
   }
 }

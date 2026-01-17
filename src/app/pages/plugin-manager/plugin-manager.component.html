@@ -23,6 +23,24 @@
 
 <div class="plugin-manager">
     <!-- Plugin List Table -->
+    <!-- Filter Controls -->
+    <div class="filter-section">
+        <div class="filter-buttons">
+            <button 
+                *ngFor="let type of pluginTypes" 
+                nz-button 
+                [nzType]="selectedPluginType === type ? 'primary' : 'default'"
+                (click)="filterByType(type)"
+                class="filter-btn"
+                [class.active]="selectedPluginType === type">
+                {{ type }}
+                <nz-tag [nzColor]="selectedPluginType === type ? 'blue' : 'default'" class="type-count">
+                    {{ getPluginTypeCount(type) }}
+                </nz-tag>
+            </button>
+        </div>
+    </div>
+
     <!-- Empty State -->
     <nz-empty *ngIf="!loading && filteredPlugins.length === 0" nzNotFoundContent="No plugins found">
         <button nz-button nzType="primary" (click)="openCreateDrawer()" nzShape="round">
@@ -120,6 +138,20 @@
                                             Maximum 100 characters allowed
                                         </ng-container>
                                     </ng-template>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- Plugin Type -->
+                            <nz-form-item>
+                                <nz-form-label nzRequired>Plugin Type</nz-form-label>
+                                <nz-form-control>
+                                    <nz-select formControlName="pluginType">
+                                        <nz-option nzValue="CUSTOM" nzLabel="CUSTOM"></nz-option>
+                                        <nz-option nzValue="PLUGIN" nzLabel="PLUGIN"></nz-option>
+                                        <nz-option nzValue="TOOL" nzLabel="TOOL"></nz-option>
+                                        <nz-option nzValue="MEMORY" nzLabel="MEMORY"></nz-option>
+                                        <nz-option nzValue="AI_MODEL" nzLabel="AI MODEL"></nz-option>
+                                    </nz-select>
                                 </nz-form-control>
                             </nz-form-item>
 
@@ -226,6 +258,27 @@
                                     <span class="switch-label">
                                         {{ pluginForm.get('active')?.value ? 'Enabled' : 'Disabled' }}
                                     </span>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- AI Tool Configuration -->
+                            <nz-form-item>
+                                <nz-form-label>Is AI Tool</nz-form-label>
+                                <nz-form-control>
+                                    <nz-switch formControlName="isAiTool"></nz-switch>
+                                    <span class="switch-label">
+                                        {{ pluginForm.get('isAiTool')?.value ? 'Yes' : 'No' }}
+                                    </span>
+                                </nz-form-control>
+                            </nz-form-item>
+
+                            <!-- AI Tool Description (Visible only if isAiTool is true) -->
+                            <nz-form-item *ngIf="pluginForm.get('isAiTool')?.value">
+                                <nz-form-label>AI Tool Description</nz-form-label>
+                                <nz-form-control>
+                                    <textarea nz-input formControlName="aiToolDescription"
+                                        placeholder="Describe how an AI agent should use this tool"
+                                        [nzAutosize]="{ minRows: 2, maxRows: 4 }" maxlength="500"></textarea>
                                 </nz-form-control>
                             </nz-form-item>
 
@@ -341,13 +394,14 @@
 
                             <nz-splitter-panel [nzDefaultSize]="'90%'">
 
-                                <div class="code-editor-flex">
-                                    <code-editor [(ngModel)]="generatedCode" [extensions]="javaExtensions"
-                                        [theme]="'dark'" [lineWrapping]="true" [highlightWhitespace]="false"
-                                        [indentUnit]="''" [indentWithTab]="true" [language]="'java'"
-                                        [languages]="languages"  
-                                        style="width:100%;height:100%;"></code-editor>
-                                </div>
+                                    <app-editor 
+                                        [(ngModel)]="generatedCode" 
+                                        [language]="'java'"
+                                        [theme]="'vs-dark'"
+                                        [readOnly]="false"
+                                        [minimap]="true"
+                                        style="width:100%;height:100%;">
+                                    </app-editor>
                             </nz-splitter-panel>
                             <nz-splitter-panel [nzDefaultSize]="'10%'">
                                 <div class="log-cat-window">

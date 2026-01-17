@@ -1,20 +1,20 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { NzModalModule } from 'ng-zorro-antd/modal';
-import { NzDescriptionsModule } from 'ng-zorro-antd/descriptions';
-import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzBadgeModule } from 'ng-zorro-antd/badge';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
-import { NzTableModule } from 'ng-zorro-antd/table';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { NzEmptyModule } from 'ng-zorro-antd/empty';
-import { MarkdownModule } from 'ngx-markdown';
-import { PluginDto, PluginService } from '../../../service/plugin.service';
+import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { NzModalModule } from "ng-zorro-antd/modal";
+import { NzDescriptionsModule } from "ng-zorro-antd/descriptions";
+import { NzTagModule } from "ng-zorro-antd/tag";
+import { NzBadgeModule } from "ng-zorro-antd/badge";
+import { NzIconModule } from "ng-zorro-antd/icon";
+import { NzDividerModule } from "ng-zorro-antd/divider";
+import { NzTableModule } from "ng-zorro-antd/table";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzSpinModule } from "ng-zorro-antd/spin";
+import { NzEmptyModule } from "ng-zorro-antd/empty";
+import { MarkdownModule } from "ngx-markdown";
+import { PluginDto, PluginService } from "../../../service/plugin.service";
 
 @Component({
-  selector: 'app-plugin-detail',
+  selector: "app-plugin-detail",
   standalone: true,
   imports: [
     CommonModule,
@@ -28,10 +28,10 @@ import { PluginDto, PluginService } from '../../../service/plugin.service';
     NzButtonModule,
     NzSpinModule,
     NzEmptyModule,
-    MarkdownModule
+    MarkdownModule,
   ],
-  templateUrl: './plugin-detail.component.html',
-  styleUrls: ['./plugin-detail.component.scss']
+  templateUrl: "./plugin-detail.component.html",
+  styleUrls: ["./plugin-detail.component.scss"],
 })
 export class PluginDetailComponent {
   @Input() visible: boolean = false;
@@ -42,13 +42,19 @@ export class PluginDetailComponent {
   plugin: PluginDto | null = null;
   loading: boolean = false;
   pluginProperties: any[] = [];
+  pluginResources: any[] = [];
   iconLoadError: boolean = false;
-  defaultIcon: string = 'api'; // Default fallback icon
+  defaultIcon: string = "api"; // Default fallback icon
 
   constructor(private pluginService: PluginService) {}
 
   ngOnChanges() {
-    console.log('Plugin detail ngOnChanges - visible:', this.visible, 'pluginId:', this.pluginId);
+    console.log(
+      "Plugin detail ngOnChanges - visible:",
+      this.visible,
+      "pluginId:",
+      this.pluginId
+    );
     if (this.visible && this.pluginId) {
       this.iconLoadError = false; // Reset icon error state
       this.loadPlugin();
@@ -63,12 +69,13 @@ export class PluginDetailComponent {
       next: (plugin) => {
         this.plugin = plugin;
         this.parsePluginProperties(plugin.props);
+        this.parsePluginResources(plugin.resources || "");
         this.loading = false;
       },
       error: (err) => {
-        console.error('Error loading plugin:', err);
+        console.error("Error loading plugin:", err);
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -76,13 +83,16 @@ export class PluginDetailComponent {
     try {
       if (propsJson) {
         const propsObj = JSON.parse(propsJson);
-        console.log('Parsed props object:', propsObj);
-        
+        console.log("Parsed props object:", propsObj);
+
         // Handle different possible structures
         if (Array.isArray(propsObj)) {
           // If props is directly an array
           this.pluginProperties = propsObj;
-        } else if (propsObj.plugin_properties && Array.isArray(propsObj.plugin_properties)) {
+        } else if (
+          propsObj.plugin_properties &&
+          Array.isArray(propsObj.plugin_properties)
+        ) {
           // If props has plugin_properties field
           this.pluginProperties = propsObj.plugin_properties;
         } else if (propsObj.properties && Array.isArray(propsObj.properties)) {
@@ -90,18 +100,42 @@ export class PluginDetailComponent {
           this.pluginProperties = propsObj.properties;
         } else {
           // Try to extract any array from the object
-          const arrayValues = Object.values(propsObj).find(val => Array.isArray(val));
-          this.pluginProperties = arrayValues ? arrayValues as any[] : [];
+          const arrayValues = Object.values(propsObj).find((val) =>
+            Array.isArray(val)
+          );
+          this.pluginProperties = arrayValues ? (arrayValues as any[]) : [];
         }
-        
-        console.log('Plugin properties:', this.pluginProperties);
+
+        console.log("Plugin properties:", this.pluginProperties);
       } else {
         this.pluginProperties = [];
       }
     } catch (e) {
-      console.error('Error parsing plugin properties:', e);
-      console.error('Props JSON:', propsJson);
+      console.error("Error parsing plugin properties:", e);
+      console.error("Props JSON:", propsJson);
       this.pluginProperties = [];
+    }
+  }
+
+  parsePluginResources(resourcesJson: string) {
+    try {
+      if (resourcesJson) {
+        const resourcesObj = JSON.parse(resourcesJson);
+        console.log("Parsed resources object:", resourcesObj);
+
+        if (Array.isArray(resourcesObj)) {
+          this.pluginResources = resourcesObj;
+        } else {
+          this.pluginResources = [];
+        }
+
+        console.log("Plugin resources:", this.pluginResources);
+      } else {
+        this.pluginResources = [];
+      }
+    } catch (e) {
+      console.error("Error parsing plugin resources:", e);
+      this.pluginResources = [];
     }
   }
 
@@ -115,19 +149,23 @@ export class PluginDetailComponent {
 
   isExternalIcon(icon: string): boolean {
     if (!icon) return false;
-    return icon.startsWith('http://') || icon.startsWith('https://') || icon.startsWith('data:');
+    return (
+      icon.startsWith("http://") ||
+      icon.startsWith("https://") ||
+      icon.startsWith("data:")
+    );
   }
 
   getStatusColor(active: boolean): string {
-    return active ? 'success' : 'default';
+    return active ? "success" : "default";
   }
 
   getStatusText(active: boolean): string {
-    return active ? 'Active' : 'Inactive';
+    return active ? "Active" : "Inactive";
   }
 
   formatDate(dateString: string | null): string {
-    if (!dateString) return 'Never';
+    if (!dateString) return "Never";
     try {
       return new Date(dateString).toLocaleString();
     } catch (e) {
@@ -137,18 +175,18 @@ export class PluginDetailComponent {
 
   getTypeIcon(type: string): string {
     const iconMap: { [key: string]: string } = {
-      'text': 'font-size',
-      'number': 'number',
-      'select': 'select',
-      'multiselect': 'select',
-      'checkbox': 'check-square',
-      'radio': 'check-circle',
-      'codeeditor': 'code',
-      'textarea': 'file-text',
-      'date': 'calendar',
-      'datetime': 'clock-circle'
+      text: "font-size",
+      number: "number",
+      select: "select",
+      multiselect: "select",
+      checkbox: "check-square",
+      radio: "check-circle",
+      codeeditor: "code",
+      textarea: "file-text",
+      date: "calendar",
+      datetime: "clock-circle",
     };
-    return iconMap[type] || 'form';
+    return iconMap[type] || "form";
   }
 
   /**
@@ -156,7 +194,7 @@ export class PluginDetailComponent {
    */
   onIconError(event: Event) {
     this.iconLoadError = true;
-    console.warn('Plugin icon failed to load, using default icon');
+    console.warn("Plugin icon failed to load, using default icon");
   }
 
   /**
@@ -167,5 +205,16 @@ export class PluginDetailComponent {
     if (this.iconLoadError || !this.plugin.icon) return this.defaultIcon;
     if (this.isExternalIcon(this.plugin.icon)) return this.plugin.icon;
     return this.plugin.icon || this.defaultIcon;
+  }
+
+  isObject(val: any): boolean {
+    return val && typeof val === "object" && !Array.isArray(val);
+  }
+
+  getMatchingProperty(key: string): any {
+    if (!this.pluginProperties) return null;
+    return this.pluginProperties.find(
+      (p) => p.id === key || p.name === key || p.key === key
+    );
   }
 }

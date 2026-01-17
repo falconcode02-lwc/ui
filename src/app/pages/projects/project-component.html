@@ -1,0 +1,132 @@
+<nz-page-header class="page-action">
+    <nz-page-header-title>
+        <nz-icon nzType="folder" nzTheme="outline"></nz-icon> Projects
+    </nz-page-header-title>
+    <nz-page-header-subtitle>
+        <nz-input-group nzSearch [nzAddOnAfter]="suffixIconButton">
+            <input type="text" (input)="search()" [(ngModel)]="searchText" nz-input placeholder="Search projects..." />
+        </nz-input-group>
+        <ng-template #suffixIconButton>
+            <button nz-button nzType="primary" (click)="search()" nzSearch>
+                <nz-icon nzType="search"></nz-icon>
+            </button>
+        </ng-template>
+    </nz-page-header-subtitle>
+    <nz-page-header-extra>
+        <nz-space>
+            <button *nzSpaceItem nz-button nzType="default" nzShape="round" (click)="loadProjects()">
+                <i nz-icon nzType="reload"></i> Refresh
+            </button>
+            <button *nzSpaceItem nz-button nzType="default" nzShape="round" (click)="openCreate()">
+                <i nz-icon nzType="plus"></i> New
+            </button>
+        </nz-space>
+    </nz-page-header-extra>
+</nz-page-header>
+
+<div class="project-list">
+    <!-- Empty State -->
+    <nz-empty *ngIf="!loading && filteredProjects.length === 0" nzNotFoundContent="No projects found">
+        <button nz-button nzType="primary" (click)="openCreate()">
+            <i nz-icon nzType="plus"></i> Create Project
+        </button>
+    </nz-empty>
+
+    <!-- List View -->
+    <nz-list *ngIf="filteredProjects.length > 0" [nzDataSource]="filteredProjects" [nzLoading]="loading" nzBordered>
+        <nz-list-item *ngFor="let p of filteredProjects" class="project-item">
+            <div class="project-content">
+                <div class="project-main" (click)="openEdit(p)">
+                    <nz-icon [nzType]="p.icon || 'folder'" nzTheme="outline" class="project-icon"></nz-icon>
+                    <div class="project-details">
+                        <div class="project-name">{{ p.name }}</div>
+                        <div class="project-meta">
+                            <span class="meta-item">
+                                <span class="meta-label">Code:</span> {{ p.code }}
+                            </span>
+                            <span class="meta-item" *ngIf="p.description">
+                                <span class="meta-label">|</span> {{ p.description }}
+                            </span>
+                            <span class="meta-item">
+                                <span class="meta-label">|</span>
+                                <nz-tag [nzColor]="p.accessibility === 'PUBLIC' ? 'green' : 'orange'">
+                                    {{ p.accessibility }}
+                                </nz-tag>
+                            </span>
+                            <span class="meta-item" *ngIf="p.workspaceCode">
+                                <span class="meta-label">|</span> {{ p.workspaceCode }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-actions">
+                    <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomRight"
+                        (click)="$event.stopPropagation()">
+                        <nz-icon nzType="more" nzTheme="outline"></nz-icon>
+                    </button>
+                    <nz-dropdown-menu #menu="nzDropdownMenu">
+                        <ul nz-menu>
+                            <li nz-menu-item (click)="openEdit(p)">
+                                <nz-icon nzType="edit" nzTheme="outline"></nz-icon>
+                                Edit
+                            </li>
+                            <li nz-menu-item nzDanger nz-popconfirm
+                                nzPopconfirmTitle="Are you sure you want to delete this project?"
+                                (nzOnConfirm)="deleteProject(p)">
+                                <nz-icon nzType="delete" nzTheme="outline"></nz-icon>
+                                Delete
+                            </li>
+                        </ul>
+                    </nz-dropdown-menu>
+                </div>
+            </div>
+        </nz-list-item>
+    </nz-list>
+</div>
+
+<!-- Create/Edit Modal -->
+<nz-modal [(nzVisible)]="isModalVisible" [nzTitle]="isEditing ? 'Edit Project' : 'New Project'"
+    (nzOnCancel)="handleCancel()" (nzOnOk)="handleOk()" [nzWidth]="600">
+    <ng-container *nzModalContent>
+        <form nz-form [formGroup]="projectForm" nzLayout="vertical">
+            <nz-form-item>
+                <nz-form-label nzRequired>Code</nz-form-label>
+                <nz-form-control nzErrorTip="Please enter project code">
+                    <input nz-input formControlName="code" placeholder="proj1" />
+                </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+                <nz-form-label nzRequired>Name</nz-form-label>
+                <nz-form-control nzErrorTip="Please enter project name">
+                    <input nz-input formControlName="name" placeholder="My Project" />
+                </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+                <nz-form-label>Icon</nz-form-label>
+                <nz-form-control>
+                    <input nz-input formControlName="icon" placeholder="folder (ant design icon name)" />
+                </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+                <nz-form-label>Description</nz-form-label>
+                <nz-form-control>
+                    <textarea nz-input rows="3" formControlName="description"
+                        placeholder="Project description"></textarea>
+                </nz-form-control>
+            </nz-form-item>
+
+            <nz-form-item>
+                <nz-form-label nzRequired>Accessibility</nz-form-label>
+                <nz-form-control>
+                    <nz-select formControlName="accessibility">
+                        <nz-option nzValue="PUBLIC" nzLabel="Public"></nz-option>
+                        <nz-option nzValue="PRIVATE" nzLabel="Private"></nz-option>
+                    </nz-select>
+                </nz-form-control>
+            </nz-form-item>
+        </form>
+    </ng-container>
+</nz-modal>
