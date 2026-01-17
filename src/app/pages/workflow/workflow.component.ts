@@ -44,9 +44,14 @@ import { NzPopoverModule } from "ng-zorro-antd/popover";
 import { NzSegmentedModule } from "ng-zorro-antd/segmented";
 import { NzBadgeModule } from "ng-zorro-antd/badge";
 
-import { HttpService } from "../../service/http-service";
-import { Mutator } from "@foblex/mutator";
-import { QueueService } from "../../classes/Queue";
+import { HttpService } from '../../service/http-service';
+import {
+  VAULT_TYPE_OPTIONS,
+  getVaultTypeLabel,
+  VaultType,
+} from '../../common/vault-type';
+import { Mutator } from '@foblex/mutator';
+import { QueueService } from '../../classes/Queue';
 
 import { CommonModule } from "@angular/common";
 import {
@@ -1530,6 +1535,17 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           info: "Enter unique name",
           secondaryText: "Required unique name",
         },
+        {
+          id: 'vaultType',
+          type: 'select',
+          label: 'Vault Type',
+          placeholder: 'Select vault',
+          required: true,
+          defaultVisible: true,
+          defaultEnabled: true,
+          defaultValue: 'DB',
+          options: VAULT_TYPE_OPTIONS,
+        },
       ],
       ...this.selectedNode?.meta?.pluginData?.plugin_secrets,
     ];
@@ -2471,7 +2487,10 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           let scr = [];
           for (let i = 0; i < d.length; i++) {
             const element = d[i];
-            scr.push({ key: element.name, value: element.name });
+            const vt = (element as any)?.vaultType;
+            const vtLabel = getVaultTypeLabel(vt);
+            const suffix = vtLabel ? ` (${vtLabel})` : '';
+            scr.push({ key: `${element.name}${suffix}`, value: element.name });
           }
           setTimeout(() => {
             this.propertyPanel.setFieldVisibility("secret", true);
@@ -2501,40 +2520,46 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       this.isSecretEditMode = true;
       this.currentSecretId = secret.id;
 
-      try {
-        if (typeof secret.value === "string") {
-          this.secretFormData = JSON.parse(secret.value);
-        } else {
-          this.secretFormData = secret.value;
+      // Initialize form data with basic fields
+      this.secretFormData = {
+        secretName: secret.name,
+        vaultType: (secret as any).vaultType || 'DB'
+      };
+
+      if (typeof secret.value === 'string') {
+        try {
+          const parsed = JSON.parse(secret.value);
+          this.secretFormData = { ...this.secretFormData, ...parsed };
+        } catch (e) {
+          console.warn('Failed to parse secret value, possibly masked for vault type', (secret as any).vaultType);
         }
-
-        // Ensure secretName is set in form data
-        this.secretFormData["secretName"] = secret.name;
-
-        this.openSecretManagerForm = true;
-
-        // Wait for modal to open and form to initialize
-        setTimeout(() => {
-          if (this.secretPropertyPanel) {
-            // We need to set the form values
-            // Since FormViewer doesn't expose a direct setValues method that takes an object,
-            // we might need to rely on preloadedSchema or similar mechanism,
-            // OR we can use the fact that secretFormData is bound to onFormSecretUpdate
-            // But onFormSecretUpdate is an output.
-
-            // Actually, FormViewer has a `loadForm` method but it takes a schema.
-            // It also has `dynamicForm` which is public.
-
-            // Let's try to patch the values
-            this.secretPropertyPanel.dynamicForm.patchValue(
-              this.secretFormData
-            );
-          }
-        }, 100);
-      } catch (e) {
-        console.error("Error parsing secret value", e, secret.value);
-        this.message.error("Failed to load secret data");
+      } else {
+        this.secretFormData = { ...this.secretFormData, ...secret.value };
       }
+
+      // Ensure vaultType is set in form data (for the Vault Type dropdown)
+      this.secretFormData['vaultType'] = (secret as any).vaultType || this.secretFormData['vaultType'] || 'DB';
+
+      this.openSecretManagerForm = true;
+
+      // Wait for modal to open and form to initialize
+      setTimeout(() => {
+        if (this.secretPropertyPanel) {
+          // We need to set the form values
+          // Since FormViewer doesn't expose a direct setValues method that takes an object,
+          // we might need to rely on preloadedSchema or similar mechanism,
+          // OR we can use the fact that secretFormData is bound to onFormSecretUpdate
+          // But onFormSecretUpdate is an output.
+
+          // Actually, FormViewer has a `loadForm` method but it takes a schema.
+          // It also has `dynamicForm` which is public.
+
+          // Let's try to patch the values
+          this.secretPropertyPanel.dynamicForm.patchValue(
+            this.secretFormData
+          );
+        }
+      }, 100);
     } else {
       this.message.warning("Secret not found");
     }
@@ -2850,13 +2875,25 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
 
   handleSecretManagerOk() {
     if (this.secretPropertyPanel.isFormValid()) {
-      let secretName = this.secretFormData["secretName"];
+      let secretName = this.secretFormData['secretName'];
+
+      const vaultTypeValue =
+        typeof this.secretFormData?.vaultType === 'object'
+          ? this.secretFormData?.vaultType?.value
+          : this.secretFormData?.vaultType;
+
+  // Persist ONLY the value (DB/AZURE/GCP) at root. Don't include in `value`.
+  const resolvedVaultType = (vaultTypeValue || 'DB') as VaultType;
+
+  // Remove vaultType from the JSON `value` payload (user requested).
+  const { vaultType: _omitVaultType, ...valueObj } = this.secretFormData || {};
 
       let payload = {
         name: secretName,
         type: this.selectedNode?.data?.call[0],
-        value: JSON.stringify(this.secretFormData),
-        metadata: "",
+  value: JSON.stringify(valueObj),
+        metadata: '',
+        vaultType: resolvedVaultType,
       };
 
       if (this.isSecretEditMode && this.currentSecretId) {
@@ -3429,7 +3466,6 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           const requiredProps = pluginData.plugin_properties.filter(
             (p: any) => p.required === true && p.defaultVisible === true
           );
-
           requiredProps.forEach((prop: any) => {
             const value = getPluginFieldValue(node, prop.id);
             let isValid = false;

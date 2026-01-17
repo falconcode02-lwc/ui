@@ -235,7 +235,8 @@
                       (field.multiple ? 'Select options' : 'Select an option')
                     " [class.has-error]="hasError(field.id)">
                     <nz-option *ngFor="let option of $any(getFieldOptions(field))"
-                      [nzValue]="$any(option).key || option" [nzLabel]="$any(option).value || option">
+                      [nzValue]="$any(option).value ?? $any(option).key ?? option"
+                      [nzLabel]="$any(option).label ?? $any(option).value ?? option">
                     </nz-option>
                   </nz-select>
                   <div *ngIf="field.type === 'select' && field.secondaryText" class="field-secondary-text">
@@ -249,7 +250,8 @@
                     [nzPlaceHolder]="field.placeholder || 'Type to search'" [nzDropdownRender]="addNewTpl"
                     [class.has-error]="hasError(field.id)">
                     <nz-option *ngFor="let option of $any(getFieldOptions(field))"
-                      [nzValue]="$any(option).key || option" [nzLabel]="$any(option).value || option">
+                      [nzValue]="$any(option).value ?? $any(option).key ?? option"
+                      [nzLabel]="$any(option).label ?? $any(option).value ?? option">
                     </nz-option>
                   </nz-select>
                   <ng-template #addNewTpl>
