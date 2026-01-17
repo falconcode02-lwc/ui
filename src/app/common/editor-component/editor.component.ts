@@ -9,6 +9,13 @@ import {
 } from "@angular/core";
 import * as monaco from "monaco-editor";
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from "@angular/forms";
+import {
+  IntellisenseService,
+  IntellisenseMetadata,
+  ClassMetadata,
+  MethodMetadata,
+  AnnotationMetadata,
+} from "../../service/intellisense.service";
 
 @Component({
   selector: "app-editor",
@@ -36,6 +43,9 @@ export class MonacoEditorComponent
 
   private _value = "";
   editor!: monaco.editor.IStandaloneCodeEditor;
+  private intellisenseMetadata: IntellisenseMetadata | null = null;
+
+  constructor(private intellisenseService: IntellisenseService) {}
 
   onChange = (value: string) => {};
   onTouched = () => {};
@@ -78,7 +88,7 @@ export class MonacoEditorComponent
 
     console.log(
       "Monaco Editor - Created with model language:",
-      this.editor.getModel()?.getLanguageId()
+      this.editor.getModel()?.getLanguageId(),
     );
 
     this.editor.onDidChangeModelContent(() => {
@@ -90,7 +100,19 @@ export class MonacoEditorComponent
 
     // Register custom Java autocomplete for FalconFlow annotations
     if (this.language === "java") {
-      this.registerJavaCompletions();
+      // Load intellisense metadata from API
+      this.intellisenseService.getIntellisenseMetadata().subscribe({
+        next: (metadata) => {
+          this.intellisenseMetadata = metadata;
+          this.registerJavaCompletions();
+        },
+        error: (err) => {
+          console.error("Failed to load intellisense metadata:", err);
+          // Fallback to empty metadata
+          this.intellisenseMetadata = { classes: [], annotations: [] };
+          this.registerJavaCompletions();
+        },
+      });
     }
   }
 
@@ -99,14 +121,42 @@ export class MonacoEditorComponent
       base: "vs-dark",
       inherit: true,
       rules: [
-        { token: "type", foreground: "4EC9B0" }, // Datatypes (Cyan)
-        { token: "keyword", foreground: "C586C0" }, // Keywords (Purple)
-        { token: "string", foreground: "CE9178" }, // Strings (Orange/Red)
-        { token: "comment", foreground: "6A9955" }, // Comments (Green)
-        { token: "number", foreground: "B5CEA8" }, // Numbers (Light Green)
-        { token: "annotation", foreground: "DCDCAA" }, // Annotations (Yellow)
-        { token: "identifier.class", foreground: "4EC9B0" }, // Class names
-        { token: "identifier.method", foreground: "DCDCAA" }, // Method names
+        // Data types (String, int, boolean, Map, etc.) - Bright Cyan
+        { token: "type", foreground: "4EC9B0", fontStyle: "bold" },
+        { token: "type.identifier", foreground: "4EC9B0" },
+
+        // Keywords (if, else, return, public, private, etc.) - Blue (C# style)
+        { token: "keyword", foreground: "569CD6", fontStyle: "bold" },
+
+        // Method names - Yellow/Gold
+        { token: "identifier.method", foreground: "DCDCAA" },
+        { token: "method", foreground: "DCDCAA" },
+
+        // Class names - Cyan (same as types)
+        { token: "identifier.class", foreground: "4EC9B0" },
+        { token: "class.name", foreground: "4EC9B0" },
+
+        // Annotations (@FPlugin, @Override, etc.) - Yellow (C# style)
+        { token: "annotation", foreground: "D7BA7D", fontStyle: "bold" },
+        { token: "meta", foreground: "D7BA7D" },
+
+        // Strings - Orange
+        { token: "string", foreground: "CE9178" },
+
+        // Numbers - Light Green
+        { token: "number", foreground: "B5CEA8" },
+
+        // Comments - Green, Italic
+        { token: "comment", foreground: "6A9955", fontStyle: "italic" },
+
+        // Variables - White (C# style - local variables are white)
+        { token: "variable", foreground: "D4D4D4" },
+        { token: "identifier", foreground: "D4D4D4" },
+
+        // Properties/Fields - White (C# style)
+        { token: "variable.property", foreground: "D4D4D4" },
+        { token: "property", foreground: "D4D4D4" },
+        { token: "field", foreground: "D4D4D4" },
       ],
       colors: {
         "editor.background": "#1e1e1e",
@@ -115,6 +165,9 @@ export class MonacoEditorComponent
         "editor.lineHighlightBackground": "#2F3337",
         "editorLineNumber.foreground": "#858585",
         "editor.selectionBackground": "#264F78",
+        "editorSuggestWidget.background": "#252526",
+        "editorSuggestWidget.border": "#454545",
+        "editorSuggestWidget.selectedBackground": "#094771",
       },
     });
   }
@@ -124,8 +177,12 @@ export class MonacoEditorComponent
    */
   private registerJavaCompletions() {
     monaco.languages.registerCompletionItemProvider("java", {
+      triggerCharacters: ["."],
       provideCompletionItems: (model, position) => {
         const word = model.getWordUntilPosition(position);
+        const lineContent = model.getLineContent(position.lineNumber);
+        const textBeforeCursor = lineContent.substring(0, position.column - 1);
+
         const range = {
           startLineNumber: position.lineNumber,
           endLineNumber: position.lineNumber,
@@ -133,45 +190,136 @@ export class MonacoEditorComponent
           endColumn: word.endColumn,
         };
 
-        const suggestions: monaco.languages.CompletionItem[] = [
-          {
-            label: "@FResource",
-            kind: monaco.languages.CompletionItemKind.Snippet,
-            insertText:
-              '@FResource(name="${1:Resource Name}", description="${2:Description}")',
-            insertTextRules:
-              monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation:
-              "FalconFlow Resource annotation - Defines a resource/function in a plugin",
-            detail: "FalconFlow Annotation",
-            range: range,
-          },
-          {
-            label: "@FPlugin",
-            kind: monaco.languages.CompletionItemKind.Snippet,
-            insertText: "@FPlugin",
-            documentation:
-              "FalconFlow Plugin annotation - Marks a class as a FalconFlow plugin",
-            detail: "FalconFlow Annotation",
-            range: range,
-          },
-          {
-            label: "@FParam",
-            kind: monaco.languages.CompletionItemKind.Snippet,
-            insertText:
-              '@FParam(value="${1:paramName}", description="${2:Parameter description}", required=false)',
-            insertTextRules:
-              monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation:
-              "FalconFlow Parameter annotation - Defines a parameter for a resource method",
-            detail: "FalconFlow Annotation",
-            range: range,
-          },
-        ];
+        // Check if we're after a dot (member access)
+        const memberAccessMatch = textBeforeCursor.match(/(\w+)\.$/);
+        if (memberAccessMatch) {
+          const variableName = memberAccessMatch[1];
+          return {
+            suggestions: this.getMemberSuggestions(range, variableName),
+          };
+        }
 
-        return { suggestions };
+        // Return global suggestions (annotations + classes)
+        return { suggestions: this.getGlobalSuggestions(range) };
       },
     });
+  }
+
+  /**
+   * Generate global suggestions from API metadata
+   */
+  private getGlobalSuggestions(
+    range: monaco.IRange,
+  ): monaco.languages.CompletionItem[] {
+    if (!this.intellisenseMetadata) {
+      return [];
+    }
+
+    const suggestions: monaco.languages.CompletionItem[] = [];
+
+    // Add annotations from API
+    this.intellisenseMetadata.annotations.forEach((annotation) => {
+      suggestions.push({
+        label: annotation.name,
+        kind: monaco.languages.CompletionItemKind.Snippet,
+        insertText: annotation.snippet,
+        insertTextRules: annotation.snippet.includes("${")
+          ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+          : undefined,
+        documentation: annotation.documentation,
+        detail: "FalconFlow Annotation",
+        range: range,
+      });
+    });
+
+    // Add classes from API
+    this.intellisenseMetadata.classes.forEach((classData) => {
+      const kind =
+        classData.type === "interface"
+          ? monaco.languages.CompletionItemKind.Interface
+          : classData.type === "enum"
+            ? monaco.languages.CompletionItemKind.Enum
+            : monaco.languages.CompletionItemKind.Class;
+
+      suggestions.push({
+        label: classData.name,
+        kind: kind,
+        insertText: classData.name,
+        documentation: `${classData.type} ${classData.name}`,
+        range: range,
+      });
+    });
+
+    return suggestions;
+  }
+
+  /**
+   * Get member suggestions based on variable name (context-aware)
+   */
+  private getMemberSuggestions(
+    range: monaco.IRange,
+    variableName: string,
+  ): monaco.languages.CompletionItem[] {
+    if (!this.intellisenseMetadata) {
+      return [];
+    }
+
+    const suggestions: monaco.languages.CompletionItem[] = [];
+    const lowerVar = variableName.toLowerCase();
+
+    // Determine which class this variable likely represents
+    let targetClassName: string | null = null;
+
+    if (lowerVar.includes("req") || lowerVar === "r") {
+      targetClassName = "FRequest";
+    } else if (
+      lowerVar.includes("map") ||
+      lowerVar.includes("header") ||
+      lowerVar.includes("info") ||
+      lowerVar.includes("mp")
+    ) {
+      targetClassName = "Map";
+    } else if (lowerVar.includes("vault")) {
+      targetClassName = "Vault";
+    }
+
+    // If we identified a class, get its methods from the API
+    if (targetClassName) {
+      const classData = this.intellisenseMetadata.classes.find(
+        (c) => c.name === targetClassName,
+      );
+
+      if (classData && classData.methods) {
+        classData.methods.forEach((method) => {
+          // Build parameter snippet
+          let insertText = method.name;
+          if (method.parameters && method.parameters.length > 0) {
+            const params = method.parameters
+              .map((p, idx) => `\${${idx + 1}:${p.name}}`)
+              .join(", ");
+            insertText = `${method.name}(${params})`;
+          } else {
+            insertText = `${method.name}()`;
+          }
+
+          suggestions.push({
+            label: method.name,
+            kind: monaco.languages.CompletionItemKind.Method,
+            insertText: insertText,
+            insertTextRules:
+              method.parameters && method.parameters.length > 0
+                ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                : undefined,
+            documentation:
+              method.documentation || `${method.returnType} ${method.name}`,
+            detail: `${method.returnType}`,
+            range: range,
+          });
+        });
+      }
+    }
+
+    return suggestions;
   }
 
   // ✅ Update options dynamically if inputs change

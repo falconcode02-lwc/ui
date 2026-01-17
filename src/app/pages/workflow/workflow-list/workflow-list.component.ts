@@ -80,7 +80,7 @@ export class WorkflowListComponent implements OnInit {
     private route: ActivatedRoute,
     private modal: NzModalService,
     private contextService: ContextService,
-    private projectService: ProjectService
+    private projectService: ProjectService,
   ) {}
 
   ngOnInit(): void {
@@ -108,8 +108,11 @@ export class WorkflowListComponent implements OnInit {
         } else {
           this.checkProjectSelection();
         }
-      })
+      }),
     );
+
+    // Check project selection on initial load
+    this.checkProjectSelection();
   }
 
   checkProjectSelection(): void {
@@ -141,8 +144,8 @@ export class WorkflowListComponent implements OnInit {
   }
 
   selectProject(project: Project): void {
-    if (project.id) {
-      this.contextService.setProject(project.id);
+    if (project.code) {
+      this.contextService.setProject(project.code);
       this.isProjectModalVisible = false;
       this.message.success(`Project "${project.name}" selected`);
     }
@@ -190,7 +193,7 @@ export class WorkflowListComponent implements OnInit {
       (w) =>
         w.name.toLowerCase().includes(keyword) ||
         w.code.toLowerCase().includes(keyword) ||
-        w.description.toLowerCase().includes(keyword)
+        w.description.toLowerCase().includes(keyword),
     );
   }
 
@@ -244,7 +247,7 @@ export class WorkflowListComponent implements OnInit {
         this.workflowService.active(workflow.id, workflow.active).subscribe({
           next: () => {
             this.message.success(
-              `${workflow.active ? "Activated" : "Deactivated"} successfully`
+              `${workflow.active ? "Activated" : "Deactivated"} successfully`,
             );
             this.loadWorkflows();
           },
@@ -252,7 +255,7 @@ export class WorkflowListComponent implements OnInit {
             this.message.error(
               `Failed to ${
                 workflow.active ? "activate" : "deactivate"
-              } workflow`
+              } workflow`,
             );
             workflow.active = !workflow.active;
           },
