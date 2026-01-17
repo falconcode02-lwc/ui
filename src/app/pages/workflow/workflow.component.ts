@@ -315,11 +315,11 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
 
   public readonly nodes = computed(() => this.updateNodeService().nodes);
   public readonly connections = computed(
-    () => this.updateNodeService().connections
+    () => this.updateNodeService().connections,
   );
   public readonly groups = computed(() => this.updateNodeService().groups);
   public readonly stickynotes = computed(
-    () => this.updateNodeService().stickynotes
+    () => this.updateNodeService().stickynotes,
   );
   private _isChangeAfterLoadedResetAndCenter = true;
 
@@ -329,7 +329,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         this.state.changes();
         untracked(() => this._applyChanges());
       },
-      { injector: this._injector }
+      { injector: this._injector },
     );
   }
 
@@ -362,7 +362,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   private _ifCanvasChangedFromInitialReCenterUpdateInitialState(
-    event: FCanvasChangeEvent
+    event: FCanvasChangeEvent,
   ): void {
     if (this._isChangeAfterLoadedResetAndCenter) {
       this._isChangeAfterLoadedResetAndCenter = false;
@@ -376,12 +376,6 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   createTransformObject({ position, scale }: FCanvasChangeEvent) {
     return { position, scale };
   }
-
-  // Undo/Redo state management
-  private historyStack: any[] = [];
-  private historyIndex: number = -1;
-  private maxHistorySize: number = 50;
-  private isUndoRedoOperation: boolean = false;
 
   protected readonly fCanvas = viewChild(FCanvasComponent);
 
@@ -598,7 +592,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       return true;
     }
     return this.toolbox.some((sec) =>
-      sec.blocks.some((block: any) => this.filterBlocksBySearch(block))
+      sec.blocks.some((block: any) => this.filterBlocksBySearch(block)),
     );
   }
 
@@ -635,12 +629,12 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         for (const section of this.toolbox) {
           if (section.name === "Plugins") {
             const pluginBlock = section.blocks.find(
-              (block: any) => block.type === node.type
+              (block: any) => block.type === node.type,
             );
             if (pluginBlock && pluginBlock.pluginData) {
               console.log(
                 `Syncing plugin definition for node ${node.id}:`,
-                pluginBlock.name
+                pluginBlock.name,
               );
               // Update meta.pluginData with latest definition
               if (!node.meta) node.meta = {};
@@ -712,7 +706,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       this.contextService.project$.subscribe((p) => {
         this.updateUrlParams();
         this.loadPlugins();
-      })
+      }),
     );
     if (this.workflowId) {
       setTimeout(() => {
@@ -720,7 +714,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           this.runOptionSelected = "Update";
           this.runUpdateOptionCode = this.runUpdateOptionCode.replace(
             "generatedID",
-            runid || ""
+            runid || "",
           );
           // this.handleValueChange('Update');
         }
@@ -818,7 +812,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         };
 
         const existingPluginIndex = this.toolbox.findIndex(
-          (section) => section.name === "Plugins"
+          (section) => section.name === "Plugins",
         );
         if (existingPluginIndex >= 0) {
           this.toolbox[existingPluginIndex] = pluginSection;
@@ -1048,7 +1042,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     private fb: FormBuilder,
     private nzContextMenuService: NzContextMenuService,
     private breadcrumbService: BreadcrumbService,
-    private pluginService: PluginService
+    private pluginService: PluginService,
   ) {}
 
   /**
@@ -1328,7 +1322,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       for (const section of this.toolbox) {
         if (section.name === "Plugins") {
           const pluginBlock = section.blocks.find(
-            (block: any) => block.type === nodeType
+            (block: any) => block.type === nodeType,
           );
           if (pluginBlock && pluginBlock.pluginData) {
             console.log("Found plugin in toolbox:", pluginBlock);
@@ -1486,7 +1480,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
                         .substr(2, 9)}`,
                       key: key,
                       value: value,
-                    })
+                    }),
                   );
                 }
               } else {
@@ -1537,7 +1531,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     console.log("secretssss", secretsField);
     console.log(
       "this.selectedNode?.meta?.pluginData?.plugin_secrets_opt?.onInit",
-      this.selectedNode?.meta?.pluginData?.plugin_secrets_opt?.onInit
+      this.selectedNode?.meta?.pluginData?.plugin_secrets_opt?.onInit,
     );
     return {
       // title: `${this.selectedNode.data?.name || 'Node'} Properties`,
@@ -1873,7 +1867,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       } else {
         // For regular nodes, check if this field should go in metaData
         const fieldSchema = this.propertySchema.find(
-          (f: any) => f.name === key
+          (f: any) => f.name === key,
         );
 
         if (fieldSchema?.dataplace === "metaData") {
@@ -2149,11 +2143,11 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   public onNodeIntersectedWithConnection(
-    event: FNodeIntersectedWithConnections
+    event: FNodeIntersectedWithConnections,
   ): void {
     const node = this.nodes().find((x: any) => x.id === event.fNodeId);
     const connection = this.connections().find(
-      (x: any) => x.id === event.fConnectionIds[0]
+      (x: any) => x.id === event.fConnectionIds[0],
     );
 
     const previousInputId = connection!.targetPortId;
@@ -2198,7 +2192,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     }
     const connectionIndex = this.findConnectionIndex(
       event.oldSourceId,
-      event.oldTargetId
+      event.oldTargetId,
     );
     if (connectionIndex === -1) {
       throw new Error("Connection not found");
@@ -2224,7 +2218,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
 
   removeConnectionById(connectionID: string) {
     const connectionIndex = this.connections().findIndex(
-      (x: any) => x.id === connectionID
+      (x: any) => x.id === connectionID,
     );
     if (connectionIndex === -1) {
       throw new Error("Connection not found");
@@ -2236,14 +2230,14 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     return this.connections().findIndex(
       (x: any) =>
         x.sourcePortId.startsWith(outputId) &&
-        x.targetPortId.startsWith(inputId)
+        x.targetPortId.startsWith(inputId),
     );
   }
 
   findConnectionsByNode(nodeID: string): number {
     return this.connections().filter(
       (x: any) =>
-        x.sourcePortId.startsWith(nodeID) || x.targetPortId.startsWith(nodeID)
+        x.sourcePortId.startsWith(nodeID) || x.targetPortId.startsWith(nodeID),
     );
   }
 
@@ -2527,7 +2521,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
 
             // Let's try to patch the values
             this.secretPropertyPanel.dynamicForm.patchValue(
-              this.secretFormData
+              this.secretFormData,
             );
           }
         }, 100);
@@ -2550,7 +2544,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
   public zoomNodeToCenter(
     nodeId: string,
     scale: number = 1.0,
-    animated: boolean = true
+    animated: boolean = true,
   ): void {
     // Prefer the explicit view child if available
     const canvas =
@@ -2819,7 +2813,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         },
         (error) => {
           console.error("Error loading agents:", error);
-        }
+        },
       );
     }
   }
@@ -2973,7 +2967,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
             this.isRunWorkflowOpen = false;
             this.runUpdateOptionCode = this.runUpdateOptionCode.replace(
               "generatedID",
-              d.workflowId
+              d.workflowId,
             );
 
             if (!this.isWorkflowRunning) {
@@ -3001,7 +2995,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
             nzDuration: 20000,
             nzPlacement: "bottomRight",
           });
-        }
+        },
       );
     }
   }
@@ -3108,33 +3102,6 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     this.loadFromJson(this.workflowJson);
   }
 
-  // Undo/Redo functionality
-  saveStateToHistory() {
-    if (this.isUndoRedoOperation) {
-      return; // Don't save state during undo/redo operations
-    }
-
-    const currentState = {
-      nodes: JSON.parse(JSON.stringify(this.nodes())),
-      connections: JSON.parse(JSON.stringify(this.connections())),
-      groups: JSON.parse(JSON.stringify(this.groups())),
-      stickynotes: JSON.parse(JSON.stringify(this.stickynotes())),
-    };
-
-    // Remove any states after current index (when user makes new change after undo)
-    this.historyStack = this.historyStack.slice(0, this.historyIndex + 1);
-
-    // Add new state
-    this.historyStack.push(currentState);
-
-    // Limit history size
-    if (this.historyStack.length > this.maxHistorySize) {
-      this.historyStack.shift();
-    } else {
-      this.historyIndex++;
-    }
-  }
-
   edit() {
     this.isEditOpen = true;
     setTimeout(() => {
@@ -3193,7 +3160,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       }
       setTimeout(() => {
         const minimapElement = document.querySelector(
-          ".any-container-or-without-container"
+          ".any-container-or-without-container",
         );
         if (minimapElement) {
           minimapElement.classList.remove("minimap-fade-out");
@@ -3212,7 +3179,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     // Remove fade-out class after DOM updates
     setTimeout(() => {
       const minimapElement = document.querySelector(
-        ".any-container-or-without-container"
+        ".any-container-or-without-container",
       );
       if (minimapElement) {
         minimapElement.classList.remove("minimap-fade-out");
@@ -3230,7 +3197,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         if (!this.isMinimapHovered) {
           // Add fade out class, then remove minimap after animation
           const minimapElement = document.querySelector(
-            ".any-container-or-without-container"
+            ".any-container-or-without-container",
           );
           if (minimapElement) {
             minimapElement.classList.add("minimap-fade-out");
@@ -3412,7 +3379,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           for (const section of this.toolbox) {
             if (section.name === "Plugins") {
               const pluginBlock = section.blocks.find(
-                (block: any) => block.type === nodeType
+                (block: any) => block.type === nodeType,
               );
               if (pluginBlock?.pluginData) {
                 pluginData = pluginBlock.pluginData;
@@ -3427,7 +3394,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           Array.isArray(pluginData.plugin_properties)
         ) {
           const requiredProps = pluginData.plugin_properties.filter(
-            (p: any) => p.required === true && p.defaultVisible === true
+            (p: any) => p.required === true && p.defaultVisible === true,
           );
 
           requiredProps.forEach((prop: any) => {
@@ -3479,7 +3446,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
 
             if (!isValid) {
               errors.push(
-                `"${nodeName}" (Plugin) is missing required field: ${prop.label}`
+                `"${nodeName}" (Plugin) is missing required field: ${prop.label}`,
               );
               hasError = true;
             }
@@ -3488,7 +3455,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           // requiredEither groups
           const withEither = pluginData.plugin_properties.filter(
             (p: any) =>
-              Array.isArray(p.requiredEither) && p.requiredEither.length > 0
+              Array.isArray(p.requiredEither) && p.requiredEither.length > 0,
           );
           const eitherGroups: Map<string, any[]> = new Map();
           withEither.forEach((prop: any) => {
@@ -3497,7 +3464,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
             if (!existing.find((f) => f.id === prop.id)) existing.push(prop);
             prop.requiredEither.forEach((rid: string) => {
               const related = pluginData.plugin_properties.find(
-                (pp: any) => pp.id === rid
+                (pp: any) => pp.id === rid,
               );
               if (related && !existing.find((f) => f.id === related.id))
                 existing.push(related);
@@ -3531,7 +3498,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
             if (!hasOne) {
               const labels = group.map((p: any) => p.label).join(" or ");
               errors.push(
-                `"${nodeName}" (Plugin) must have at least one of: ${labels}`
+                `"${nodeName}" (Plugin) must have at least one of: ${labels}`,
               );
               hasError = true;
             }
@@ -3589,7 +3556,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           // If validation fails, add error message
           if (!isValid) {
             errors.push(
-              `"${nodeName}" is missing required field: ${fieldLabel}`
+              `"${nodeName}" is missing required field: ${fieldLabel}`,
             );
             hasError = true;
           }
@@ -3605,7 +3572,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
               field.visiblefor &&
               field.visiblefor.includes(nodeType)
             );
-          }
+          },
         );
 
         // Group fields by their requiredEither relationships
@@ -3628,7 +3595,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           // Add all related fields to the group
           field.requiredEither.forEach((relatedFieldName: string) => {
             const relatedField = this.propertySchema.find(
-              (f: any) => f.name === relatedFieldName
+              (f: any) => f.name === relatedFieldName,
             );
             if (
               relatedField &&
@@ -3667,7 +3634,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           if (!hasAtLeastOne) {
             const fieldLabels = group.map((f: any) => f.label).join(" or ");
             errors.push(
-              `"${nodeName}" must have at least one of: ${fieldLabels}`
+              `"${nodeName}" must have at least one of: ${fieldLabels}`,
             );
             hasError = true;
           }
@@ -3703,7 +3670,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
         {
           nzDuration: 10000,
           nzPlacement: "topRight",
-        }
+        },
       );
 
       // Navigate to the first invalid node and open its properties
@@ -3808,13 +3775,13 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       this.apiRequest =
         this.runUpdateOptionCode.replaceAll(
           "selectedWorkflowcode",
-          this.selectedWorkflow?.code
+          this.selectedWorkflow?.code,
         ) + "";
     } else if (e == "New") {
       this.apiRequest =
         this.runNewOptionCode.replaceAll(
           "selectedWorkflowcode",
-          this.selectedWorkflow?.code
+          this.selectedWorkflow?.code,
         ) + "";
     }
   }
@@ -3848,11 +3815,11 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       if (!conne) return;
       //let liveconnection = this.connections().find((d: any) => { return d.connectionId === connection.connectionId })
       let trgNodePos = this.nodes().find((d: any) =>
-        d.id.startsWith(conne.targetPortId)
+        d.id.startsWith(conne.targetPortId),
       );
       if (conne2) {
         let t_trgNodePos = this.nodes().find((d: any) =>
-          d.id.startsWith(conne2.targetPortId)
+          d.id.startsWith(conne2.targetPortId),
         );
 
         if (t_trgNodePos.position.x > trgNodePos.position.x) {
@@ -3864,7 +3831,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
 
       if (conne) {
         let srcNodePos = this.nodes().find((d: any) =>
-          conne.sourcePortId.startsWith(d.id)
+          conne.sourcePortId.startsWith(d.id),
         );
         if (srcNodePos.position.x < trgNodePos.position.x) {
           conne.type = "offset_straight";
@@ -3934,7 +3901,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     this.workflowService
       .getWorkflowStepsStatus(
         this.contextService.getWorkspace() || "",
-        workflowId
+        workflowId,
       )
       .subscribe((d: any) => {
         if (d.status == "SUCCESS") {
@@ -3953,7 +3920,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
                 nzData: d.workflowId,
                 nzDuration: 20000,
                 nzPlacement: "bottomRight",
-              }
+              },
             );
           }
 
@@ -4008,7 +3975,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
           let connct = this.connections().filter(
             (a: any) =>
               a.sourcePortId.split("_")[0] == this.prevNode &&
-              a.targetPortId.split("_")[0] == node.id
+              a.targetPortId.split("_")[0] == node.id,
           );
           console.log(this.prevNode, node.id, connct.id);
           if (connct)
@@ -4204,7 +4171,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     return resources.filter(
       (res: any) =>
         (res.displayName && res.displayName.toLowerCase().includes(term)) ||
-        (res.method && res.method.toLowerCase().includes(term))
+        (res.method && res.method.toLowerCase().includes(term)),
     );
   }
 
@@ -4227,7 +4194,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     ) {
       this.openPluginDetail(
         this.selectedPluginForResources.pluginData.id,
-        event
+        event,
       );
     }
   }
@@ -4295,7 +4262,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
    */
   onBlockIconError(block: any) {
     console.warn(
-      `Icon failed to load for block: ${block.name}, using fallback icon`
+      `Icon failed to load for block: ${block.name}, using fallback icon`,
     );
     // Mark the block to use fallback icon
     block.iconError = true;
@@ -4313,7 +4280,7 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
     console.warn(
       `Icon failed to load for node: ${
         node.meta?.html || node.id
-      }, using fallback icon`
+      }, using fallback icon`,
     );
     // Mark the node to use fallback icon
     node.iconError = true;
@@ -4323,5 +4290,61 @@ export class WorkflowEditorComponent implements AfterViewInit, OnDestroy {
       nodes: [...flow.nodes],
     }));
     this.changeDetectorRef.markForCheck();
+  }
+
+  /**
+   * Keyboard shortcut handler for undo/redo
+   */
+  @HostListener("window:keydown", ["$event"])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+    const ctrlKey = isMac ? event.metaKey : event.ctrlKey;
+
+    // Ctrl+Z or Cmd+Z: Undo
+    if (ctrlKey && event.key === "z" && !event.shiftKey) {
+      if (this.canUndo()) {
+        event.preventDefault();
+        this.undo();
+      }
+    }
+
+    // Ctrl+Y or Cmd+Y or Ctrl+Shift+Z: Redo
+    if (
+      (ctrlKey && event.key === "y") ||
+      (ctrlKey && event.shiftKey && event.key === "z")
+    ) {
+      if (this.canRedo()) {
+        event.preventDefault();
+        this.redo();
+      }
+    }
+  }
+
+  /**
+   * Undo the last change
+   */
+  undo(): void {
+    this.state.undo();
+  }
+
+  /**
+   * Redo the last undone change
+   */
+  redo(): void {
+    this.state.redo();
+  }
+
+  /**
+   * Check if undo is available
+   */
+  canUndo(): boolean {
+    return this.state.canUndo();
+  }
+
+  /**
+   * Check if redo is available
+   */
+  canRedo(): boolean {
+    return this.state.canRedo();
   }
 }

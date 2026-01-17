@@ -27,6 +27,7 @@ import { ProjectService } from "./project-service";
 import { Project } from "./project-model";
 import { ContextService } from "../../service/context.service";
 import { Subscription } from "rxjs";
+import { Router } from "@angular/router";
 
 @Component({
   selector: "app-projects",
@@ -69,7 +70,8 @@ export class ProjectComponent implements OnInit {
     private projectService: ProjectService,
     private fb: FormBuilder,
     private message: NzMessageService,
-    private contextService: ContextService
+    private contextService: ContextService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -108,7 +110,7 @@ export class ProjectComponent implements OnInit {
       (p) =>
         p.name.toLowerCase().includes(keyword) ||
         p.code.toLowerCase().includes(keyword) ||
-        (p.description && p.description.toLowerCase().includes(keyword))
+        (p.description && p.description.toLowerCase().includes(keyword)),
     );
   }
 
@@ -190,6 +192,22 @@ export class ProjectComponent implements OnInit {
     this.projectService.startWorkflow(p.id).subscribe({
       next: () => this.message.success("Workflow started successfully"),
       error: () => this.message.error("Failed to start workflow"),
+    });
+  }
+
+  /**
+   * Navigate to workflows with this project selected
+   */
+  navigateToWorkflows(project: Project): void {
+    // Set project in global context
+    this.contextService.setProject(project.code);
+
+    // Navigate to workflows with query params
+    this.router.navigate(["/workflow"], {
+      queryParams: {
+        workspace: this.contextService.getWorkspace(),
+        project: project.code,
+      },
     });
   }
 
