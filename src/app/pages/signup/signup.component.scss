@@ -1,0 +1,71 @@
+// Import login styles as base
+@import '../login/login.component.scss';
+
+// Override class names for signup
+.signup-container {
+  @extend .login-container;
+}
+
+.signup-branding {
+  @extend .login-branding;
+}
+
+.signup-form-section {
+  @extend .login-form-section;
+}
+
+.signup-form-container {
+  @extend .login-form-container;
+}
+
+.signup-form {
+  @extend .login-form;
+}
+
+.signup-button {
+  @extend .login-button;
+}
+
+.signup-alert {
+  @extend .login-alert;
+}
+
+.signup-input {
+  background-color: transparent !important;
+}
+
+.terms-checkbox {
+  margin-bottom: 24px;
+
+  ::ng-deep {
+    .ant-checkbox-wrapper {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+
+      .ant-checkbox-inner {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      &:hover .ant-checkbox-inner {
+        border-color: #1890ff;
+      }
+
+      .ant-checkbox-checked .ant-checkbox-inner {
+        background: #1890ff;
+        border-color: #1890ff;
+      }
+
+      a {
+        color: #1890ff;
+        text-decoration: none;
+        transition: color 0.3s ease;
+
+        &:hover {
+          color: #40a9ff;
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+}
