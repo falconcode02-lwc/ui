@@ -13,10 +13,9 @@
                     </nz-upload>
                 </div>
                 <div class="user-info">
-                    <h1 class="user-name">{{ profileForm.get('firstName')?.value }} {{
-                        profileForm.get('lastName')?.value }}</h1>
+                    <h1 class="user-name">{{ profileForm.get('fullName')?.value || 'User' }}</h1>
                     <p class="user-email">{{ profileForm.get('email')?.value }}</p>
-                    <p class="user-bio">{{ profileForm.get('bio')?.value }}</p>
+                    <p class="user-bio">{{ '@' + (profileForm.get('username')?.value || '') }}</p>
                 </div>
             </div>
         </nz-card>
@@ -43,6 +42,11 @@
                     <span nz-icon nzType="bell" nzTheme="outline"></span>
                     <span>Notifications</span>
                 </li>
+                <li nz-menu-divider></li>
+                <li nz-menu-item nzDanger (click)="logout()">
+                    <span nz-icon nzType="logout" nzTheme="outline"></span>
+                    <span>Logout</span>
+                </li>
             </ul>
         </div>
 
@@ -52,67 +56,27 @@
             <div *ngIf="selectedSection === 'personal'" class="profile-section">
                 <nz-card nzTitle="Personal Information" class="content-card">
                     <form nz-form [formGroup]="profileForm" nzLayout="vertical">
-                        <div nz-row [nzGutter]="16">
-                            <div nz-col [nzSpan]="12">
-                                <nz-form-item>
-                                    <nz-form-label nzRequired>First Name</nz-form-label>
-                                    <nz-form-control nzErrorTip="Please input your first name!">
-                                        <input nz-input formControlName="firstName" placeholder="First Name" />
-                                    </nz-form-control>
-                                </nz-form-item>
-                            </div>
-                            <div nz-col [nzSpan]="12">
-                                <nz-form-item>
-                                    <nz-form-label nzRequired>Last Name</nz-form-label>
-                                    <nz-form-control nzErrorTip="Please input your last name!">
-                                        <input nz-input formControlName="lastName" placeholder="Last Name" />
-                                    </nz-form-control>
-                                </nz-form-item>
-                            </div>
-                        </div>
-
-                        <div nz-row [nzGutter]="16">
-                            <div nz-col [nzSpan]="12">
-                                <nz-form-item>
-                                    <nz-form-label nzRequired>Email</nz-form-label>
-                                    <nz-form-control nzErrorTip="Please input a valid email!">
-                                        <input nz-input formControlName="email" type="email" placeholder="Email" />
-                                    </nz-form-control>
-                                </nz-form-item>
-                            </div>
-                            <div nz-col [nzSpan]="12">
-                                <nz-form-item>
-                                    <nz-form-label>Phone</nz-form-label>
-                                    <nz-form-control>
-                                        <input nz-input formControlName="phone" placeholder="Phone Number" />
-                                    </nz-form-control>
-                                </nz-form-item>
-                            </div>
-                        </div>
-
                         <nz-form-item>
-                            <nz-form-label>Bio</nz-form-label>
-                            <nz-form-control>
-                                <textarea nz-input formControlName="bio" placeholder="Tell us about yourself"
-                                    [nzAutosize]="{ minRows: 3, maxRows: 6 }"></textarea>
+                            <nz-form-label nzRequired>Full Name</nz-form-label>
+                            <nz-form-control nzErrorTip="Please input your full name!">
+                                <input nz-input formControlName="fullName" placeholder="Full Name" />
                             </nz-form-control>
                         </nz-form-item>
 
                         <div nz-row [nzGutter]="16">
                             <div nz-col [nzSpan]="12">
                                 <nz-form-item>
-                                    <nz-form-label>Location</nz-form-label>
-                                    <nz-form-control>
-                                        <input nz-input formControlName="location" placeholder="City, Country" />
+                                    <nz-form-label nzRequired>Username</nz-form-label>
+                                    <nz-form-control nzErrorTip="Please input your username!">
+                                        <input nz-input formControlName="username" placeholder="Username" />
                                     </nz-form-control>
                                 </nz-form-item>
                             </div>
                             <div nz-col [nzSpan]="12">
                                 <nz-form-item>
-                                    <nz-form-label>Website</nz-form-label>
-                                    <nz-form-control>
-                                        <input nz-input formControlName="website"
-                                            placeholder="https://yourwebsite.com" />
+                                    <nz-form-label nzRequired>Email</nz-form-label>
+                                    <nz-form-control nzErrorTip="Please input a valid email!">
+                                        <input nz-input formControlName="email" type="email" placeholder="Email" />
                                     </nz-form-control>
                                 </nz-form-item>
                             </div>
@@ -136,35 +100,12 @@
                 <nz-card nzTitle="Account Settings" class="content-card">
                     <form nz-form [formGroup]="accountForm" nzLayout="vertical">
                         <nz-form-item>
-                            <nz-form-label nzRequired>Username</nz-form-label>
-                            <nz-form-control nzErrorTip="Please input your username!">
-                                <input nz-input formControlName="username" placeholder="Username" />
-                            </nz-form-control>
-                        </nz-form-item>
-
-                        <div nz-row [nzGutter]="16">
-                            <div nz-col [nzSpan]="12">
-                                <nz-form-item>
-                                    <nz-form-label>Language</nz-form-label>
-                                    <nz-form-control>
-                                        <input nz-input formControlName="language" placeholder="Language" />
-                                    </nz-form-control>
-                                </nz-form-item>
-                            </div>
-                            <div nz-col [nzSpan]="12">
-                                <nz-form-item>
-                                    <nz-form-label>Timezone</nz-form-label>
-                                    <nz-form-control>
-                                        <input nz-input formControlName="timezone" placeholder="Timezone" />
-                                    </nz-form-control>
-                                </nz-form-item>
-                            </div>
-                        </div>
-
-                        <nz-form-item>
-                            <nz-form-label>Date Format</nz-form-label>
+                            <nz-form-label>Account Status</nz-form-label>
                             <nz-form-control>
-                                <input nz-input formControlName="dateFormat" placeholder="Date Format" />
+                                <nz-select formControlName="status">
+                                    <nz-option nzValue="ACTIVE" nzLabel="Active"></nz-option>
+                                    <nz-option nzValue="INACTIVE" nzLabel="Inactive"></nz-option>
+                                </nz-select>
                             </nz-form-control>
                         </nz-form-item>
 

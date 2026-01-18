@@ -89,6 +89,19 @@
 
 
 
+            <li nz-submenu nzTitle="Settings" nzIcon="setting">
+                <ul>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/users']" routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="usergroup-add"></span>
+                        <span>Users</span>
+                    </li>
+                    <li nz-menu-item nzMatchRouter [routerLink]="['/roles']" routerLinkActive="ant-menu-item-selected">
+                        <span nz-icon nzType="safety"></span>
+                        <span>Roles</span>
+                    </li>
+                </ul>
+            </li>
+
             <li nz-menu-item>
                 <a href="/ffdocs/" target="_blank" rel="noopener noreferrer">
                     <span nz-icon nzType="file-text"></span>
@@ -117,13 +130,13 @@
         </div>
     </nz-sider>
     <nz-layout>
-        <nz-header>
+        <!-- <nz-header>
             <div class="app-header">
                 <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
                     <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
                 </span>
 
-                <!-- Workspace and Project Dropdowns -->
+                 
                 <div class="environment-selectors">
                     <nz-select 
                         nzSize="small"
@@ -196,7 +209,7 @@
                 </nz-breadcrumb-item>
             </nz-breadcrumb>
 
-        </nz-header>
+        </nz-header> -->
         <nz-content style="overflow: auto;">
 
             <router-outlet></router-outlet>

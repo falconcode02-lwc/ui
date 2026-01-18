@@ -1,4 +1,4 @@
-<div class="login-container">
+<div class="signup-container">
   <!-- Animated Workflow Background -->
   <div class="workflow-animation">
     <!-- Workflow Nodes -->
@@ -61,7 +61,7 @@
   </div>
 
   <!-- Left Side - Branding -->
-  <div class="login-branding">
+  <div class="signup-branding">
     <div class="branding-content">
       <div class="logo-section">
         <div class="logo-icon">
@@ -78,74 +78,68 @@
           </svg>
         </div>
         <h1 class="brand-name">Falcon Flow</h1>
-        <p class="brand-tagline">Workflow Automation Platform</p>
+        <p class="brand-tagline">Join the Workflow Revolution</p>
       </div>
       
       <div class="features-list">
         <div class="feature-item">
           <nz-icon nzType="check-circle" nzTheme="fill"></nz-icon>
-          <span>Powerful Workflow Engine</span>
+          <span>Free Account Setup</span>
         </div>
         <div class="feature-item">
           <nz-icon nzType="check-circle" nzTheme="fill"></nz-icon>
-          <span>Real-time Monitoring</span>
+          <span>Instant Access</span>
         </div>
         <div class="feature-item">
           <nz-icon nzType="check-circle" nzTheme="fill"></nz-icon>
-          <span>Secure & Scalable</span>
+          <span>No Credit Card Required</span>
         </div>
         <div class="feature-item">
           <nz-icon nzType="check-circle" nzTheme="fill"></nz-icon>
-          <span>Enterprise Ready</span>
-        </div>
-      </div>
-
-      <div class="stats-section">
-        <div class="stat-item">
-          <div class="stat-value">10K+</div>
-          <div class="stat-label">Workflows</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">99.9%</div>
-          <div class="stat-label">Uptime</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">24/7</div>
-          <div class="stat-label">Support</div>
+          <span>24/7 Support</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Right Side - Login Form -->
-  <div class="login-form-section">
-    <div class="login-form-container">
+  <!-- Right Side - Signup Form -->
+  <div class="signup-form-section">
+    <div class="signup-form-container">
       <div class="form-header">
-        <h2>Welcome Back</h2>
-        <p>Sign in to continue to Falcon Flow</p>
+        <h2>Create Account</h2>
+        <p>Start your workflow automation journey</p>
       </div>
 
-      <!-- Error/Warning Alert -->
+      <!-- Success Alert -->
+      <nz-alert 
+        *ngIf="successMessage" 
+        nzType="success" 
+        [nzMessage]="successMessage" 
+        [nzShowIcon]="true"
+        class="signup-alert">
+      </nz-alert>
+
+      <!-- Error Alert -->
       <nz-alert 
         *ngIf="errorMessage" 
-        [nzType]="getAlertType()" 
+        nzType="error" 
         [nzMessage]="errorMessage" 
         [nzShowIcon]="true"
         [nzCloseable]="true"
         (nzOnClose)="errorMessage = ''"
-        class="login-alert">
+        class="signup-alert">
       </nz-alert>
 
-      <form nz-form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <form nz-form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
         <nz-form-item>
-          <nz-form-control nzErrorTip="Please input your username!">
+          <nz-form-control nzErrorTip="Please input your full name!">
             <nz-input-group nzSize="large" [nzPrefix]="userPrefix">
               <input 
                 nz-input 
-                class="login-input"
-                formControlName="username" 
-                placeholder="Username"
-                [disabled]="loading || accountLocked" />
+                class="signup-input"
+                formControlName="fullName" 
+                placeholder="Full Name"
+                [disabled]="loading" />
             </nz-input-group>
             <ng-template #userPrefix>
               <nz-icon nzType="user" nzTheme="outline"></nz-icon>
@@ -154,15 +148,48 @@
         </nz-form-item>
 
         <nz-form-item>
-          <nz-form-control nzErrorTip="Please input your password!">
+          <nz-form-control nzErrorTip="Please input a valid username (min 3 characters)!">
+            <nz-input-group nzSize="large" [nzPrefix]="idcardPrefix">
+              <input 
+                nz-input 
+                class="signup-input"
+                formControlName="username" 
+                placeholder="Username"
+                [disabled]="loading" />
+            </nz-input-group>
+            <ng-template #idcardPrefix>
+              <nz-icon nzType="idcard" nzTheme="outline"></nz-icon>
+            </ng-template>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-control nzErrorTip="Please input a valid email!">
+            <nz-input-group nzSize="large" [nzPrefix]="mailPrefix">
+              <input 
+                nz-input 
+                class="signup-input"
+                type="email"
+                formControlName="email" 
+                placeholder="Email Address"
+                [disabled]="loading" />
+            </nz-input-group>
+            <ng-template #mailPrefix>
+              <nz-icon nzType="mail" nzTheme="outline"></nz-icon>
+            </ng-template>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-control nzErrorTip="Password must be at least 6 characters!">
             <nz-input-group nzSize="large" [nzPrefix]="lockPrefix">
               <input 
                 nz-input 
-                class="login-input"
+                class="signup-input"
                 type="password" 
                 formControlName="password"
-                placeholder="Password"
-                [disabled]="loading || accountLocked" />
+                placeholder="Password (min 6 characters)"
+                [disabled]="loading" />
             </nz-input-group>
             <ng-template #lockPrefix>
               <nz-icon nzType="lock" nzTheme="outline"></nz-icon>
@@ -170,9 +197,27 @@
           </nz-form-control>
         </nz-form-item>
 
-        <div class="form-options">
-          <!-- <label nz-checkbox>Remember me</label> -->
-          <!-- <a class="forgot-link">Forgot password?</a> -->
+        <nz-form-item>
+          <nz-form-control nzErrorTip="Please confirm your password!">
+            <nz-input-group nzSize="large" [nzPrefix]="lockPrefix2">
+              <input 
+                nz-input 
+                class="signup-input"
+                type="password" 
+                formControlName="confirmPassword"
+                placeholder="Confirm Password"
+                [disabled]="loading" />
+            </nz-input-group>
+            <ng-template #lockPrefix2>
+              <nz-icon nzType="lock" nzTheme="outline"></nz-icon>
+            </ng-template>
+          </nz-form-control>
+        </nz-form-item>
+
+        <div class="terms-checkbox">
+          <label nz-checkbox formControlName="agreeToTerms">
+            I agree to the <a>Terms of Service</a> and <a>Privacy Policy</a>
+          </label>
         </div>
 
         <button 
@@ -181,22 +226,15 @@
           nzSize="large"
           nzBlock
           [nzLoading]="loading"
-          [disabled]="loginForm.invalid || accountLocked"
-          class="login-button">
-          <span *ngIf="!loading">Sign In</span>
-          <span *ngIf="loading">Signing in...</span>
+          [disabled]="signupForm.invalid"
+          class="signup-button">
+          <span *ngIf="!loading">Create Account</span>
+          <span *ngIf="loading">Creating Account...</span>
         </button>
-
-        <!-- Account Locked Notice -->
-        <div *ngIf="accountLocked" class="locked-notice">
-          <nz-icon nzType="lock" nzTheme="fill"></nz-icon>
-          <p>Account locked due to multiple failed attempts</p>
-          <small>Please contact your administrator</small>
-        </div>
       </form>
 
       <div class="form-footer">
-        <p>Don't have an account? <a (click)="navigateToSignup()">Sign Up</a></p>
+        <p>Already have an account? <a (click)="navigateToLogin()">Sign In</a></p>
       </div>
     </div>
   </div>
