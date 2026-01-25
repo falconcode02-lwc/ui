@@ -40,7 +40,7 @@
     </nz-empty>
 
     <!-- List View -->
-    <nz-list *ngIf="filteredWorkflows.length > 0" [nzDataSource]="filteredWorkflows" [nzLoading]="loading" nzBordered>
+    <nz-list *ngIf="filteredWorkflows.length > 0" [nzDataSource]="filteredWorkflows" [nzLoading]="loading" >
         <nz-list-item *ngFor="let w of filteredWorkflows" class="workflow-item">
             <div class="workflow-content">
                 <div class="workflow-main" (click)="edit(w)">
@@ -114,7 +114,7 @@
     <div class="project-selection-container">
       <p>Please select a project to view the workflow list.</p>
       
-      <nz-list [nzDataSource]="projects" [nzLoading]="projectLoading" nzBordered>
+      <nz-list [nzDataSource]="projects" [nzLoading]="projectLoading" >
         <nz-list-item *ngFor="let project of projects" (click)="selectProject(project)" class="project-item-clickable">
           <div class="project-item-content">
             <span nz-icon nzType="folder" nzTheme="outline" class="project-icon"></span>

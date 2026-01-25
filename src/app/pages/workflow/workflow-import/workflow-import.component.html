@@ -84,7 +84,7 @@
                 <h4><nz-icon nzType="phone" nzTheme="outline"></nz-icon> Referenced Calls</h4>
                 <p class="section-hint">This workflow references the following calls. Please ensure they exist in your
                     environment:</p>
-                <nz-list nzBordered [nzDataSource]="validationResult!.missingCalls!" nzSize="small">
+                <nz-list  [nzDataSource]="validationResult!.missingCalls!" nzSize="small">
                     <nz-list-item *ngFor="let call of validationResult!.missingCalls">
                         <nz-tag nzColor="blue">{{ call }}</nz-tag>
                     </nz-list-item>
@@ -95,7 +95,7 @@
                 *ngIf="validationResult && validationResult.missingPlugins && validationResult.missingPlugins.length > 0">
                 <h4><nz-icon nzType="api" nzTheme="outline"></nz-icon> Referenced Plugins</h4>
                 <p class="section-hint">This workflow uses the following plugins. Please ensure they are installed:</p>
-                <nz-list nzBordered [nzDataSource]="validationResult!.missingPlugins!" nzSize="small">
+                <nz-list  [nzDataSource]="validationResult!.missingPlugins!" nzSize="small">
                     <nz-list-item *ngFor="let plugin of validationResult!.missingPlugins">
                         <nz-tag nzColor="purple">{{ plugin }}</nz-tag>
                     </nz-list-item>

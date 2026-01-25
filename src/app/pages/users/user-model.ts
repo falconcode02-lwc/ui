@@ -5,6 +5,14 @@ export interface User {
   fullName: string;
   status: "ACTIVE" | "INACTIVE";
   password?: string; // Optional, only used for create/update
-  createdAt?: Date;
-  updatedAt?: Date;
+  roleId?: string;
+  roleName?: string;
+  workspaceIds?: string[];
+  projectIds?: string[];
+  createdTime?: number[];
+  modifiedTime?: number[] | null;
+  createdBy?: string;
+  modifiedBy?: string;
+  createdAt?: any;
+  updatedAt?: any;
 }

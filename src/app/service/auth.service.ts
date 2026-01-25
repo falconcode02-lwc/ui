@@ -4,6 +4,7 @@ import { Observable, BehaviorSubject } from "rxjs";
 import { tap } from "rxjs/operators";
 import { LoginRequest, LoginResponse } from "../model/auth.model";
 import { environment } from "../environments/environment";
+import { ContextService } from "./context.service";
 
 @Injectable({
   providedIn: "root",
@@ -13,7 +14,10 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<LoginResponse | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(
+    private http: HttpClient,
+    private contextService: ContextService,
+  ) {
     // Load user from localStorage if exists
     const storedUser = localStorage.getItem("currentUser");
     if (storedUser) {
@@ -35,7 +39,9 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem("currentUser");
+    localStorage.clear();
+    sessionStorage.clear();
+    this.contextService.clear();
     this.currentUserSubject.next(null);
   }
 

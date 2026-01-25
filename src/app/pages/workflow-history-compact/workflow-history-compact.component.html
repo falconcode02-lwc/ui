@@ -192,7 +192,7 @@
 
       <!-- Input/Output Section -->
       <div class="io-section" *ngIf="inputdata">
-        <nz-collapse nzBordered class="io-collapse">
+        <nz-collapse  class="io-collapse">
           <nz-collapse-panel [nzHeader]="ioHeader" [nzActive]="false">
             <ng-template #ioHeader>
               <div class="section-header-content">
@@ -237,11 +237,11 @@
           <span>Event Details</span>
         </div>
 
-        <nz-collapse nzBordered class="details-collapse">
+        <nz-collapse  class="details-collapse">
           <nz-collapse-panel *ngFor="let event of panels" [nzHeader]="event.eventType" [nzExtra]="eventTime1(event)"
             [nzActive]="true" class="detail-panel">
 
-            <nz-descriptions nzBordered [nzSize]="'small'" [nzColumn]="{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }">
+            <nz-descriptions  [nzSize]="'small'" [nzColumn]="{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }">
               <!-- Event ID -->
               <nz-descriptions-item nzTitle="Event ID">
                 <nz-tag [nzColor]="'gold'">{{ shortId(event) }}</nz-tag>

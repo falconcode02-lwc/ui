@@ -12,7 +12,7 @@ export class ProjectService {
   constructor(
     private http: HttpService,
     private httpClient: HttpClient,
-    private contextService: ContextService
+    private contextService: ContextService,
   ) {}
 
   private getSelectedWorkspace(): string {
@@ -23,6 +23,11 @@ export class ProjectService {
   getAll(): Observable<Project[]> {
     const workspaceCode = this.getSelectedWorkspace();
     return this.http.get(`/api/${this.base}/workspace/${workspaceCode}`);
+  }
+
+  // list all projects across all workspaces
+  getListAll(): Observable<Project[]> {
+    return this.http.get(`/api/${this.base}`);
   }
 
   // get one project by id
@@ -46,7 +51,7 @@ export class ProjectService {
   // delete project – uses HttpClient directly, HttpService untouched
   delete(id: string): Observable<void> {
     const url = `${environment.apiUrl}/api/${this.base}/${encodeURIComponent(
-      id
+      id,
     )}`;
     return this.httpClient.delete<void>(url);
   }

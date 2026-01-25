@@ -28,5 +28,8 @@ export interface Role {
   roleName: string;
   description: string;
   permissions?: RolePermissions | string;
-  createdAt?: Date;
+  createdTime?: number[];
+  modifiedTime?: number[] | null;
+  createdBy?: string;
+  modifiedBy?: string;
 }

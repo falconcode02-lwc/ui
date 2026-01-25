@@ -33,7 +33,7 @@
     </nz-empty>
 
     <!-- List View -->
-    <nz-list *ngIf="filteredProjects.length > 0" [nzDataSource]="filteredProjects" [nzLoading]="loading" nzBordered>
+    <nz-list *ngIf="filteredProjects.length > 0" [nzDataSource]="filteredProjects" [nzLoading]="loading" >
         <nz-list-item *ngFor="let p of filteredProjects" class="project-item">
             <div class="project-content">
                 <div class="project-main" (click)="navigateToWorkflows(p)">

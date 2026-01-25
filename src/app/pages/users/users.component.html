@@ -10,7 +10,7 @@
   </nz-page-header-subtitle>
   <nz-page-header-extra>
     <nz-space>
-      <button *nzSpaceItem nz-button nzType="default" nzShape="round" (click)="loadUsers()">
+      <button *nzSpaceItem nz-button nzType="default" nzShape="round" (click)="refreshData()">
         <i nz-icon nzType="reload"></i> Refresh
       </button>
       <button *nzSpaceItem nz-button nzType="default" nzShape="round" (click)="openCreate()">
@@ -29,7 +29,7 @@
   </nz-empty>
 
   <!-- List View -->
-  <nz-list *ngIf="filteredUsers.length > 0" [nzDataSource]="filteredUsers" [nzLoading]="loading" nzBordered>
+  <nz-list *ngIf="filteredUsers.length > 0" [nzDataSource]="filteredUsers" [nzLoading]="loading" >
     <nz-list-item *ngFor="let user of filteredUsers" class="user-item">
       <div class="user-content">
         <div class="user-main" (click)="openEdit(user)">
@@ -45,6 +45,15 @@
               </span>
               <span class="meta-item">
                 <span class="meta-label">|</span> Created <small><i>{{ user.createdAt | date:'MMM d, y, h:mm a' }}</i></small>
+              </span>
+              <span class="meta-item">
+                <span class="meta-label">|</span> Role: <nz-tag nzColor="blue">{{ user.roleName || user.roleId || 'N/A' }}</nz-tag>
+              </span>
+              <span class="meta-item">
+                <span class="meta-label">|</span> Workspaces: <nz-tag nzColor="orange">{{ user.workspaceIds?.length || 0 }}</nz-tag>
+              </span>
+              <span class="meta-item">
+                <span class="meta-label">|</span> Projects: <nz-tag nzColor="cyan">{{ user.projectIds?.length || 0 }}</nz-tag>
               </span>
               <span class="meta-item" *ngIf="user.updatedAt">
                 <span class="meta-label">|</span> Updated <small><i>{{ user.updatedAt | date:'MMM d, y, h:mm a' }}</i></small>
@@ -85,54 +94,105 @@
 <nz-modal [(nzVisible)]="isModalVisible" 
           [nzTitle]="isEditing ? 'Edit User' : 'Create New User'" 
           (nzOnCancel)="handleCancel()" 
-          (nzOnOk)="handleOk()">
+          (nzOnOk)="handleOk()"
+          [nzWidth]="1000">
   <ng-container *nzModalContent>
     <form nz-form [formGroup]="userForm" nzLayout="vertical">
-      <nz-form-item>
-        <nz-form-label [nzRequired]="true">Username</nz-form-label>
-        <nz-form-control nzErrorTip="Please input username!">
-          <input nz-input formControlName="username" placeholder="Enter username" />
-        </nz-form-control>
-      </nz-form-item>
+      <div nz-row [nzGutter]="24">
+        <div nz-col [nzSpan]="12">
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Username</nz-form-label>
+            <nz-form-control nzErrorTip="Please input username!">
+              <input nz-input formControlName="username" placeholder="Enter username" />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+        <div nz-col [nzSpan]="12">
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Full Name</nz-form-label>
+            <nz-form-control nzErrorTip="Please input full name!">
+              <input nz-input formControlName="fullName" placeholder="Enter full name" />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+      </div>
+
+      <div nz-row [nzGutter]="24">
+        <div nz-col [nzSpan]="12">
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Email</nz-form-label>
+            <nz-form-control nzErrorTip="Please input a valid email!">
+              <input nz-input formControlName="email" placeholder="Enter email address" />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+        <div nz-col [nzSpan]="12">
+          <nz-form-item>
+            <nz-form-label [nzRequired]="!isEditing">Password</nz-form-label>
+            <nz-form-control 
+              [nzErrorTip]="isEditing ? 'Password must be at least 6 characters (leave blank to keep current)' : 'Please input password (minimum 6 characters)!'">
+              <nz-input-group [nzPrefix]="prefixTemplate">
+                <input 
+                  nz-input 
+                  type="password" 
+                  formControlName="password" 
+                  [placeholder]="isEditing ? 'Leave blank to keep current password' : 'Enter password (min 6 characters)'" />
+              </nz-input-group>
+              <ng-template #prefixTemplate>
+                <nz-icon nzType="lock" nzTheme="outline"></nz-icon>
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+      </div>
+
+      <div nz-row [nzGutter]="24">
+        <div nz-col [nzSpan]="12">
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Status</nz-form-label>
+            <nz-form-control nzErrorTip="Please select status!">
+              <nz-select formControlName="status">
+                <nz-option nzValue="ACTIVE" nzLabel="ACTIVE"></nz-option>
+                <nz-option nzValue="INACTIVE" nzLabel="INACTIVE"></nz-option>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+        <div nz-col [nzSpan]="12">
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Role</nz-form-label>
+            <nz-form-control nzErrorTip="Please select a role!">
+              <nz-select formControlName="roleId" nzPlaceHolder="Select a role">
+                <nz-option *ngFor="let role of roles" [nzValue]="role.roleId" [nzLabel]="role.roleName"></nz-option>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+      </div>
 
       <nz-form-item>
-        <nz-form-label [nzRequired]="true">Full Name</nz-form-label>
-        <nz-form-control nzErrorTip="Please input full name!">
-          <input nz-input formControlName="fullName" placeholder="Enter full name" />
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzRequired]="true">Email</nz-form-label>
-        <nz-form-control nzErrorTip="Please input a valid email!">
-          <input nz-input formControlName="email" placeholder="Enter email address" />
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzRequired]="!isEditing">Password</nz-form-label>
-        <nz-form-control 
-          [nzErrorTip]="isEditing ? 'Password must be at least 6 characters (leave blank to keep current)' : 'Please input password (minimum 6 characters)!'">
-          <nz-input-group [nzPrefix]="prefixTemplate">
-            <input 
-              nz-input 
-              type="password" 
-              formControlName="password" 
-              [placeholder]="isEditing ? 'Leave blank to keep current password' : 'Enter password (min 6 characters)'" />
-          </nz-input-group>
-          <ng-template #prefixTemplate>
-            <nz-icon nzType="lock" nzTheme="outline"></nz-icon>
-          </ng-template>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzRequired]="true">Status</nz-form-label>
-        <nz-form-control nzErrorTip="Please select status!">
-          <nz-select formControlName="status">
-            <nz-option nzValue="ACTIVE" nzLabel="ACTIVE"></nz-option>
-            <nz-option nzValue="INACTIVE" nzLabel="INACTIVE"></nz-option>
-          </nz-select>
+        <nz-form-label>Workspace & Project Access Mapping</nz-form-label>
+        <nz-form-control>
+          <div nz-row [nzGutter]="24">
+            <div nz-col [nzSpan]="12">
+              <nz-divider nzText="Workspaces" nzOrientation="left"></nz-divider>
+              <nz-transfer
+                [nzDataSource]="workspaceTransferData"
+                [nzShowSearch]="true"
+                [nzRenderList]="[null, null]"
+                (nzChange)="handleTransferChange($event, 'workspace')">
+              </nz-transfer>
+            </div>
+            <div nz-col [nzSpan]="12">
+              <nz-divider nzText="Projects" nzOrientation="left"></nz-divider>
+              <nz-transfer
+                [nzDataSource]="filteredProjectTransferData"
+                [nzShowSearch]="true"
+                [nzRenderList]="[null, null]"
+                (nzChange)="handleTransferChange($event, 'project')">
+              </nz-transfer>
+            </div>
+          </div>
         </nz-form-control>
       </nz-form-item>
     </form>

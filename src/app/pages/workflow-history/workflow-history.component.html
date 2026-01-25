@@ -1,5 +1,5 @@
 
-<nz-card *ngIf="events?.length; else emptyBlock" nzBordered>
+<nz-card *ngIf="events?.length; else emptyBlock" >
   <nz-timeline>
     <nz-timeline-item *ngFor="let ev of events; let i = index" [nzColor]="'blue'">
       <div class="event-head">

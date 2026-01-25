@@ -3,7 +3,7 @@
     <nz-splitter-panel [nzDefaultSize]="'60%'">
 
 
-        <nz-card [nzBordered]="false" style="max-width: 800px;" [nzSize]="'small'">
+        <nz-card []="false" style="max-width: 800px;" [nzSize]="'small'">
 
             <form nz-form [formGroup]="apiForm" nzLayout="vertical" (ngSubmit)="onSubmit()" class="p-4">
                 <nz-form-item>
@@ -109,7 +109,7 @@
 
     </nz-splitter-panel>
     <nz-splitter-panel [nzDefaultSize]="'40%'">
-        <nz-card [nzBordered]="false" style="max-width: 800px;" [nzSize]="'small'" nzTitle="Test">
+        <nz-card []="false" style="max-width: 800px;" [nzSize]="'small'" nzTitle="Test">
 
             <div class="api-test-editor" style="padding: 16px;">
                 <nz-form-item>

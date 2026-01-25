@@ -29,7 +29,7 @@
   </nz-empty>
 
   <!-- List View -->
-  <nz-list *ngIf="filteredRoles.length > 0" [nzDataSource]="filteredRoles" [nzLoading]="loading" nzBordered>
+  <nz-list *ngIf="filteredRoles.length > 0" [nzDataSource]="filteredRoles" [nzLoading]="loading" >
     <nz-list-item *ngFor="let role of filteredRoles" class="role-item">
       <div class="role-content">
         <div class="role-main" (click)="openEdit(role)">
@@ -111,7 +111,7 @@
       </div>
 
       <!-- Workspace Permissions -->
-      <nz-card nzTitle="Workspace" [nzBordered]="true" class="permission-card">
+      <nz-card nzTitle="Workspace" []="true" class="permission-card">
         <div class="permission-header">
           <label nz-checkbox 
                  [ngModel]="isAllWorkspaceSelected()" 
@@ -132,7 +132,7 @@
       </nz-card>
 
       <!-- Project Permissions -->
-      <nz-card nzTitle="Project" [nzBordered]="true" class="permission-card">
+      <nz-card nzTitle="Project" []="true" class="permission-card">
         <div class="permission-header">
           <label nz-checkbox 
                  [ngModel]="isAllProjectSelected()" 
@@ -156,7 +156,7 @@
       </nz-card>
 
       <!-- Workflow Permissions -->
-      <nz-card nzTitle="Workflow" [nzBordered]="true" class="permission-card">
+      <nz-card nzTitle="Workflow" []="true" class="permission-card">
         <div class="permission-header">
           <label nz-checkbox 
                  [ngModel]="isAllWorkflowSelected()" 
@@ -186,7 +186,7 @@
       </nz-card>
 
       <!-- Plugin Permissions -->
-      <nz-card nzTitle="Plugin" [nzBordered]="true" class="permission-card">
+      <nz-card nzTitle="Plugin" []="true" class="permission-card">
         <div class="permission-header">
           <label nz-checkbox 
                  [ngModel]="isAllPluginSelected()" 

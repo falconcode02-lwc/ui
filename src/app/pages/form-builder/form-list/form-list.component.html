@@ -35,7 +35,7 @@
     </nz-empty>
 
     <!-- List View -->
-    <nz-list *ngIf="filteredForms.length > 0" [nzDataSource]="filteredForms" [nzLoading]="loading" nzBordered>
+    <nz-list *ngIf="filteredForms.length > 0" [nzDataSource]="filteredForms" [nzLoading]="loading" >
         <nz-list-item *ngFor="let f of filteredForms" class="form-item">
             <div class="form-content">
                 <div class="form-main" (click)="edit(f)">

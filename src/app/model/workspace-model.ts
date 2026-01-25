@@ -7,6 +7,8 @@ export interface Workspace {
   active: boolean;
   icon?: string;
   code?: string;
-  createdTime?: number[];   // [yyyy, mm, dd, hh, mm, ss, nanos]
+  createdTime?: number[]; // [yyyy, mm, dd, hh, mm, ss, nanos]
   modifiedTime?: number[] | null;
+  createdBy?: string;
+  modifiedBy?: string;
 }

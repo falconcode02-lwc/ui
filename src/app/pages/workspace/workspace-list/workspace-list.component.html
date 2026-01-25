@@ -41,7 +41,7 @@
   </nz-empty>
 
   <!-- List View -->
-  <nz-list *ngIf="filteredWorkspaces.length > 0" [nzDataSource]="filteredWorkspaces" [nzLoading]="loading" nzBordered>
+  <nz-list *ngIf="filteredWorkspaces.length > 0" [nzDataSource]="filteredWorkspaces" [nzLoading]="loading" >
     <nz-list-item *ngFor="let w of filteredWorkspaces" class="workspace-item">
       <div class="workspace-content">
 

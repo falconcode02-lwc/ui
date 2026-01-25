@@ -27,7 +27,7 @@
 
       <!-- List View -->
       <div *ngIf="agents.length > 0">
-        <nz-list [nzDataSource]="paginatedAgents" nzBordered>
+        <nz-list [nzDataSource]="paginatedAgents">
           <nz-list-item *ngFor="let agent of paginatedAgents" class="agent-item">
             <div class="agent-content">
               <div class="agent-main" (click)="editAgent(agent)">
@@ -82,7 +82,7 @@
     </div>
   </nz-splitter-panel>
   <nz-splitter-panel [nzDefaultSize]="'40%'">
-    <nz-card [nzTitle]="isEditMode ? 'Edit Agent' : 'Create Agent'" [nzBordered]="false" style="height: 100%;">
+    <nz-card [nzTitle]="isEditMode ? 'Edit Agent' : 'Create Agent'" []="false" style="height: 100%;">
       <form nz-form (ngSubmit)="isEditMode ? updateAgent() : createAgent()" [formGroup]="agentForm">
         <nz-form-item>
           <nz-form-label [nzSpan]="6" nzFor="agentId" [nzRequired]="true">Agent ID</nz-form-label>

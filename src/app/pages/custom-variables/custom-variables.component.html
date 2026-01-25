@@ -18,7 +18,7 @@
 
         <nz-splitter-panel [nzDefaultSize]="'20%'" class="group-pane">
             <div style="padding-right: 16px;">
-                <nz-list nzBordered>
+                <nz-list >
                     @for (item of groupOptions; track item) {
                     <nz-list-item (click)="selectGroupItem(item)" 
                                   [class.active-group]="selectedGroup === item"
@@ -43,7 +43,7 @@
 
         <nz-splitter-panel>
             <div class="content-pane">
-                <nz-table #varTable nzShowPagination nzBordered nzSize="small" [nzData]="filteredVariables"
+                <nz-table #varTable nzShowPagination  nzSize="small" [nzData]="filteredVariables"
                     nzFrontPagination [nzPageSize]="8">
                     <thead>
                         <tr>
