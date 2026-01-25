@@ -4,6 +4,10 @@ export interface Project {
   name: string;
   icon?: string;
   description?: string;
-  accessibility: 'PUBLIC' | 'PRIVATE';
+  accessibility: "PUBLIC" | "PRIVATE";
   workspaceCode?: string;
+  createdTime?: number[];
+  modifiedTime?: number[] | null;
+  createdBy?: string;
+  modifiedBy?: string;
 }

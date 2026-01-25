@@ -19,11 +19,16 @@ import { APP_VERSION, BUILD_TIME } from "./environments/version";
 import { constants } from "./environments/constats";
 import { NzAvatarModule } from "ng-zorro-antd/avatar";
 import { NzSelectModule } from "ng-zorro-antd/select";
+import { NzModalModule } from "ng-zorro-antd/modal";
+import { NzButtonModule } from "ng-zorro-antd/button";
+import { NzListModule } from "ng-zorro-antd/list";
 import { WorkspaceService } from "./service/workspace.service";
 import { ProjectService } from "./pages/projects/project-service";
 import { Workspace } from "./model/workspace-model";
 import { Project } from "./pages/projects/project-model";
 import { ContextService } from "./service/context.service";
+import { NzDropDownModule } from "ng-zorro-antd/dropdown";
+import { AuthService } from "./service/auth.service";
 
 // const originalLog = console.log;
 // const originalError = console.error;
@@ -82,6 +87,10 @@ console.warn = (...args) => {
     NzAvatarModule,
     NzSelectModule,
     FormsModule,
+    NzModalModule,
+    NzListModule,
+    NzButtonModule,
+    NzDropDownModule,
   ],
   templateUrl: "./app.component.html",
   styleUrl: "./app.component.scss",
@@ -93,6 +102,7 @@ export class AppComponent implements AfterViewInit {
   private subCenterMsg?: Subscription;
   breadcrumbs: Breadcrumb[] = [];
   dark = false;
+  themeMode: "light" | "dark" | "system" = "system";
   version = APP_VERSION;
   buildTime = new Date(BUILD_TIME).toLocaleString();
 
@@ -101,8 +111,17 @@ export class AppComponent implements AfterViewInit {
   projects: Project[] = [];
   selectedWorkspace: string | null = null;
   selectedProject: string | null = null;
+  selectedWorkspaceName: string | null = null;
+  selectedProjectName: string | null = null;
   isSelectionDisabled = false;
   private contextSub?: Subscription;
+  private userSub?: Subscription;
+  userRole: string | null = null;
+
+  // Modal visibility
+  isWorkspaceModalVisible = false;
+  isProjectModalVisible = false;
+  isProjectsLoading = false;
 
   constructor(
     private nzConfig: NzConfigService,
@@ -112,10 +131,11 @@ export class AppComponent implements AfterViewInit {
     private breadcrumbService: BreadcrumbService,
     private workspaceService: WorkspaceService,
     private projectService: ProjectService,
-    private contextService: ContextService
+    private contextService: ContextService,
+    public authService: AuthService,
   ) {
     this.subStatus = this.editorStatus.status$.subscribe(
-      (status) => (this.status = status)
+      (status) => (this.status = status),
     );
 
     // Subscribe to breadcrumb service
@@ -130,7 +150,7 @@ export class AppComponent implements AfterViewInit {
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
         const routeBreadcrumbs = this.createBreadcrumbs(
-          this.activatedRoute.root
+          this.activatedRoute.root,
         );
         this.breadcrumbService.setBreadcrumbs(routeBreadcrumbs);
 
@@ -148,23 +168,86 @@ export class AppComponent implements AfterViewInit {
       this.selectedWorkspace = ws;
       if (ws) {
         this.loadProjects(ws);
+      } else {
+        this.selectedWorkspaceName = null;
+        this.projects = [];
       }
     });
     this.contextSub.add(
       this.contextService.project$.subscribe((p) => {
         this.selectedProject = p;
-      })
+        if (!p) {
+          this.selectedProjectName = null;
+        }
+      }),
     );
+
+    // Subscribe to user changes for role-based visibility
+    this.userSub = this.authService.currentUser$.subscribe((user) => {
+      this.userRole = user?.roleName || null;
+    });
   }
 
   ngAfterViewInit() {
-    this.toggleTheme();
+    this.initializeTheme();
   }
 
-  toggleTheme() {
-    this.dark = !this.dark;
-    // set theme variable or CSS root class
-    const themeSetting = this.dark
+  initializeTheme() {
+    // Load saved theme preference
+    const savedTheme = localStorage.getItem("themeMode") as
+      | "light"
+      | "dark"
+      | "system";
+    if (savedTheme) {
+      this.themeMode = savedTheme;
+    }
+    this.applyTheme();
+
+    // Listen for system theme changes
+    if (window.matchMedia) {
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", (e) => {
+          if (this.themeMode === "system") {
+            this.applyTheme();
+          }
+        });
+    }
+  }
+
+  setThemeMode(mode: "light" | "dark" | "system") {
+    this.themeMode = mode;
+    localStorage.setItem("themeMode", mode);
+    this.applyTheme();
+  }
+
+  applyTheme() {
+    let isDark = false;
+
+    if (this.themeMode === "system") {
+      // Detect system preference
+      isDark =
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches;
+    } else {
+      isDark = this.themeMode === "dark";
+    }
+
+    this.dark = isDark;
+
+    // Update body attributes for theme
+    document.body.setAttribute("data-theme", isDark ? "dark" : "light");
+
+    // Add/remove light theme class for ng-zorro components
+    if (isDark) {
+      document.body.classList.remove("light-theme");
+      document.body.classList.add("dark-theme");
+    } else {
+      document.body.classList.remove("dark-theme");
+      document.body.classList.add("light-theme");
+    }
+
+    const themeSetting = isDark
       ? {
           /* dark vars */
         }
@@ -172,13 +255,26 @@ export class AppComponent implements AfterViewInit {
           /* light vars */
         };
     this.nzConfig.set("theme", themeSetting);
-    document.body.setAttribute("theme", this.dark ? "dark" : "light");
+  }
+
+  getThemeIcon(): string {
+    if (this.themeMode === "system") return "laptop";
+    if (this.themeMode === "dark") return "moon";
+    return "sun";
+  }
+
+  isAdmin(): boolean {
+    //alert(this.userRole);
+    return (
+      this.userRole?.toLowerCase() == "admin" ||
+      this.userRole?.toLowerCase() == "super_admin"
+    );
   }
 
   private createBreadcrumbs(
     route: ActivatedRoute,
     url: string = "",
-    breadcrumbs: Breadcrumb[] = []
+    breadcrumbs: Breadcrumb[] = [],
   ): Breadcrumb[] {
     const children = route.children;
 
@@ -216,6 +312,7 @@ export class AppComponent implements AfterViewInit {
     this.subStatus?.unsubscribe();
     this.subCenterMsg?.unsubscribe();
     this.contextSub?.unsubscribe();
+    this.userSub?.unsubscribe();
   }
 
   // Workspace and Project methods
@@ -227,7 +324,16 @@ export class AppComponent implements AfterViewInit {
         if (!this.selectedWorkspace && this.workspaces.length > 0) {
           const firstWorkspace = this.workspaces[0];
           const workspaceId = firstWorkspace.code || firstWorkspace.id;
+          this.selectedWorkspaceName = firstWorkspace.name;
           this.onWorkspaceChange(workspaceId);
+        } else if (this.selectedWorkspace) {
+          // Set name for already selected workspace
+          const workspace = this.workspaces.find(
+            (w) => (w.code || w.id) === this.selectedWorkspace,
+          );
+          if (workspace) {
+            this.selectedWorkspaceName = workspace.name;
+          }
         }
       },
       error: (error) => {
@@ -237,30 +343,45 @@ export class AppComponent implements AfterViewInit {
   }
 
   private loadProjects(workspaceId: string): void {
+    this.isProjectsLoading = true;
     // Note: ProjectService.getAll() uses a hardcoded workspace code
     // You may need to update the service to accept workspaceId parameter
     this.projectService.getAll().subscribe({
       next: (projects) => {
         this.projects = projects;
+        this.isProjectsLoading = false;
+        // Set name for already selected project
+        if (this.selectedProject) {
+          const project = this.projects.find(
+            (p) => p.id === this.selectedProject,
+          );
+          if (project) {
+            this.selectedProjectName = project.name;
+          }
+        }
       },
       error: (error) => {
         console.error("Error loading projects:", error);
         this.projects = [];
+        this.isProjectsLoading = false;
       },
     });
   }
-
   private restoreSavedSelections(): void {
     const savedWorkspace = this.contextService.getWorkspace();
     const savedProject = this.contextService.getProject();
 
     if (savedWorkspace) {
       this.selectedWorkspace = savedWorkspace;
+      this.selectedWorkspaceName = localStorage.getItem(
+        "selectedWorkspaceName",
+      );
       this.loadProjects(savedWorkspace);
     }
 
     if (savedProject) {
       this.selectedProject = savedProject;
+      this.selectedProjectName = localStorage.getItem("selectedProjectName");
     }
   }
 
@@ -291,5 +412,61 @@ export class AppComponent implements AfterViewInit {
     if (projectId) {
       // this.router.navigate(["/dashboard"]);
     }
+  }
+
+  // Modal methods
+  showWorkspaceModal(): void {
+    this.isWorkspaceModalVisible = true;
+  }
+
+  showProjectModal(): void {
+    this.isProjectModalVisible = true;
+  }
+
+  handleWorkspaceModalOk(): void {
+    this.isWorkspaceModalVisible = false;
+  }
+
+  handleWorkspaceModalCancel(): void {
+    this.isWorkspaceModalVisible = false;
+  }
+
+  handleProjectModalOk(): void {
+    this.isProjectModalVisible = false;
+  }
+
+  handleProjectModalCancel(): void {
+    this.isProjectModalVisible = false;
+  }
+
+  selectWorkspaceFromModal(workspaceId: string): void {
+    const workspace = this.workspaces.find(
+      (w) => (w.code || w.id) === workspaceId,
+    );
+    if (workspace) {
+      this.selectedWorkspaceName = workspace.name;
+      localStorage.setItem("selectedWorkspaceName", workspace.name);
+    }
+    this.onWorkspaceChange(workspaceId);
+    this.isWorkspaceModalVisible = false;
+
+    // Automatically show project modal after workspace selection
+    setTimeout(() => {
+      this.showProjectModal();
+    }, 300);
+  }
+
+  selectProjectFromModal(projectId: string): void {
+    const project = this.projects.find((p) => p.id === projectId);
+    if (project) {
+      this.selectedProjectName = project.name;
+      localStorage.setItem("selectedProjectName", project.name);
+      // Ensure we store the ID (UUID) specifically
+      if (project.id) {
+        localStorage.setItem("selectedProject", project.id);
+      }
+    }
+    this.onProjectChange(projectId);
+    this.isProjectModalVisible = false;
   }
 }

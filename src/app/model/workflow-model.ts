@@ -11,6 +11,8 @@ export interface Workflow {
 
   createdTime?: any; // ISO timestamp from backend
   modifiedTime?: any; // optional since can be null initially
+  createdBy?: string;
+  modifiedBy?: string;
   workspaceKey?: string;
   projectKey?: string;
 }

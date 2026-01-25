@@ -10,6 +10,7 @@ export interface LoginResponse {
   username?: string;
   fullName?: string;
   email?: string;
+  roleName?: string;
   remainingAttempts?: number;
   accountLocked?: boolean;
 }

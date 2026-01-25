@@ -4,10 +4,10 @@ import { BehaviorSubject, Observable } from "rxjs";
 @Injectable({ providedIn: "root" })
 export class ContextService {
   private workspaceSubject = new BehaviorSubject<string | null>(
-    localStorage.getItem("selectedWorkspace")
+    localStorage.getItem("selectedWorkspace"),
   );
   private projectSubject = new BehaviorSubject<string | null>(
-    localStorage.getItem("selectedProject")
+    localStorage.getItem("selectedProject"),
   );
 
   workspace$ = this.workspaceSubject.asObservable();
@@ -37,5 +37,10 @@ export class ContextService {
 
   getProject(): string | null {
     return this.projectSubject.value;
+  }
+
+  clear(): void {
+    this.workspaceSubject.next(null);
+    this.projectSubject.next(null);
   }
 }

@@ -14,7 +14,7 @@
     z-index: 10;
     min-height: calc(100vh - 22px);
     // box-shadow: 2px 0 6px rgba(0, 21, 41, .35);
-    border-right: 1px solid #505050;
+    border-right: 1px solid var(--border-color);
 }
 
 .header-trigger {
@@ -23,6 +23,34 @@
     font-size: 20px;
     cursor: pointer;
     transition: all .3s, padding 0s;
+}
+
+.header-trigger-button {
+   position: absolute;
+    right: -13px;
+    top: 50px;
+    z-index: 11;
+    width: 25px;
+    height: 25px;
+    background: #414244;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #404040;
+    
+    &:hover {
+        background: #3a3f47;
+        border-color: #505050;
+    }
+    
+    .trigger {
+        font-size: 16px;
+        color: #fff;
+        transition: transform 0.3s ease;
+    }
 }
 
 .trigger:hover {
@@ -64,14 +92,39 @@ nz-header {
 
 .app-header {
     position: relative;
-    height: 64px;
+    // height: 64px;
     padding: 0;
     // background: #fff;
-    box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
-    border-bottom: 1px solid #515151;
+   
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 16px;
+    height: 31px !important;
+}
+
+// Theme Switcher
+.theme-switcher {
+    margin-right: 16px;
+    
+    button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        
+        &:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        nz-icon {
+            font-size: 18px;
+        }
+    }
 }
 
 // Environment Selectors (Workspace and Project Dropdowns)
@@ -161,4 +214,14 @@ nz-breadcrumb {
         align-items: center;
         gap: 4px;
     }
+}
+// Modal list item hover effects
+.workspace-item:hover,
+.project-item:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+// Breadcrumb link hover
+.environment-selectors a:hover {
+  opacity: 0.8;
 }

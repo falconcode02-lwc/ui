@@ -6,7 +6,12 @@
                 <img src="ff-icon.png" alt="logo">
                 <h1>Falcon Flow</h1>
             </a>
+
+            
         </div>
+         <span class="header-trigger-button" (click)="isCollapsed = !isCollapsed">
+                    <nz-icon class="trigger" [nzType]="isCollapsed ? 'right-circle' : 'left-circle'" />
+                </span>
         <ul style="    height: calc(100vh - 112px);" nz-menu nzTheme="dark" nzMode="inline"
             [nzInlineCollapsed]="isCollapsed">
             <li nz-menu-item nzMatchRouter [routerLink]="['/dashboard']" routerLinkActive="ant-menu-item-selected">
@@ -16,12 +21,12 @@
             <li nz-submenu nzMatchRouter nzTitle="Add" nzIcon="plus">
                 <ul>
                     <li nz-menu-item nzMatchRouter [routerLink]="['/workspace']"
-                        routerLinkActive="ant-menu-item-selected">
+                        routerLinkActive="ant-menu-item-selected" *ngIf="isAdmin()">
                         <span nz-icon nzType="apartment"></span>
                         <span>Workspace</span>
                     </li>
                     <li nz-menu-item nzMatchRouter [routerLink]="['/projects']"
-                        routerLinkActive="ant-menu-item-selected">
+                        routerLinkActive="ant-menu-item-selected" *ngIf="isAdmin()">
                         <span nz-icon nzType="folder"></span>
                         <span>Project</span>
                     </li>
@@ -50,11 +55,11 @@
                         <span nz-icon nzType="api"></span>
                         <span>Plugin</span>
                     </li>
-                    <li nz-menu-item nzMatchRouter [routerLink]="['/aiagents']"
+                    <!-- <li nz-menu-item nzMatchRouter [routerLink]="['/aiagents']"
                         routerLinkActive="ant-menu-item-selected">
                         <span nz-icon nzType="robot"></span>
                         <span>AI Agent</span>
-                    </li>
+                    </li> -->
                     <li nz-menu-item nzMatchRouter [routerLink]="['/custom-variables']"
                         routerLinkActive="ant-menu-item-selected">
                         <span nz-icon nzType="database"></span>
@@ -89,7 +94,7 @@
 
 
 
-            <li nz-submenu nzTitle="Settings" nzIcon="setting">
+            <li nz-submenu nzTitle="Settings" nzIcon="setting" *ngIf="isAdmin()">
                 <ul>
                     <li nz-menu-item nzMatchRouter [routerLink]="['/users']" routerLinkActive="ant-menu-item-selected">
                         <span nz-icon nzType="usergroup-add"></span>
@@ -121,24 +126,39 @@
                 </li>
 
             </ul>
-            <!-- 
-
             <div class="profile-info" *ngIf="!isCollapsed">
-                <div class="name">John Doe</div>
-                <div class="role">Admin</div>
-            </div> -->
+                <div class="name" style="font-weight: 600; font-size: 14px; color: var(--text-primary);">{{authService.getCurrentUser()?.fullName}}</div>
+                <div class="role" style="font-size: 12px; color: var(--text-secondary);">{{userRole}}</div>
+            </div>
         </div>
     </nz-sider>
     <nz-layout>
-        <!-- <nz-header>
+        <nz-header>
             <div class="app-header">
-                <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
+                <!-- <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
                     <nz-icon class="trigger" [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'" />
-                </span>
+                </span> -->
 
                  
                 <div class="environment-selectors">
-                    <nz-select 
+                    <nz-breadcrumb style="border-bottom: 0px solid #f0f0f0;font-weight: 800;">
+                        <nz-breadcrumb-item>
+                            <a (click)="showWorkspaceModal()" style="cursor: pointer; color: var(--text-primary);">
+                                <nz-icon nzType="database" nzTheme="outline"></nz-icon>
+                                <span style="margin-left: 8px;">{{selectedWorkspaceName || 'Select Workspace'}}</span>
+                            </a>
+                        </nz-breadcrumb-item>
+                        <nz-breadcrumb-item>
+                            <a (click)="showProjectModal()" style="cursor: pointer; color: var(--text-primary);">
+                                <nz-icon nzType="project" nzTheme="outline"></nz-icon>
+                                <span style="margin-left: 8px;">{{selectedProjectName || 'Select Project'}}</span>
+                            </a>
+                        </nz-breadcrumb-item>
+                    </nz-breadcrumb>
+                    <!-- <a nz-button nzType="link">{{selectedWorkspace}}</a>
+                    <a nz-button nzType="link">{{selectedProject}}</a> -->
+                  
+                    <!-- <nz-select 
                         nzSize="small"
                         [(ngModel)]="selectedWorkspace"
                         (ngModelChange)="onWorkspaceChange($event)"
@@ -168,12 +188,34 @@
                             [nzValue]="project.id" 
                             [nzLabel]="project.name">
                         </nz-option>
-                    </nz-select>
+                    </nz-select> -->
                 </div>
 
-                <ng-content select="[header]"></ng-content>
+                <div class="theme-switcher">
+                    <button nz-button nzType="text" nz-dropdown [nzDropdownMenu]="themeMenu" nzPlacement="bottomRight">
+                        <nz-icon [nzType]="getThemeIcon()" nzTheme="outline"></nz-icon>
+                    </button>
+                    <nz-dropdown-menu #themeMenu="nzDropdownMenu">
+                        <ul nz-menu>
+                            <li nz-menu-item (click)="setThemeMode('light')" [nzSelected]="themeMode === 'light'">
+                                <nz-icon nzType="sun" nzTheme="outline"></nz-icon>
+                                <span style="margin-left: 8px;">Light</span>
+                            </li>
+                            <li nz-menu-item (click)="setThemeMode('dark')" [nzSelected]="themeMode === 'dark'">
+                                <nz-icon nzType="moon" nzTheme="outline"></nz-icon>
+                                <span style="margin-left: 8px;">Dark</span>
+                            </li>
+                            <li nz-menu-item (click)="setThemeMode('system')" [nzSelected]="themeMode === 'system'">
+                                <nz-icon nzType="laptop" nzTheme="outline"></nz-icon>
+                                <span style="margin-left: 8px;">System</span>
+                            </li>
+                        </ul>
+                    </nz-dropdown-menu>
+                </div>
+
+                <!-- <ng-content select="[header]"></ng-content> -->
             </div>
-            <nz-breadcrumb>
+            <!-- <nz-breadcrumb>
                 <nz-breadcrumb-item>
                     <a routerLink="/">
                         <nz-icon nzType="home" nzTheme="outline"></nz-icon>
@@ -207,9 +249,9 @@
                         </a>
                     </ng-container>
                 </nz-breadcrumb-item>
-            </nz-breadcrumb>
+            </nz-breadcrumb> -->
 
-        </nz-header> -->
+        </nz-header> 
         <nz-content style="overflow: auto;">
 
             <router-outlet></router-outlet>
@@ -219,3 +261,62 @@
     </nz-layout>
 
 </nz-layout>
+<!-- Workspace Selection Modal -->
+<nz-modal
+  [(nzVisible)]="isWorkspaceModalVisible"
+  nzTitle="Select Workspace"
+  (nzOnCancel)="handleWorkspaceModalCancel()"
+  [nzFooter]="null"
+  nzWidth="600px">
+  <ng-container *nzModalContent>
+    <nz-list [nzDataSource]="workspaces" nzBordered nzSize="small">
+      <nz-list-item *ngFor="let workspace of workspaces" 
+                    (click)="(workspace.code || workspace.id) && selectWorkspaceFromModal(workspace.code || workspace.id)"
+                    style="cursor: pointer; padding: 16px; transition: all 0.3s;"
+                    [ngStyle]="{'background-color': selectedWorkspace === (workspace.code || workspace.id) ? 'var(--bg-tertiary)' : 'transparent'}"
+                    class="workspace-item">
+        <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+          <nz-icon nzType="database" nzTheme="outline" style="font-size: 20px; color: var(--accent-color);"></nz-icon>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 14px;">{{workspace.name}}</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">{{workspace.code || workspace.id}}</div>
+          </div>
+          <nz-icon *ngIf="selectedWorkspace === (workspace.code || workspace.id)" 
+                   nzType="check-circle" 
+                   nzTheme="fill" 
+                   style="color: var(--accent-color); font-size: 20px;"></nz-icon>
+        </div>
+      </nz-list-item>
+    </nz-list>
+  </ng-container>
+</nz-modal>
+
+<!-- Project Selection Modal -->
+<nz-modal
+  [(nzVisible)]="isProjectModalVisible"
+  nzTitle="Select Project"
+  (nzOnCancel)="handleProjectModalCancel()"
+  [nzFooter]="null"
+  nzWidth="600px">
+  <ng-container *nzModalContent>
+    <nz-list [nzDataSource]="projects" nzBordered nzSize="small" [nzLoading]="isProjectsLoading">
+      <nz-list-item *ngFor="let project of projects" 
+                    (click)="project.id && selectProjectFromModal(project.id)"
+                    style="cursor: pointer; padding: 16px; transition: all 0.3s;"
+                    [ngStyle]="{'background-color': selectedProject === project.id ? 'var(--bg-tertiary)' : 'transparent'}"
+                    class="project-item">
+        <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+          <nz-icon nzType="project" nzTheme="outline" style="font-size: 20px; color: var(--accent-color);"></nz-icon>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 14px;">{{project.name}}</div>
+            <div style="font-size: 12px; color: var(--text-secondary);">{{project.code || project.id}}</div>
+          </div>
+          <nz-icon *ngIf="selectedProject === project.id" 
+                   nzType="check-circle" 
+                   nzTheme="fill" 
+                   style="color: var(--accent-color); font-size: 20px;"></nz-icon>
+        </div>
+      </nz-list-item>
+    </nz-list>
+  </ng-container>
+</nz-modal>

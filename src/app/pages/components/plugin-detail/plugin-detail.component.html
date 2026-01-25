@@ -43,7 +43,7 @@
 
     <div *ngIf="!loading && plugin">
       <!-- Plugin Information -->
-      <nz-descriptions [nzColumn]="2" nzBordered [nzSize]="'small'">
+      <nz-descriptions [nzColumn]="2"  [nzSize]="'small'">
         <nz-descriptions-item nzTitle="Plugin ID">
           <code style="background: #2a2a2a; padding: 2px 6px; border-radius: 4px;">{{ plugin.pluginId }}</code>
         </nz-descriptions-item>
@@ -110,7 +110,7 @@
         [nzData]="pluginResources" 
         [nzShowPagination]="false"
         [nzSize]="'small'"
-        nzBordered>
+        >
         <thead>
           <tr>
             <th nzWidth="40px"><nz-icon nzType="api" style="color: #52c41a;"></nz-icon></th>
@@ -190,7 +190,7 @@
         [nzData]="pluginProperties" 
         [nzShowPagination]="false"
         [nzSize]="'small'"
-        nzBordered>
+        >
         <thead>
           <tr>
             <th nzWidth="40px"><nz-icon nzType="setting" style="color: #1890ff;"></nz-icon></th>

@@ -18,7 +18,7 @@
 }
 
 body[data-theme="light"] {
-    --bg-primary: #f5f5f5;
+    --bg-primary: #fcfcfe;
     --bg-secondary: #ffffff;
     --bg-tertiary: #fafafa;
     --text-primary: #000000;
@@ -183,9 +183,9 @@ textarea.ant-input::placeholder {
     border-color: var(--border-color) !important;
 }
 
-.ant-btn {
-    border-color: var(--border-color) !important;
-}
+// .ant-btn {
+//     // border-color: var(--border-color) !important;
+// }
 
 .ant-btn-default {
     background: var(--bg-tertiary) !important;
@@ -401,11 +401,11 @@ f-flow .f-minimap .f-minimap-node {
 .log-container {
     border: 1px solid #2a2a2a !important;
     border-bottom: 0px !important;
-    background: #2e2e2e;
+    background: var(--bg-primary);
 }
 
 .editor-header {
-    background: #2e2e2e !important;
+    background: var(--bg-primary) !important;
     border-bottom-color: #2a2a2a !important;
 }
 
@@ -421,11 +421,11 @@ f-flow .f-minimap .f-minimap-node {
 }
 
 .nz-content {
-    background: #2e2e2e !important;
+    background: var(--bg-primary) !important;
 }
 
 .ant-layout {
-    background: #2e2e2e !important;
+    background: var(--bg-primary) !important;
 }
 
 .log-actions {
@@ -462,7 +462,7 @@ f-flow .f-minimap .f-minimap-node {
 }
 
 .f-flow {
-    background: #2d2e2e !important;
+    background: var(--bg-primary) !important;
 }
 
 .theme-background {
@@ -820,7 +820,7 @@ markdown th {
 }
 
 markdown tr:nth-child(even) {
-    background-color: #2e2e2e;
+    background-color: var(--bg-primary);
 }
 
 markdown tr:hover {
@@ -829,7 +829,7 @@ markdown tr:hover {
 
 .f-node:hover {
     border-color: #ff6d5a !important;
-    background: #2e2e2e;
+    background: var(--bg-primary);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 
     .node-external-icon {
@@ -892,7 +892,9 @@ span.activityCallCounts {
     align-items: center;
     align-content: center;
 }
-
+.ant-layout-header{
+    background-color: var(--bg-primary);
+}
 
 // Header
 .editor-header {
@@ -935,7 +937,8 @@ span.activityCallCounts {
 
 .page-action {
     padding: 12px 24px;
-    // background: var(--bg-secondary, #3a3a3a) !important;
+    z-index: 1!important;
+    background: var(--bg-secondary, #3a3a3a) !important;
     border-bottom: 1px solid var(--border-color, #404040) !important;
 }
 
@@ -943,34 +946,34 @@ span.activityCallCounts {
     color: var(--accent-color, #ff6d5a);
 }
 
-nz-table {
-    background: var(--bg-secondary, #fff);
-    border-radius: 6px;
-    overflow: hidden;
-}
+// nz-table {
+//     background: var(--bg-secondary, #fff);
+//     border-radius: 6px;
+//     overflow: hidden;
+// }
 
-.ant-menu.ant-menu-dark,
-.ant-menu-dark .ant-menu-sub,
-.ant-menu.ant-menu-dark .ant-menu-sub {
-    color: rgba(255, 255, 255, 0.65);
-    background: var(--bg-secondary, #fff);
-}
+// .ant-menu.ant-menu-dark,
+// .ant-menu-dark .ant-menu-sub,
+// .ant-menu.ant-menu-dark .ant-menu-sub {
+//     color: rgba(255, 255, 255, 0.65);
+//     background: var(--bg-secondary, #fff);
+// }
 
-nz-breadcrumb,
-.sidebar-logo,
-.ant-layout-header,
-thead.ant-table-thead th {
-    background: var(--bg-secondary, #fff);
-}
+// nz-breadcrumb,
+// .sidebar-logo,
+// .ant-layout-header,
+// thead.ant-table-thead th {
+//     background: var(--bg-secondary, #fff);
+// }
 
-.ant-table {
-    background: #303030;
-    border: 1px solid var(--border-color, #404040);
-}
-.ant-table tr td{
+// .ant-table {
+//     background: #303030;
+//     border: 1px solid var(--border-color, #404040);
+// }
+// .ant-table tr td{
     
-    border-bottom: 1px solid var(--border-color, #404040)!important;
-}
+//     border-bottom: 1px solid var(--border-color, #404040)!important;
+// }
 
 .plugin.AI_MODEL{
         border-radius: 50%!important;

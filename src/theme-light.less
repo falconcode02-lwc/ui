@@ -1,0 +1,30 @@
+
+// Light Theme for NG-ZORRO
+@import "../node_modules/ng-zorro-antd/ng-zorro-antd.less";
+ 
+@primary-color: #ff6d5a; // primary token - n8n style coral/orange
+// Light menu specifics
+@menu-item-active-bg: #ff6d5a;
+@menu-item-active-color: #ffffff;
+@menu-highlight-color: #ff8b7a;
+
+nz-list-item.ant-list-item.selected-item {
+    background-color: @primary-color;
+}
+
+nz-list-item.ant-list-item {
+    padding-top: 6px!important;
+    padding-bottom: 2px!important;
+}
+
+nz-list-item.ant-list-item.selected-item-file {
+    background-color: @primary-color;
+}
+
+nz-list-item.ant-list-item{
+    text-align: left!important;
+}
+
+.ant-layout-header {
+    height: auto!important;
+}

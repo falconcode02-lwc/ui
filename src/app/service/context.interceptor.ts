@@ -17,6 +17,14 @@ export const contextInterceptor: HttpInterceptorFn = (req, next) => {
     headers["X-Project-Id"] = project;
   }
 
+  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  if (currentUser && currentUser.userId) {
+    headers["X-User-Id"] = currentUser.userId;
+  }
+  if (currentUser && currentUser.username) {
+    headers["X-Username"] = currentUser.username;
+  }
+
   if (Object.keys(headers).length > 0) {
     authReq = req.clone({
       setHeaders: headers,

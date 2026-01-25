@@ -3,7 +3,7 @@
   top: 0;
   z-index: 100;
   background: var(--bg-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  // box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .user-list {
@@ -12,7 +12,7 @@
   margin: 0 auto;
 
   nz-list {
-    border-color: #303030;
+    border-color: var(--border-color);
   }
 
   .user-item {
@@ -75,7 +75,7 @@
     align-items: center;
     gap: 8px;
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--text-secondary);
     flex-wrap: wrap;
 
     .meta-item {
@@ -85,7 +85,7 @@
     }
 
     .meta-label {
-      color: rgba(255, 255, 255, 0.65);
+      color: var(--text-secondary);
     }
   }
 
@@ -94,5 +94,78 @@
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+  }
+}
+
+// Multi-select pill styles
+::ng-deep {
+  .ant-select-selection-item {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+    
+    .ant-select-selection-item-remove {
+      color: var(--text-secondary) !important;
+      &:hover {
+        color: var(--accent-color) !important;
+      }
+    }
+  }
+  
+  .ant-select-multiple .ant-select-selection-search {
+    color: var(--text-primary) !important;
+  }
+
+  // Transfer component styling
+  .ant-transfer {
+    color: var(--text-primary) !important;
+    
+    .ant-transfer-list {
+      background: var(--bg-tertiary) !important;
+      border-color: var(--border-color) !important;
+      flex: 1;
+      height: 300px;
+      min-width: 180px;
+    }
+
+    .ant-transfer-list-header {
+      background: var(--bg-secondary) !important;
+      border-bottom-color: var(--border-color) !important;
+      color: var(--text-primary) !important;
+    }
+
+    .ant-transfer-list-content-item {
+      color: var(--text-primary) !important;
+      &:hover {
+        background-color: var(--bg-primary) !important;
+      }
+    }
+
+    .ant-transfer-list-content-item-checked {
+      background-color: rgba(24, 144, 255, 0.1) !important;
+    }
+
+    .ant-transfer-operation {
+      .ant-btn {
+        background: var(--bg-secondary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+        
+        &[disabled] {
+          opacity: 0.5;
+        }
+      }
+    }
+
+    .ant-input {
+      background: var(--bg-primary) !important;
+      border-color: var(--border-color) !important;
+      color: var(--text-primary) !important;
+    }
+
+    .ant-transfer-list-header-title,
+    .ant-transfer-list-header-count {
+      color: var(--text-primary) !important;
+    }
   }
 }
